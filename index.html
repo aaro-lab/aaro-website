@@ -1524,7 +1524,7 @@
         for (const [ai, bi] of APP_EDGES) {
           if (ai >= nodes.length || bi >= nodes.length) continue;
           const a = nodes[ai], b = nodes[bi];
-          const isHL = hoveredNode && (hoveredNode === a || hoveredNode === b) || worldHovered;
+          const isHL = hoveredNode && (hoveredNode === a || hoveredNode === b);
           ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
           ctx.strokeStyle = isHL ? 'rgba(196,119,60,0.4)' : 'rgba(255,255,255,0.06)';
           ctx.lineWidth = isHL ? 1.2 : 0.5;
