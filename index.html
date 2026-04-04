@@ -222,9 +222,9 @@
 
     /* Ground Level Demo */
     .gl-demo {
-      position: absolute; top: 50%; right: clamp(32px,5vw,80px);
+      position: absolute; top: 50%; right: clamp(60px,8vw,140px);
       transform: translateY(-50%);
-      width: clamp(320px, 38vw, 580px); height: clamp(400px, 50vh, 600px);
+      width: clamp(340px, 42vw, 640px); height: clamp(420px, 55vh, 650px);
       z-index: 5;
     }
     .gl-demo__label {
@@ -1778,12 +1778,12 @@
       // Polygon vertices with FH (floor height) values
       // Normalized coords 0-1, will scale to canvas
       const verts = [
-        { x: 0.30, y: 0.12, fh: 5.0, label: 'A' },
-        { x: 0.15, y: 0.50, fh: 2.0, label: 'B' },
-        { x: 0.35, y: 0.62, fh: 1.0, label: 'C' },
-        { x: 0.58, y: 0.52, fh: 0.0, label: 'D' },
-        { x: 0.62, y: 0.22, fh: 0.0, label: 'E' },
-        { x: 0.45, y: 0.08, fh: 5.0, label: 'F' },
+        { x: 0.22, y: 0.10, fh: 5.0, label: 'A' },
+        { x: 0.18, y: 0.38, fh: 2.0, label: 'B' },
+        { x: 0.28, y: 0.58, fh: 5.0, label: 'C' },
+        { x: 0.58, y: 0.55, fh: 0.0, label: 'D' },
+        { x: 0.68, y: 0.28, fh: 0.0, label: 'E' },
+        { x: 0.55, y: 0.08, fh: 5.0, label: 'F' },
       ];
 
       let W, H, planH, secH;
