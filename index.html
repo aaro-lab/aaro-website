@@ -453,19 +453,17 @@
       background: rgba(196,119,60,0.12);
       border-color: rgba(196,119,60,0.25);
     }
-    .m-tile__icon svg {
-      width: 36px; height: 36px;
-      stroke: var(--cream);
-      stroke-width: 1;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      opacity: 0.5;
-      transition: opacity 0.4s, stroke 0.4s;
+    .m-tile__emoji {
+      font-size: 32px;
+      line-height: 1;
+      opacity: 0.7;
+      transition: opacity 0.4s, transform 0.4s;
+      filter: grayscale(0.3);
     }
-    .m-tile:hover .m-tile__icon svg {
+    .m-tile:hover .m-tile__emoji {
       opacity: 1;
-      stroke: var(--accent-h);
+      filter: grayscale(0);
+      transform: scale(1.15);
     }
 
     /* Floating particles (decorative dots in preview) */
@@ -783,7 +781,7 @@
       .m-tile { width: 190px; }
       .m-tile__preview { height: 110px; }
       .m-tile__icon { width: 60px; height: 60px; border-radius: 14px; }
-      .m-tile__icon svg { width: 30px; height: 30px; }
+      .m-tile__emoji { font-size: 28px; }
       .marquee-section::before,
       .marquee-section::after { width: 80px; }
     }
@@ -800,7 +798,7 @@
       .m-tile { width: 170px; }
       .m-tile__preview { height: 100px; }
       .m-tile__icon { width: 52px; height: 52px; border-radius: 12px; }
-      .m-tile__icon svg { width: 26px; height: 26px; }
+      .m-tile__emoji { font-size: 24px; }
       .m-tile__info { padding: 12px 14px; }
       .m-tile__name { font-size: 12px; }
       .marquee-section::before,
@@ -824,7 +822,7 @@
       .m-tile { width: 150px; }
       .m-tile__preview { height: 85px; }
       .m-tile__icon { width: 44px; height: 44px; border-radius: 10px; }
-      .m-tile__icon svg { width: 22px; height: 22px; }
+      .m-tile__emoji { font-size: 20px; }
       .m-tile__card { border-radius: 14px; }
       .m-tile__info { padding: 10px 12px; }
       .m-tile__name { font-size: 11px; }
@@ -1073,30 +1071,30 @@
 
     // ── MICRO APP DATA (with SVG icon paths) ──
     const APPS = [
-      { n: "Circle Packing", c: "Generation", u: "https://aaro-circle-packing.vercel.app/", p: "M20,20 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0 M10,12 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 M28,10 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 M12,30 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 M30,28 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" },
-      { n: "Plant Algorithm", c: "Generation", u: "https://aaro-plant-algorithm.vercel.app/", p: "M20,36 L20,20 M20,20 L12,12 M20,20 L28,12 M20,26 L14,22 M20,26 L26,22 M12,12 L8,8 M12,12 L16,8 M28,12 L24,8 M28,12 L32,8" },
-      { n: "Bubble Diagram", c: "Planning", u: "https://aaro-bubble-diagram.vercel.app/", p: "M14,16 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 M28,14 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 M20,28 m-7,0 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 M18,17 L24,15 M16,21 L17,23 M27,19 L23,24" },
-      { n: "Building Layout", c: "Evaluation", u: "https://aaro-building-layout-analyzer.vercel.app/", p: "M8,14 L18,9 L28,14 L28,28 L18,33 L8,28Z M12,16 L24,16 M12,19 L24,19 M12,22 L20,22" },
-      { n: "Advanced Offset", c: "Generation", u: "https://aaro-advanced-offset-algorithm.vercel.app/", p: "M6,20 L20,13 L34,20 L34,30 L20,37 L6,30Z M10,22 L20,17 L30,22 L30,28 L20,33 L10,28Z M14,24 L20,21 L26,24 L26,26 L20,29 L14,26Z" },
-      { n: "Furnishing", c: "Optimization", u: "https://aaro-furnishing-algorithm.vercel.app/", p: "M8,10 L32,10 L32,32 L8,32Z M12,10 L12,32 M22,10 L22,32 M8,20 L32,20 M14,22 L20,22 L20,30 L14,30Z" },
-      { n: "WFC Pavilion", c: "Generation", u: "https://aaro-wfc-sonsbeek-pavilion.vercel.app/", p: "M10,10 L20,10 L20,20 L10,20Z M20,10 L30,10 L30,20 L20,20Z M10,20 L20,20 L20,30 L10,30Z M20,20 L30,20 L30,30 L20,30Z M15,15 L25,15 M15,25 L25,25 M15,15 L15,25 M25,15 L25,25" },
-      { n: "Ground Level", c: "Simulation", u: "https://aaro-weighted-ground-level-algorith.vercel.app/", p: "M6,28 Q12,20 16,24 Q20,28 24,18 Q28,10 34,14 M6,28 L34,28 M10,28 L10,24 M16,28 L16,24 M22,28 L22,20 M28,28 L28,14" },
-      { n: "Archboard", c: "Dashboard", u: "https://aaro-archboard.vercel.app/", p: "M8,8 L32,8 L32,32 L8,32Z M8,16 L32,16 M20,8 L20,16 M12,20 L12,28 L18,28 L18,20Z M22,20 L22,28 L28,28 L28,20Z" },
-      { n: "Land Splitter", c: "Generation", u: "https://aaro-land-splitter-algorithm.vercel.app/", p: "M6,8 L34,8 L34,34 L6,34Z M6,8 L20,20 L34,8 M6,34 L20,20 M20,20 L34,34" },
-      { n: "Layout Optimizer", c: "Optimization", u: "https://modular-layout-optimizer.vercel.app/", p: "M8,8 L18,8 L18,18 L8,18Z M22,8 L32,8 L32,14 L22,14Z M22,18 L32,18 L32,32 L22,32Z M8,22 L18,22 L18,32 L8,32Z M8,18 L8,22 M18,18 L18,22 M22,14 L22,18 M32,14 L32,18" },
-      { n: "Monitoring", c: "Dashboard", u: "https://aaro-vercel-monitoring.vercel.app/", p: "M6,20 L12,14 L18,18 L24,10 L30,16 L36,12 M6,30 L36,30 M12,30 L12,26 M18,30 L18,22 M24,30 L24,18 M30,30 L30,24" },
-      { n: "Design Scope", c: "Evaluation", u: "https://aaro-design-scope.vercel.app/", p: "M20,6 L10,11 L10,27 L20,32 L30,27 L30,11Z M15,19 L18,23 L26,15 M20,6 L20,32" },
-      { n: "Unit Splitter", c: "Generation", u: "https://aaro-unit-splitter-algorithm.vercel.app/", p: "M6,22 L20,15 L34,22 L34,32 L20,39 L6,32Z M10,24 L20,19 L30,24 L30,30 L20,35 L10,30Z M14,26 L20,23 L26,26 L26,28 L20,31 L14,28Z" },
-      { n: "Gongsi", c: "Evaluation", u: "https://aaro-gongsi.vercel.app/", p: "M8,26 L20,32 L32,26 L32,20 L20,14 L8,20Z M12,21 L12,28 M16,19 L16,30 M20,17 L20,32 M24,19 L24,30 M28,21 L28,28" },
-      { n: "AI Legal", c: "Evaluation", u: "https://aaro-ai-legal.vercel.app/", p: "M12,8 L28,8 L28,34 L12,34Z M16,14 L24,14 M16,18 L24,18 M16,22 L22,22 M16,26 L20,26 M12,8 L20,4 L28,8" },
-      { n: "Raster to Vector", c: "Generation", u: "https://aaro-raster-to-vector.vercel.app/", p: "M8,8 L18,8 L18,18 L8,18Z M8,8 L18,18 M18,8 L8,18 M22,12 L34,12 L34,32 L22,32Z M22,12 L28,22 L34,12 M22,32 L28,22 L34,32" },
-      { n: "Design Planning", c: "Planning", u: "https://aaro-design-planning-algorithm.vercel.app/", p: "M10,10 L30,10 L30,30 L10,30Z M10,16 L30,16 M10,22 L30,22 M18,10 L18,30 M14,13 L16,13 M22,19 L26,19 M12,25 L16,25" },
-      { n: "GH Canvas", c: "Evaluation", u: "https://aaro-gh-canvas-interpreter.vercel.app/", p: "M8,20 L16,12 L24,18 L32,10 M8,20 L16,28 L24,22 L32,30 M16,12 L16,28 M24,18 L24,22" },
-      { n: "Urban Timemap", c: "Evaluation", u: "https://aaro-urban-change-timemap.vercel.app/", p: "M10,16 L20,11 L30,16 M10,16 L10,20 L20,25 L30,20 L30,16 M8,24 L20,30 L32,24 M8,24 L8,28 L20,34 L32,28 L32,24" },
-      { n: "Parking", c: "Optimization", u: "https://aaro-parking-algorithm.vercel.app/", p: "M6,22 L20,15 L34,22 L34,30 L20,37 L6,30Z M13,18.5 L13,33.5 M20,15 L20,29 M27,18.5 L27,33.5 M6,26 L20,33 L34,26" },
-      { n: "Topography", c: "Simulation", u: "https://aaro-topography.vercel.app/", p: "M4,30 Q10,20 16,24 Q22,28 26,16 Q30,8 36,12 M4,34 Q12,26 18,28 Q24,30 30,22 Q34,16 38,18" },
-      { n: "AARO World", c: "Dashboard", u: "https://aaro-world.vercel.app/", p: "M20,6 A14,14 0 1,0 20,34 A14,14 0 1,0 20,6Z M8,16 Q20,12 32,16 M8,24 Q20,28 32,24 M20,6 Q14,20 20,34 M20,6 Q26,20 20,34" },
-      { n: "Brick", c: "Generation", u: "https://aaro-brick.vercel.app/", p: "M8,14 L8,30 L20,36 L32,30 L32,14 L20,8Z M8,18 L20,24 L32,18 M8,22 L20,28 L32,22 M8,26 L20,32 L32,26 M14,11 L14,33 M26,11 L26,33" },
+      { n: "Circle Packing", c: "Generation", u: "https://aaro-circle-packing.vercel.app/", e: "\u25CB" },
+      { n: "Plant Algorithm", c: "Generation", u: "https://aaro-plant-algorithm.vercel.app/", e: "\ud83c\udf31" },
+      { n: "Bubble Diagram", c: "Planning", u: "https://aaro-bubble-diagram.vercel.app/", e: "\ud83d\udcac" },
+      { n: "Building Layout", c: "Evaluation", u: "https://aaro-building-layout-analyzer.vercel.app/", e: "\ud83c\udfe2" },
+      { n: "Advanced Offset", c: "Generation", u: "https://aaro-advanced-offset-algorithm.vercel.app/", e: "\u25c7" },
+      { n: "Furnishing", c: "Optimization", u: "https://aaro-furnishing-algorithm.vercel.app/", e: "\ud83e\ude91" },
+      { n: "WFC Pavilion", c: "Generation", u: "https://aaro-wfc-sonsbeek-pavilion.vercel.app/", e: "\ud83c\udfdb\ufe0f" },
+      { n: "Ground Level", c: "Simulation", u: "https://aaro-weighted-ground-level-algorith.vercel.app/", e: "\ud83d\udcc9" },
+      { n: "Archboard", c: "Dashboard", u: "https://aaro-archboard.vercel.app/", e: "\ud83d\udcca" },
+      { n: "Land Splitter", c: "Generation", u: "https://aaro-land-splitter-algorithm.vercel.app/", e: "\u2702\ufe0f" },
+      { n: "Layout Optimizer", c: "Optimization", u: "https://modular-layout-optimizer.vercel.app/", e: "\u2b1b" },
+      { n: "Monitoring", c: "Dashboard", u: "https://aaro-vercel-monitoring.vercel.app/", e: "\ud83d\udcf6" },
+      { n: "Design Scope", c: "Evaluation", u: "https://aaro-design-scope.vercel.app/", e: "\u2714\ufe0f" },
+      { n: "Unit Splitter", c: "Generation", u: "https://aaro-unit-splitter-algorithm.vercel.app/", e: "\ud83d\udcd0" },
+      { n: "Gongsi", c: "Evaluation", u: "https://aaro-gongsi.vercel.app/", e: "\ud83c\udfe0" },
+      { n: "AI Legal", c: "Evaluation", u: "https://aaro-ai-legal.vercel.app/", e: "\ud83d\udccb" },
+      { n: "Raster to Vector", c: "Generation", u: "https://aaro-raster-to-vector.vercel.app/", e: "\ud83d\uddbc\ufe0f" },
+      { n: "Design Planning", c: "Planning", u: "https://aaro-design-planning-algorithm.vercel.app/", e: "\ud83d\uddd3\ufe0f" },
+      { n: "GH Canvas", c: "Evaluation", u: "https://aaro-gh-canvas-interpreter.vercel.app/", e: "\ud83d\udd17" },
+      { n: "Urban Timemap", c: "Evaluation", u: "https://aaro-urban-change-timemap.vercel.app/", e: "\ud83c\udf0d" },
+      { n: "Parking", c: "Optimization", u: "https://aaro-parking-algorithm.vercel.app/", e: "\ud83c\udd7f\ufe0f" },
+      { n: "Topography", c: "Simulation", u: "https://aaro-topography.vercel.app/", e: "\u26f0\ufe0f" },
+      { n: "AARO World", c: "Dashboard", u: "https://aaro-world.vercel.app/", e: "\ud83c\udf10" },
+      { n: "Brick", c: "Generation", u: "https://aaro-brick.vercel.app/", e: "\ud83e\uddf1" },
     ];
 
     // ── Shuffle ──
@@ -1119,7 +1117,7 @@
         <div class="m-tile__card">
           <div class="m-tile__preview">
             <div class="m-tile__icon">
-              <svg viewBox="0 0 40 40"><path d="${app.p}"/></svg>
+              <span class="m-tile__emoji">${app.e}</span>
             </div>
             <div class="m-tile__dot m-tile__dot--1"></div>
             <div class="m-tile__dot m-tile__dot--2"></div>
