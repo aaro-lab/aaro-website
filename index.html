@@ -884,7 +884,11 @@
       <div class="gl-demo__label">Weighted Ground Level</div>
       <canvas id="glCanvas"></canvas>
       <div class="gl-demo__metrics" id="glMetrics"></div>
-      <div class="gl-demo__hint">꼭지점을 드래그하여 필지 형태를 변경하고,<br>더블클릭하여 높이(FH)를 지정하면 가중평균 지표면을 계산합니다.</div>
+      <div class="gl-demo__hint">
+        가중평균 지표면 알고리즘 — 건축법 시행령 기반<br>
+        <span style="color:var(--ink-40)">드래그: 꼭지점 이동 &nbsp;|&nbsp; 더블클릭: 높이(FH) 지정</span><br>
+        <span style="color:var(--ink-40)">WGL = h_min + (단면적 / 둘레)</span>
+      </div>
     </div>
     <div class="s-cover__scroll"><div class="scroll-bar"></div> Scroll</div>
   </section>
@@ -1295,37 +1299,35 @@
       const ALL_NODES = [
         // World Agent (index 0)
         { id:'W', n:'World Agent', ini:'WA', c:'Master', r:76, isCenter:true },
-        // 24 real apps (varied sizes by category importance)
+        // 24 real apps (uniform size)
         ...APPS.map((a,i) => {
-          const sizeMap = { Dashboard:42, Optimization:38, Planning:36, Generation:32, Evaluation:28, Simulation:28 };
-          const r = sizeMap[a.c] || 30;
-          return { id:'a'+i, n:a.n, ini: a.n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(), c:a.c, u:a.u, r: r + (i%3)*4, svgPath: a.p };
+          return { id:'a'+i, n:a.n, ini: a.n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(), c:a.c, u:a.u, r:30, svgPath: a.p };
         }),
-        // Dummy nodes for density (varied sizes)
-        { id:'d0', n:'Facade Gen', ini:'FG', c:'Generation', r:28 },
-        { id:'d1', n:'Structure Check', ini:'SC', c:'Evaluation', r:20 },
-        { id:'d2', n:'Solar Analysis', ini:'SA', c:'Simulation', r:32 },
-        { id:'d3', n:'Cost Estimator', ini:'CE', c:'Evaluation', r:18 },
+        // Dummy nodes (uniform size, monotone initials)
+        { id:'d0', n:'Facade Gen', ini:'FG', c:'Generation', r:30 },
+        { id:'d1', n:'Structure Check', ini:'SC', c:'Evaluation', r:30 },
+        { id:'d2', n:'Solar Analysis', ini:'SA', c:'Simulation', r:30 },
+        { id:'d3', n:'Cost Estimator', ini:'CE', c:'Evaluation', r:30 },
         { id:'d4', n:'Circulation', ini:'CI', c:'Optimization', r:30 },
-        { id:'d5', n:'Site Context', ini:'SX', c:'Evaluation', r:16 },
-        { id:'d6', n:'Floor Plan AI', ini:'FP', c:'Generation', r:34 },
-        { id:'d7', n:'BIM Export', ini:'BX', c:'Dashboard', r:26 },
-        { id:'d8', n:'Regulation DB', ini:'RD', c:'Evaluation', r:22 },
-        { id:'d9', n:'Setback Calc', ini:'SB', c:'Generation', r:24 },
-        { id:'d10', n:'Daylight Sim', ini:'DS', c:'Simulation', r:20 },
-        { id:'d11', n:'Wind Flow', ini:'WF', c:'Simulation', r:18 },
-        { id:'d12', n:'View Analysis', ini:'VA', c:'Evaluation', r:16 },
-        { id:'d13', n:'Noise Map', ini:'NM', c:'Simulation', r:14 },
-        { id:'d14', n:'GFA Calc', ini:'GF', c:'Evaluation', r:18 },
-        { id:'d15', n:'MEP Route', ini:'ME', c:'Optimization', r:22 },
-        { id:'d16', n:'Elevation Gen', ini:'EG', c:'Generation', r:16 },
-        { id:'d17', n:'Section Cut', ini:'ST', c:'Generation', r:14 },
-        { id:'d18', n:'Area Table', ini:'AT', c:'Evaluation', r:20 },
-        { id:'d19', n:'Landscape AI', ini:'LA', c:'Optimization', r:26 },
-        { id:'d20', n:'Road Network', ini:'RN', c:'Planning', r:24 },
-        { id:'d21', n:'Skyline Check', ini:'SK', c:'Simulation', r:16 },
-        { id:'d22', n:'Fire Escape', ini:'FE', c:'Evaluation', r:14 },
-        { id:'d23', n:'Density Map', ini:'DM', c:'Evaluation', r:18 },
+        { id:'d5', n:'Site Context', ini:'SX', c:'Evaluation', r:30 },
+        { id:'d6', n:'Floor Plan AI', ini:'FP', c:'Generation', r:30 },
+        { id:'d7', n:'BIM Export', ini:'BX', c:'Dashboard', r:30 },
+        { id:'d8', n:'Regulation DB', ini:'RD', c:'Evaluation', r:30 },
+        { id:'d9', n:'Setback Calc', ini:'SB', c:'Generation', r:30 },
+        { id:'d10', n:'Daylight Sim', ini:'DS', c:'Simulation', r:30 },
+        { id:'d11', n:'Wind Flow', ini:'WF', c:'Simulation', r:30 },
+        { id:'d12', n:'View Analysis', ini:'VA', c:'Evaluation', r:30 },
+        { id:'d13', n:'Noise Map', ini:'NM', c:'Simulation', r:30 },
+        { id:'d14', n:'GFA Calc', ini:'GF', c:'Evaluation', r:30 },
+        { id:'d15', n:'MEP Route', ini:'ME', c:'Optimization', r:30 },
+        { id:'d16', n:'Elevation Gen', ini:'EG', c:'Generation', r:30 },
+        { id:'d17', n:'Section Cut', ini:'ST', c:'Generation', r:30 },
+        { id:'d18', n:'Area Table', ini:'AT', c:'Evaluation', r:30 },
+        { id:'d19', n:'Landscape AI', ini:'LA', c:'Optimization', r:30 },
+        { id:'d20', n:'Road Network', ini:'RN', c:'Planning', r:30 },
+        { id:'d21', n:'Skyline Check', ini:'SK', c:'Simulation', r:30 },
+        { id:'d22', n:'Fire Escape', ini:'FE', c:'Evaluation', r:30 },
+        { id:'d23', n:'Density Map', ini:'DM', c:'Evaluation', r:30 },
       ];
 
       // App-to-app edges (complex graph)
@@ -1565,9 +1567,9 @@
           ctx.stroke();
           ctx.shadowBlur = 0;
 
-          // Icon (SVG path or initials fallback)
-          ctx.fillStyle = isHov ? '#fff' : col;
-          ctx.globalAlpha = isHov ? 1 : 0.6;
+          // Icon (SVG path or initials fallback) — monotone
+          ctx.fillStyle = isHov ? '#fff' : 'rgba(255,255,255,0.45)';
+          ctx.globalAlpha = 1;
           if (n.svgPath) {
             const iconSize = Math.max(16, s * 0.5);
             const scale = iconSize / 40;
