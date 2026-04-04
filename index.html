@@ -579,6 +579,7 @@
       height: 100vh;
       display: block;
       cursor: grab;
+      touch-action: none;
     }
     .agent-canvas:active { cursor: grabbing; }
     .agent-canvas-wrap {
@@ -709,9 +710,15 @@
       .marquee-section::after { width: 80px; }
     }
     @media (max-width: 768px) {
+      html { scroll-snap-type: y proximity; }
       .s-cover__nav-links { display: none; }
       .nums-grid { grid-template-columns: 1fr; }
       .nav-dots { display: none; }
+      .cursor-glow { display: none; }
+      .s-mani__l { border-right: none; }
+      .s-mani__quote { text-align: left; }
+      .s-agent__header { position: relative; top: auto; left: auto; padding: clamp(24px,5vw,48px); }
+      .agent-canvas { height: 70vh; }
       .m-tile { width: 170px; }
       .m-tile__preview { height: 100px; }
       .m-tile__icon { width: 52px; height: 52px; border-radius: 12px; }
@@ -720,6 +727,42 @@
       .m-tile__name { font-size: 12px; }
       .marquee-section::before,
       .marquee-section::after { width: 40px; }
+      .foot__mark { font-size: clamp(3.5rem, 10vw, 5rem); }
+      .foot__copy { margin-top: 28px; }
+    }
+    @media (max-width: 480px) {
+      .s-cover__sub { font-size: 11px; letter-spacing: 0.1em; }
+      .s-cover__scroll { display: none; }
+      .clock { display: none; }
+      .geo--1 { width: 70vw; height: 70vw; left: 90%; opacity: 0.08; }
+      .geo--2, .geo--3 { display: none; }
+      .s-mani__text { font-size: clamp(1.4rem, 5vw, 1.8rem); }
+      .s-mani__l, .s-mani__r { padding: 32px 20px; }
+      .s-mani__kr { font-size: 14px; }
+      .n-cell { padding: 24px 16px; }
+      .n-cell__v { font-size: 1.6rem; }
+      .s-cap { padding: clamp(32px,5vw,60px) 20px; }
+      .cap-tbl td { font-size: 13px; padding: 12px 0; }
+      .cap-tbl td:last-child { font-size: 11px; }
+      .s-agent__header { padding: 24px 20px; }
+      .s-agent__desc { font-size: 13px; max-width: 28ch; }
+      .agent-canvas { height: 60vh; }
+      .m-tile { width: 150px; }
+      .m-tile__preview { height: 85px; }
+      .m-tile__icon { width: 44px; height: 44px; border-radius: 10px; }
+      .m-tile__icon svg { width: 22px; height: 22px; }
+      .m-tile__card { border-radius: 14px; }
+      .m-tile__info { padding: 10px 12px; }
+      .m-tile__name { font-size: 11px; }
+      .m-tile__tag { font-size: 8px; }
+      .m-tile__arrow { width: 20px; height: 20px; font-size: 10px; }
+      .marquee-section::before,
+      .marquee-section::after { width: 24px; }
+      .s-marquee-apps__head { padding: 0 20px; }
+      .s-foot { padding: 40px 20px; gap: 32px; }
+      .foot__addr { font-size: 13px; }
+      .foot__links { gap: 20px; flex-wrap: wrap; }
+      .foot__links a { font-size: 11px; }
     }
   </style>
 </head>
@@ -898,8 +941,8 @@
       </div>
       <div class="foot__links rv rv-d1">
         <a href="mailto:architecture.algorithm@gmail.com">Email</a>
-        <a href="https://www.linkedin.com/in/tzung-kuan-hsu/" target="_blank">LinkedIn</a>
-        <a href="https://www.instagram.com/tzung_kuan_hsu/" target="_blank">Instagram</a>
+        <a href="https://www.linkedin.com/in/tzung-kuan-hsu/" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://www.instagram.com/tzung_kuan_hsu/" target="_blank" rel="noopener">Instagram</a>
       </div>
       <div class="foot__copy rv rv-d2">&copy; 2026 AARO. All rights reserved.</div>
     </div>
@@ -1004,7 +1047,8 @@
       for (let copy = 0; copy < 2; copy++) {
         shuffled.forEach(app => rowEl.appendChild(createMarqueeTile(app)));
       }
-      const tileW = 220 + 16;
+      const firstTile = rowEl.querySelector('.m-tile');
+      const tileW = (firstTile ? firstTile.offsetWidth : 220) + 16;
       const setWidth = TILES_PER_SET * tileW;
       const dir = ROW_DIRS[r];
       const speed = ROW_SPEEDS[r];
@@ -1200,11 +1244,18 @@
 
       function resize() {
         const rect = canvas.parentElement.getBoundingClientRect();
-        W = rect.width; H = window.innerHeight;
+        W = rect.width; H = canvas.offsetHeight || window.innerHeight;
         canvas.width = W * dpr; canvas.height = H * dpr;
         canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         centerX = W * 0.5; centerY = H * 0.5;
+        // Scale force params for smaller viewports
+        const scale = Math.min(W, H) / 900;
+        EDGE_TARGET = 200 * Math.max(scale, 0.4);
+        HUB_TARGET = 450 * Math.max(scale, 0.4);
+        // Scale node radii
+        const rScale = Math.max(scale, 0.55);
+        nodes.forEach((n, i) => { n.r = ALL_NODES[i].r * rScale; });
       }
 
       function initNodes() {
@@ -1227,12 +1278,12 @@
         });
       }
 
-      // Force params — full-width spread
+      // Force params — viewport-responsive
       const REPULSION = 6000;
       const EDGE_ATTRACTION = 0.002;
-      const EDGE_TARGET = 200;
+      let EDGE_TARGET = 200;
       const HUB_PULL = 0.001;
-      const HUB_TARGET = 450;
+      let HUB_TARGET = 450;
       const GRAVITY = 0.0002;
       const DAMPING = 0.84;
       let alpha = 1.0;
@@ -1504,7 +1555,7 @@
           const moved = Math.hypot(mx - mouseDownPos.x, my - mouseDownPos.y);
           // Click = short press + little movement
           if (elapsed < 300 && moved < 5 && dragNode.u) {
-            window.open(dragNode.u, '_blank');
+            window.open(dragNode.u, '_blank', 'noopener');
           }
           dragNode.fx = null; dragNode.fy = null;
           dragNode = null;
@@ -1543,7 +1594,7 @@
       canvas.addEventListener('touchend', e => {
         if (dragNode) {
           const elapsed = Date.now()-touchStartTime;
-          if (elapsed < 300 && dragNode.u) window.open(dragNode.u,'_blank');
+          if (elapsed < 300 && dragNode.u) window.open(dragNode.u,'_blank','noopener');
           dragNode.fx=null; dragNode.fy=null; dragNode=null;
         }
       });
