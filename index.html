@@ -1299,7 +1299,7 @@
         ...APPS.map((a,i) => {
           const sizeMap = { Dashboard:42, Optimization:38, Planning:36, Generation:32, Evaluation:28, Simulation:28 };
           const r = sizeMap[a.c] || 30;
-          return { id:'a'+i, n:a.n, ini: a.n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(), c:a.c, u:a.u, r: r + (i%3)*4 };
+          return { id:'a'+i, n:a.n, ini: a.n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(), c:a.c, u:a.u, r: r + (i%3)*4, svgPath: a.p };
         }),
         // Dummy nodes for density (varied sizes)
         { id:'d0', n:'Facade Gen', ini:'FG', c:'Generation', r:28 },
@@ -1565,12 +1565,23 @@
           ctx.stroke();
           ctx.shadowBlur = 0;
 
-          // Initials
+          // Icon (SVG path or initials fallback)
           ctx.fillStyle = isHov ? '#fff' : col;
           ctx.globalAlpha = isHov ? 1 : 0.6;
-          ctx.font = `700 ${Math.max(10, s*0.32)}px 'DM Sans', sans-serif`;
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(n.ini, n.x, n.y);
+          if (n.svgPath) {
+            const iconSize = Math.max(16, s * 0.5);
+            const scale = iconSize / 40;
+            ctx.save();
+            ctx.translate(n.x - iconSize/2, n.y - iconSize/2);
+            ctx.scale(scale, scale);
+            const path = new Path2D(n.svgPath);
+            ctx.fill(path);
+            ctx.restore();
+          } else {
+            ctx.font = `700 ${Math.max(10, s*0.32)}px 'DM Sans', sans-serif`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(n.ini, n.x, n.y);
+          }
           ctx.globalAlpha = 1;
 
           // Hover bubble: show name
