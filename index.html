@@ -1825,15 +1825,28 @@
           wSum += avgH * len;
         }
         area = Math.abs(area) / 2;
-        const hWeighted = perimeter > 0 ? wSum / perimeter : 0;
         const hMin = Math.min(...verts.map(v => v.fh));
+        const hMax = Math.max(...verts.map(v => v.fh));
         // Scale to reasonable m² (1px ≈ 0.05m)
         const scale = 0.05;
+        const perimM = perimeter * scale;
+        // Section area (trapezoid sum along unfolded perimeter above h_min)
+        let secArea = 0;
+        for (let i = 0; i < n; i++) {
+          const j = (i + 1) % n;
+          const len = edgeLen(verts[i], verts[j]) * scale;
+          const h1 = verts[i].fh - hMin, h2 = verts[j].fh - hMin;
+          secArea += (h1 + h2) / 2 * len;
+        }
+        // Weighted Ground Level: h_min + sectionArea / perimeter
+        const hWeighted = perimM > 0 ? hMin + secArea / perimM : hMin;
         return {
           area: area * scale * scale,
-          perimeter: perimeter * scale,
+          perimeter: perimM,
+          secArea,
           hWeighted,
-          hMin
+          hMin,
+          hMax
         };
       }
 
@@ -1946,18 +1959,19 @@
           }
         }
 
-        // Ground baseline
-        ctx.beginPath();
-        ctx.moveTo(padL, padT + sH); ctx.lineTo(padL + sW, padT + sH);
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-        ctx.lineWidth = 0.5; ctx.stroke();
-
-        // Height scale
+        // Height grid lines every 1m
         ctx.font = `400 8px 'IBM Plex Mono', monospace`;
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
         ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-        ctx.fillText('0.00', padL - 6, padT + sH);
-        ctx.fillText(maxFH.toFixed(2), padL - 6, padT + sH * 0.15);
+        for (let h = 0; h <= maxFH; h += 1) {
+          const gy = padT + sH - (h / maxFH) * sH * 0.85;
+          ctx.beginPath();
+          ctx.moveTo(padL, gy); ctx.lineTo(padL + sW, gy);
+          ctx.strokeStyle = h === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)';
+          ctx.lineWidth = h === 0 ? 0.5 : 0.3;
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,0.25)';
+          ctx.fillText(h.toFixed(1), padL - 6, gy);
+        }
 
         // Hatched area under section
         ctx.beginPath();
@@ -1984,19 +1998,19 @@
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 1.5; ctx.stroke();
 
-        // Weighted average line (dashed, red/orange)
+        // Weighted Ground Level line (red dashed)
         const wglY = padT + sH - (m.hWeighted / maxFH) * sH * 0.85;
         ctx.beginPath();
         ctx.setLineDash([6, 4]);
         ctx.moveTo(padL, wglY); ctx.lineTo(padL + sW, wglY);
-        ctx.strokeStyle = '#C4773C';
-        ctx.lineWidth = 1; ctx.stroke();
+        ctx.strokeStyle = '#e53e3e';
+        ctx.lineWidth = 1.2; ctx.stroke();
         ctx.setLineDash([]);
         // WGL label
         ctx.font = `500 9px 'IBM Plex Mono', monospace`;
-        ctx.fillStyle = '#C4773C';
+        ctx.fillStyle = '#e53e3e';
         ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-        ctx.fillText('WGL: ' + m.hWeighted.toFixed(2), padL + sW + 4, wglY + 3);
+        ctx.fillText('WGL: ' + m.hWeighted.toFixed(2) + ' m', padL + sW + 4, wglY + 3);
 
         // Section vertices
         secPts.forEach(p => {
@@ -2016,7 +2030,7 @@
 
         // Metrics
         metricsEl.textContent =
-          `Area: ${m.area.toFixed(2)} m²  |  Perimeter: ${m.perimeter.toFixed(2)} m  |  WGL: ${m.hWeighted.toFixed(2)} m`;
+          `Section Area: ${m.secArea.toFixed(2)}  |  Perimeter: ${m.perimeter.toFixed(2)}  |  h_min: ${m.hMin.toFixed(2)} + (${m.secArea.toFixed(2)}/${m.perimeter.toFixed(2)}) = ${m.hWeighted.toFixed(4)}`;
       }
 
       // ── Interaction ──
