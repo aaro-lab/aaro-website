@@ -273,25 +273,8 @@
       font-size: clamp(1.8rem, 3.5vw, 3rem); font-weight: 300; line-height: 1.45; max-width: 18ch;
       color: var(--cream);
     }
-    .s-mani__text em { font-style: normal; font-weight: 900; }
-    .s-mani__kr {
-      font-size: 16px; font-weight: 300; color: var(--ink-40);
-      margin-top: 36px; line-height: 2; max-width: 26ch;
-    }
-    .s-mani__statement {
-      font-size: clamp(1.8rem, 3.5vw, 3rem); font-weight: 300; line-height: 1.45;
-      color: var(--cream);
-    }
-    .s-mani__statement em { font-style: normal; font-weight: 900; }
-    .s-mani__statement-kr {
-      font-size: 16px; font-weight: 300; color: var(--ink-40);
-      margin-top: 36px; line-height: 2; max-width: 26ch;
-    }
-    /* Orange sweep animation on text */
-    .sweep-text { display: inline; }
-    .sweep-text span {
-      display: inline;
-      color: var(--cream);
+    .s-mani__text em, .s-mani__statement em {
+      font-style: normal; font-weight: 900;
       background: linear-gradient(90deg, var(--accent) 0%, var(--accent-h) 50%, var(--cream) 50.1%);
       background-size: 200% 100%;
       background-position: 100% 0;
@@ -300,13 +283,26 @@
       background-clip: text;
       animation: sweepOrange 4s ease-in-out infinite alternate;
     }
-    .sweep-text span:nth-child(2) { animation-delay: 0.6s; }
-    .sweep-text span:nth-child(3) { animation-delay: 1.2s; }
+    .s-mani__text em:nth-of-type(2) { animation-delay: 0.8s; }
+    .s-mani__statement em:nth-of-type(2) { animation-delay: 0.8s; }
+    .s-mani__statement em:nth-of-type(3) { animation-delay: 1.6s; }
     @keyframes sweepOrange {
       0%   { background-position: 100% 0; }
       40%  { background-position: 0% 0; }
       60%  { background-position: 0% 0; }
       100% { background-position: 100% 0; }
+    }
+    .s-mani__kr {
+      font-size: 16px; font-weight: 300; color: var(--ink-40);
+      margin-top: 36px; line-height: 2; max-width: 26ch;
+    }
+    .s-mani__statement {
+      font-size: clamp(1.8rem, 3.5vw, 3rem); font-weight: 300; line-height: 1.45;
+      color: var(--cream); max-width: 18ch;
+    }
+    .s-mani__statement-kr {
+      font-size: 16px; font-weight: 300; color: var(--ink-40);
+      margin-top: 36px; line-height: 2; max-width: 26ch;
     }
     .s-mani__quote {
       text-align: right; font-size: 14px; letter-spacing: .08em; color: var(--ink-40); line-height: 2.2;
@@ -852,13 +848,13 @@
       </p>
     </div>
     <div class="s-mani__r">
-      <p class="s-mani__statement rv sweep-text">
-        <span>Make decisions</span><br>
-        <span>you can <em>prove</em>.</span>
+      <p class="s-mani__statement rv rv-d1">
+        From <em>intent</em> to evidence.<br>
+        AI <em>orchestrates</em>, architects <em>decide</em>.
       </p>
-      <p class="s-mani__statement-kr rv rv-d1">
+      <p class="s-mani__statement-kr rv rv-d2">
         의도를 설계하고, AI가 조율한다.<br>
-        From intent to evidence.
+        결정은 건축가가, 검증은 알고리즘이.
       </p>
     </div>
     <div style="grid-column: 1 / -1;">
@@ -880,7 +876,7 @@
   <section class="sec s-marquee-apps" id="s3">
     <div class="s-marquee-apps__head">
       <p class="t-eyebrow rv">App Overview</p>
-      <h2 class="t-display rv rv-d1" style="margin-top:16px;">20+ Micro Apps</h2>
+      <h2 class="t-display rv rv-d1" style="margin-top:16px;">Micro Apps</h2>
       <p class="rv rv-d2" style="font-size:16px; color:var(--ink-40); max-width:480px; margin-top:20px; line-height:1.7;">
         AI와 알고리즘으로 건축 설계의 새로운 기준을 만듭니다.<br>
         의도를 설계하고, AI가 조율합니다.
