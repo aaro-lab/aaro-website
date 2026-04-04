@@ -669,11 +669,17 @@
       background: var(--ink); padding: clamp(48px,6vw,100px);
       border-top: 1px solid var(--ink-80);
     }
-    .contact-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start;
+    .final-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+      min-height: calc(100vh - clamp(96px,12vw,200px));
     }
-    .contact-info { font-size: 14px; color: var(--ink-40); line-height: 2.2; }
-    .contact-info strong { color: var(--cream); font-weight: 600; }
+    .final-left {
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .final-left__bottom { margin-top: auto; }
+    .final-right {
+      display: flex; flex-direction: column; justify-content: center;
+    }
     .contact-form { display: flex; flex-direction: column; gap: 20px; }
     .contact-field { display: flex; flex-direction: column; gap: 8px; }
     .contact-field label {
@@ -710,29 +716,20 @@
     .contact-msg--ok { color: #4ade80; }
     .contact-msg--err { color: #f87171; }
     @media (max-width: 1024px) {
-      .contact-grid { grid-template-columns: 1fr; gap: 48px; }
+      .final-grid { grid-template-columns: 1fr; gap: 60px; min-height: auto; }
+      .final-left__bottom { margin-top: 48px; }
     }
     @media (max-width: 480px) {
       .s-contact { padding: 40px 20px; }
       .contact-btn { width: 100%; text-align: center; }
     }
 
-    /* ────────────────────────
-       FOOTER BOTTOM (inside contact)
-    ──────────────────────── */
-    .foot-bottom {
-      margin-top: clamp(48px,6vw,80px);
-      padding-top: clamp(36px,4vw,60px);
-      border-top: 1px solid var(--ink-80);
-      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: end;
-    }
     .foot__mark {
       font-size: clamp(5rem, 12vw, 10rem); font-weight: 900;
       letter-spacing: -0.05em; line-height: .85;
     }
     .foot__sub { font-size: 15px; color: var(--ink-40); margin-top: 28px; line-height: 2; }
-    .foot-r { text-align: right; }
-    .foot__addr { font-size: 14px; color: var(--ink-40); line-height: 2.2; }
+    .foot__addr { font-size: 14px; color: var(--ink-40); line-height: 2.2; margin-top: 0; }
     .foot__mark .foot-letter {
       display: inline;
       animation: colorCycle 6s ease-in-out infinite;
@@ -741,7 +738,7 @@
     .foot__mark .foot-letter:nth-child(2) { animation-delay: 1.5s; }
     .foot__mark .foot-letter:nth-child(3) { animation-delay: 3s; }
     .foot__mark .foot-letter:nth-child(4) { animation-delay: 4.5s; }
-    .foot__links { margin-top: 28px; display: flex; gap: 28px; justify-content: flex-end; }
+    .foot__links { margin-top: 28px; display: flex; gap: 28px; }
     .foot__links a {
       font-family: var(--mono); font-size: 12px; letter-spacing: .12em;
       text-transform: uppercase; color: var(--ink-40); transition: color .4s; position: relative;
@@ -764,9 +761,6 @@
       .s-mani__r { border-top: 1px solid var(--ink-10); }
       .s-mani__statement { font-size: clamp(1.4rem, 3vw, 2.2rem); }
       .cap-grid { grid-template-columns: 1fr; gap: 48px; }
-      .foot-bottom { grid-template-columns: 1fr; gap: 48px; }
-      .foot-r { text-align: left; }
-      .foot__links { justify-content: flex-start; }
       .nums-grid { grid-template-columns: 1fr 1fr; }
       .m-tile { width: 190px; }
       .m-tile__preview { height: 110px; }
@@ -996,45 +990,45 @@
 
   <!-- CONTACT + FOOTER -->
   <section class="sec s-contact" id="s6">
-    <!-- 상단: 문의하기(좌) + 폼(우) -->
-    <div class="contact-grid">
-      <div class="rv">
+    <div class="final-grid">
+      <!-- 왼쪽: 상단 로고+설명, 하단 주소+링크 -->
+      <div class="final-left">
+        <div class="rv">
+          <div class="foot__mark"><span class="foot-letter">a</span><span class="foot-letter">a</span><span class="foot-letter">r</span><span class="foot-letter">o</span></div>
+          <div class="foot__sub rv rv-d1">
+            Architectural Algorithm Research Office<br>Design Lab & Academy
+          </div>
+        </div>
+        <div class="final-left__bottom rv rv-d2">
+          <div class="foot__addr">
+            서울시 중구 을지로 157, 대림상가 369호<br>
+            Tel. 010-3061-3836<br>
+            사업자등록번호 441-42-01457
+          </div>
+          <div class="foot__links">
+            <a href="mailto:architecture.algorithm@gmail.com">Email</a>
+            <a href="https://www.linkedin.com/in/tzung-kuan-hsu/" target="_blank" rel="noopener">LinkedIn</a>
+            <a href="https://www.instagram.com/tzung_kuan_hsu/" target="_blank" rel="noopener">Instagram</a>
+          </div>
+          <div class="foot__copy">&copy; 2026 AARO. All rights reserved.</div>
+        </div>
+      </div>
+      <!-- 오른쪽: 문의하기 폼 -->
+      <div class="final-right rv rv-d1">
         <p class="t-eyebrow" style="margin-bottom:28px; color:var(--ink-40);">Contact</p>
-        <h2 class="t-display" style="color:var(--cream);">문의하기</h2>
-      </div>
-      <form class="contact-form rv rv-d1" id="contactForm">
-        <div class="contact-field">
-          <label for="cf-name">이름 / 기관명</label>
-          <input type="text" id="cf-name" name="name" placeholder="홍길동 / OO건축사사무소" required>
-        </div>
-        <div class="contact-field">
-          <label for="cf-inquiry">문의 사항</label>
-          <textarea id="cf-inquiry" name="inquiry" placeholder="문의하실 내용을 작성해주세요." required></textarea>
-        </div>
-        <button type="submit" class="contact-btn" id="contactBtn">보내기</button>
-        <div class="contact-msg" id="contactMsg"></div>
-      </form>
-    </div>
-    <!-- 하단: 로고+정보(좌) + 링크+저작권(우) -->
-    <div class="foot-bottom">
-      <div class="rv">
-        <div class="foot__mark"><span class="foot-letter">a</span><span class="foot-letter">a</span><span class="foot-letter">r</span><span class="foot-letter">o</span></div>
-        <div class="foot__sub rv rv-d1">
-          Architectural Algorithm Research Office<br>Design Lab & Academy
-        </div>
-      </div>
-      <div class="foot-r rv rv-d1">
-        <div class="foot__addr">
-          서울시 중구 을지로 157, 대림상가 369호<br>
-          Tel. 010-3061-3836<br>
-          사업자등록번호 441-42-01457
-        </div>
-        <div class="foot__links">
-          <a href="mailto:architecture.algorithm@gmail.com">Email</a>
-          <a href="https://www.linkedin.com/in/tzung-kuan-hsu/" target="_blank" rel="noopener">LinkedIn</a>
-          <a href="https://www.instagram.com/tzung_kuan_hsu/" target="_blank" rel="noopener">Instagram</a>
-        </div>
-        <div class="foot__copy">&copy; 2026 AARO. All rights reserved.</div>
+        <h2 class="t-heading" style="color:var(--cream); margin-bottom:32px;">문의하기</h2>
+        <form class="contact-form" id="contactForm">
+          <div class="contact-field">
+            <label for="cf-name">이름 / 기관명</label>
+            <input type="text" id="cf-name" name="name" placeholder="홍길동 / OO건축사사무소" required>
+          </div>
+          <div class="contact-field">
+            <label for="cf-inquiry">문의 사항</label>
+            <textarea id="cf-inquiry" name="inquiry" placeholder="문의하실 내용을 작성해주세요." required></textarea>
+          </div>
+          <button type="submit" class="contact-btn" id="contactBtn">보내기</button>
+          <div class="contact-msg" id="contactMsg"></div>
+        </form>
       </div>
     </div>
   </section>
