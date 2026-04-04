@@ -1571,24 +1571,32 @@
           ctx.restore();
         }
 
-        // World Agent node (large, prominent)
+        // World Agent node (large rounded rect, matching micro apps)
         ctx.save();
         const wH = hoveredNode === w;
-        // Outer glow
-        const glowGrad = ctx.createRadialGradient(w.x, w.y, w.r, w.x, w.y, w.r + 80);
+        const ws = w.r * 2;
+        const wRad = ws * 0.3;
+        // Outer glow (square-ish)
+        const glowS = ws + 160;
+        const glowGrad = ctx.createRadialGradient(w.x, w.y, ws/2, w.x, w.y, glowS/2);
         glowGrad.addColorStop(0, 'rgba(196,119,60,0.08)');
         glowGrad.addColorStop(1, 'transparent');
-        ctx.beginPath(); ctx.arc(w.x, w.y, w.r + 80, 0, Math.PI*2);
+        ctx.beginPath();
+        ctx.moveTo(w.x-glowS/2+wRad*2, w.y-glowS/2);
+        ctx.arcTo(w.x+glowS/2,w.y-glowS/2, w.x+glowS/2,w.y+glowS/2, wRad*2);
+        ctx.arcTo(w.x+glowS/2,w.y+glowS/2, w.x-glowS/2,w.y+glowS/2, wRad*2);
+        ctx.arcTo(w.x-glowS/2,w.y+glowS/2, w.x-glowS/2,w.y-glowS/2, wRad*2);
+        ctx.arcTo(w.x-glowS/2,w.y-glowS/2, w.x+glowS/2,w.y-glowS/2, wRad*2);
+        ctx.closePath();
         ctx.fillStyle = glowGrad; ctx.fill();
-        // Pulse rings
-        for (let ring = 3; ring >= 1; ring--) {
-          ctx.beginPath(); ctx.arc(w.x, w.y, w.r + ring*28, 0, Math.PI*2);
-          const pulse = 0.04 + Math.sin(Date.now()/2000+ring)*0.03;
-          ctx.strokeStyle = `rgba(196,119,60,${pulse})`;
-          ctx.lineWidth = 0.8; ctx.stroke();
-        }
-        // Main circle
-        ctx.beginPath(); ctx.arc(w.x, w.y, w.r, 0, Math.PI*2);
+        // Main rounded rect
+        ctx.beginPath();
+        ctx.moveTo(w.x-ws/2+wRad, w.y-ws/2);
+        ctx.arcTo(w.x+ws/2,w.y-ws/2, w.x+ws/2,w.y+ws/2, wRad);
+        ctx.arcTo(w.x+ws/2,w.y+ws/2, w.x-ws/2,w.y+ws/2, wRad);
+        ctx.arcTo(w.x-ws/2,w.y+ws/2, w.x-ws/2,w.y-ws/2, wRad);
+        ctx.arcTo(w.x-ws/2,w.y-ws/2, w.x+ws/2,w.y-ws/2, wRad);
+        ctx.closePath();
         if (wH) { ctx.shadowColor='rgba(196,119,60,0.5)'; ctx.shadowBlur=50; }
         ctx.fillStyle = wH ? '#252018' : '#1A1A18';
         ctx.fill();
@@ -1607,7 +1615,7 @@
 
       function getNodeAt(mx, my) {
         const w = nodes[0];
-        if (Math.hypot(mx-w.x,my-w.y) < w.r) return w;
+        if (Math.abs(mx-w.x)<w.r && Math.abs(my-w.y)<w.r) return w;
         for (let i = nodes.length-1; i>=1; i--) {
           const n = nodes[i];
           if (Math.abs(mx-n.x)<n.r && Math.abs(my-n.y)<n.r) return n;
