@@ -244,32 +244,6 @@
       .gl-demo { display: none; }
     }
 
-    /* Geo shapes - slower */
-    .geo {
-      position: absolute; border: 1px solid var(--accent); pointer-events: none;
-      animation: morph 36s cubic-bezier(.4,0,.2,1) infinite;
-    }
-    .geo--1 {
-      width: 45vw; height: 45vw; max-width: 520px; max-height: 520px;
-      top: 40%; left: 78%; transform: translate(-50%,-50%); opacity: .14;
-    }
-    .geo--2 {
-      width: 28vw; height: 28vw; max-width: 320px; max-height: 320px;
-      top: 48%; left: 68%; transform: translate(-50%,-50%); opacity: .08;
-      animation-delay: -18s; animation-duration: 44s;
-    }
-    .geo--3 {
-      width: 16vw; height: 16vw; max-width: 180px; max-height: 180px;
-      top: 35%; left: 85%; transform: translate(-50%,-50%); opacity: .06;
-      animation-delay: -10s; animation-duration: 52s;
-    }
-    @keyframes morph {
-      0%   { border-radius: 50%; }
-      25%  { border-radius: 0; transform: translate(-50%,-50%) rotate(45deg) scale(.85); }
-      50%  { border-radius: 50%; transform: translate(-50%,-50%) rotate(135deg) scale(1.05); }
-      75%  { border-radius: 0; transform: translate(-50%,-50%) rotate(225deg) scale(.9); }
-      100% { border-radius: 50%; transform: translate(-50%,-50%) rotate(360deg); }
-    }
 
     /* ────────────────────────
        S02: MANIFESTO + NUMBERS (merged, dark)
@@ -832,8 +806,6 @@
     @media (max-width: 480px) {
       .s-cover__sub { font-size: 11px; letter-spacing: 0.1em; }
       .s-cover__scroll { display: none; }
-      .geo--1 { width: 70vw; height: 70vw; left: 90%; opacity: 0.08; }
-      .geo--2, .geo--3 { display: none; }
       .s-mani__text { font-size: clamp(1.4rem, 5vw, 1.8rem); }
       .s-mani__l, .s-mani__r { padding: 32px 20px; }
       .s-mani__kr { font-size: 14px; }
@@ -889,9 +861,6 @@
       <div class="cover-grid__line" style="left:60%"></div>
       <div class="cover-grid__line" style="left:80%"></div>
     </div>
-    <div class="geo geo--1"></div>
-    <div class="geo geo--2"></div>
-    <div class="geo geo--3"></div>
     <div class="s-cover__top">
       <div class="s-cover__logo">aaro</div>
       <div class="s-cover__nav-links">
@@ -2116,15 +2085,6 @@
       window.addEventListener('resize', () => { resize(); draw(); });
     })();
 
-    // ── Parallax on cover shapes ──
-    const geos = document.querySelectorAll('.geo');
-    window.addEventListener('scroll', () => {
-      const y = window.scrollY;
-      geos.forEach((g, i) => {
-        const speed = 0.03 + i * 0.015;
-        g.style.transform = `translate(-50%, calc(-50% + ${y * speed}px))`;
-      });
-    });
 
     // ── Contact form ──
     const cForm = document.getElementById('contactForm');
