@@ -718,14 +718,16 @@
     }
 
     /* ────────────────────────
-       S10: COLOPHON
+       FOOTER BOTTOM (inside contact)
     ──────────────────────── */
-    .s-foot {
-      background: var(--ink); padding: clamp(48px,6vw,100px);
-      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: end;
+    .foot-bottom {
+      margin-top: clamp(48px,6vw,80px);
+      padding-top: clamp(36px,4vw,60px);
+      border-top: 1px solid var(--ink-80);
+      display: flex; justify-content: space-between; align-items: flex-end;
     }
     .foot__mark {
-      font-size: clamp(5rem, 12vw, 10rem); font-weight: 900;
+      font-size: clamp(3rem, 8vw, 6rem); font-weight: 900;
       letter-spacing: -0.05em; line-height: .85;
     }
     .foot__mark .foot-letter {
@@ -736,9 +738,6 @@
     .foot__mark .foot-letter:nth-child(2) { animation-delay: 1.5s; }
     .foot__mark .foot-letter:nth-child(3) { animation-delay: 3s; }
     .foot__mark .foot-letter:nth-child(4) { animation-delay: 4.5s; }
-    .foot__sub { font-size: 15px; color: var(--ink-40); margin-top: 28px; line-height: 2; }
-    .foot-r { text-align: right; }
-    .foot__addr { font-size: 14px; color: var(--ink-40); line-height: 2.2; }
     .foot__links { margin-top: 28px; display: flex; gap: 28px; justify-content: flex-end; }
     .foot__links a {
       font-family: var(--mono); font-size: 12px; letter-spacing: .12em;
@@ -762,9 +761,7 @@
       .s-mani__r { border-top: 1px solid var(--ink-10); }
       .s-mani__statement { font-size: clamp(1.4rem, 3vw, 2.2rem); }
       .cap-grid { grid-template-columns: 1fr; gap: 48px; }
-      .s-foot { grid-template-columns: 1fr; gap: 48px; }
-      .foot-r { text-align: left; }
-      .foot__links { justify-content: flex-start; }
+      .foot-bottom { flex-direction: column; align-items: flex-start; gap: 16px; }
       .nums-grid { grid-template-columns: 1fr 1fr; }
       .m-tile { width: 190px; }
       .m-tile__preview { height: 110px; }
@@ -791,8 +788,7 @@
       .m-tile__name { font-size: 12px; }
       .marquee-section::before,
       .marquee-section::after { width: 40px; }
-      .foot__mark { font-size: clamp(3.5rem, 10vw, 5rem); }
-      .foot__copy { margin-top: 28px; }
+      .foot__mark { font-size: clamp(2.5rem, 8vw, 4rem); }
     }
     @media (max-width: 480px) {
       .s-cover__sub { font-size: 11px; letter-spacing: 0.1em; }
@@ -822,8 +818,6 @@
       .marquee-section::before,
       .marquee-section::after { width: 24px; }
       .s-marquee-apps__head { padding: 0 20px; }
-      .s-foot { padding: 40px 20px; gap: 32px; }
-      .foot__addr { font-size: 13px; }
       .foot__links { gap: 20px; flex-wrap: wrap; }
       .foot__links a { font-size: 11px; }
     }
@@ -865,7 +859,7 @@
         <a href="#s3">Apps</a>
         <a href="#s4">Agents</a>
         <a href="#s5">About</a>
-        <a href="#contact">Contact</a>
+        <a href="#s6">Contact</a>
       </div>
     </div>
     <div class="s-cover__title" id="coverTitle">
@@ -995,8 +989,8 @@
 
 
 
-  <!-- CONTACT -->
-  <section class="sec s-contact" id="contact">
+  <!-- CONTACT + FOOTER -->
+  <section class="sec s-contact" id="s6">
     <p class="t-eyebrow rv" style="margin-bottom:48px; color:var(--ink-40);">Contact</p>
     <div class="contact-grid">
       <div class="contact-info rv">
@@ -1013,6 +1007,11 @@
           <strong>Email</strong> architecture.algorithm@gmail.com<br>
           <strong>사업자등록번호</strong> 441-42-01457
         </p>
+        <div class="foot__links rv rv-d1" style="justify-content:flex-start; margin-top:32px;">
+          <a href="mailto:architecture.algorithm@gmail.com">Email</a>
+          <a href="https://www.linkedin.com/in/tzung-kuan-hsu/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://www.instagram.com/tzung_kuan_hsu/" target="_blank" rel="noopener">Instagram</a>
+        </div>
       </div>
       <form class="contact-form rv rv-d1" id="contactForm">
         <div class="contact-field">
@@ -1027,28 +1026,9 @@
         <div class="contact-msg" id="contactMsg"></div>
       </form>
     </div>
-  </section>
-
-  <!-- COLOPHON -->
-  <section class="sec s-foot" id="s6">
-    <div>
-      <div class="foot__mark rv"><span class="foot-letter">a</span><span class="foot-letter">a</span><span class="foot-letter">r</span><span class="foot-letter">o</span></div>
-      <div class="foot__sub rv rv-d1">
-        Architectural Algorithm Research Office<br>Design Lab & Academy
-      </div>
-    </div>
-    <div class="foot-r">
-      <div class="foot__addr rv">
-        서울시 중구 을지로 157, 대림상가 369호<br>
-        Tel. 010-3061-3836<br>
-        사업자등록번호 441-42-01457
-      </div>
-      <div class="foot__links rv rv-d1">
-        <a href="mailto:architecture.algorithm@gmail.com">Email</a>
-        <a href="https://www.linkedin.com/in/tzung-kuan-hsu/" target="_blank" rel="noopener">LinkedIn</a>
-        <a href="https://www.instagram.com/tzung_kuan_hsu/" target="_blank" rel="noopener">Instagram</a>
-      </div>
-      <div class="foot__copy rv rv-d2">&copy; 2026 AARO. All rights reserved.</div>
+    <div class="foot-bottom rv rv-d2">
+      <div class="foot__mark"><span class="foot-letter">a</span><span class="foot-letter">a</span><span class="foot-letter">r</span><span class="foot-letter">o</span></div>
+      <div class="foot__copy">&copy; 2026 AARO. All rights reserved.</div>
     </div>
   </section>
 
