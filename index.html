@@ -80,11 +80,6 @@
     .nav-divider { width: 1px; height: 10px; background: rgba(255,255,255,0.06); }
 
     /* ── CLOCK ── */
-    .clock {
-      position: fixed; bottom: 32px; left: 40px;
-      font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em;
-      color: #fff; opacity: 0.3; z-index: 1000; mix-blend-mode: difference;
-    }
 
     /* ── SECTION ── */
     .sec {
@@ -747,7 +742,6 @@
     @media (max-width: 480px) {
       .s-cover__sub { font-size: 11px; letter-spacing: 0.1em; }
       .s-cover__scroll { display: none; }
-      .clock { display: none; }
       .geo--1 { width: 70vw; height: 70vw; left: 90%; opacity: 0.08; }
       .geo--2, .geo--3 { display: none; }
       .s-mani__text { font-size: clamp(1.4rem, 5vw, 1.8rem); }
@@ -797,7 +791,6 @@
     <button class="nav-dot" data-s="6"></button>
   </nav>
 
-  <div class="clock" id="clock">00:00:00</div>
 
 
   <!-- S01: COVER -->
@@ -1090,14 +1083,6 @@
       rowEl.addEventListener('mouseleave', () => rowEl.classList.remove('paused'));
     }
 
-    // ── Clock ──
-    const cl = document.getElementById('clock');
-    function tickClock(){
-      const d = new Date();
-      cl.textContent = [d.getHours(), d.getMinutes(), d.getSeconds()]
-        .map(v => String(v).padStart(2,'0')).join(':');
-    }
-    setInterval(tickClock, 1000); tickClock();
 
     // ── Progress ──
     const pr = document.getElementById('progress');
