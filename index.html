@@ -724,12 +724,15 @@
       margin-top: clamp(48px,6vw,80px);
       padding-top: clamp(36px,4vw,60px);
       border-top: 1px solid var(--ink-80);
-      display: flex; justify-content: space-between; align-items: flex-end;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: end;
     }
     .foot__mark {
-      font-size: clamp(3rem, 8vw, 6rem); font-weight: 900;
+      font-size: clamp(5rem, 12vw, 10rem); font-weight: 900;
       letter-spacing: -0.05em; line-height: .85;
     }
+    .foot__sub { font-size: 15px; color: var(--ink-40); margin-top: 28px; line-height: 2; }
+    .foot-r { text-align: right; }
+    .foot__addr { font-size: 14px; color: var(--ink-40); line-height: 2.2; }
     .foot__mark .foot-letter {
       display: inline;
       animation: colorCycle 6s ease-in-out infinite;
@@ -761,7 +764,9 @@
       .s-mani__r { border-top: 1px solid var(--ink-10); }
       .s-mani__statement { font-size: clamp(1.4rem, 3vw, 2.2rem); }
       .cap-grid { grid-template-columns: 1fr; gap: 48px; }
-      .foot-bottom { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .foot-bottom { grid-template-columns: 1fr; gap: 48px; }
+      .foot-r { text-align: left; }
+      .foot__links { justify-content: flex-start; }
       .nums-grid { grid-template-columns: 1fr 1fr; }
       .m-tile { width: 190px; }
       .m-tile__preview { height: 110px; }
@@ -991,27 +996,11 @@
 
   <!-- CONTACT + FOOTER -->
   <section class="sec s-contact" id="s6">
-    <p class="t-eyebrow rv" style="margin-bottom:48px; color:var(--ink-40);">Contact</p>
+    <!-- 상단: 문의하기(좌) + 폼(우) -->
     <div class="contact-grid">
-      <div class="contact-info rv">
-        <h2 class="t-display" style="color:var(--cream); margin-bottom:32px;">문의하기</h2>
-        <p>
-          <strong>AARO</strong> — Architectural Algorithm Research Office<br>
-          Design Lab & Academy
-        </p>
-        <p style="margin-top:20px;">
-          서울시 중구 을지로 157, 대림상가 369호
-        </p>
-        <p style="margin-top:20px;">
-          <strong>Tel</strong> 010-3061-3836<br>
-          <strong>Email</strong> architecture.algorithm@gmail.com<br>
-          <strong>사업자등록번호</strong> 441-42-01457
-        </p>
-        <div class="foot__links rv rv-d1" style="justify-content:flex-start; margin-top:32px;">
-          <a href="mailto:architecture.algorithm@gmail.com">Email</a>
-          <a href="https://www.linkedin.com/in/tzung-kuan-hsu/" target="_blank" rel="noopener">LinkedIn</a>
-          <a href="https://www.instagram.com/tzung_kuan_hsu/" target="_blank" rel="noopener">Instagram</a>
-        </div>
+      <div class="rv">
+        <p class="t-eyebrow" style="margin-bottom:28px; color:var(--ink-40);">Contact</p>
+        <h2 class="t-display" style="color:var(--cream);">문의하기</h2>
       </div>
       <form class="contact-form rv rv-d1" id="contactForm">
         <div class="contact-field">
@@ -1026,9 +1015,27 @@
         <div class="contact-msg" id="contactMsg"></div>
       </form>
     </div>
-    <div class="foot-bottom rv rv-d2">
-      <div class="foot__mark"><span class="foot-letter">a</span><span class="foot-letter">a</span><span class="foot-letter">r</span><span class="foot-letter">o</span></div>
-      <div class="foot__copy">&copy; 2026 AARO. All rights reserved.</div>
+    <!-- 하단: 로고+정보(좌) + 링크+저작권(우) -->
+    <div class="foot-bottom">
+      <div class="rv">
+        <div class="foot__mark"><span class="foot-letter">a</span><span class="foot-letter">a</span><span class="foot-letter">r</span><span class="foot-letter">o</span></div>
+        <div class="foot__sub rv rv-d1">
+          Architectural Algorithm Research Office<br>Design Lab & Academy
+        </div>
+      </div>
+      <div class="foot-r rv rv-d1">
+        <div class="foot__addr">
+          서울시 중구 을지로 157, 대림상가 369호<br>
+          Tel. 010-3061-3836<br>
+          사업자등록번호 441-42-01457
+        </div>
+        <div class="foot__links">
+          <a href="mailto:architecture.algorithm@gmail.com">Email</a>
+          <a href="https://www.linkedin.com/in/tzung-kuan-hsu/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://www.instagram.com/tzung_kuan_hsu/" target="_blank" rel="noopener">Instagram</a>
+        </div>
+        <div class="foot__copy">&copy; 2026 AARO. All rights reserved.</div>
+      </div>
     </div>
   </section>
 
