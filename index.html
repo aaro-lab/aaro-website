@@ -278,15 +278,36 @@
       font-size: 16px; font-weight: 300; color: var(--ink-40);
       margin-top: 36px; line-height: 2; max-width: 26ch;
     }
-    .s-mani__video {
-      width: 100%; border-radius: 12px; overflow: hidden;
-      border: 1px solid var(--ink-80); margin-bottom: 28px;
+    .s-mani__statement {
+      font-size: clamp(1.8rem, 3.5vw, 3rem); font-weight: 300; line-height: 1.45;
+      color: var(--cream);
     }
-    .s-mani__video video {
-      width: 100%; height: 100%; object-fit: cover; display: block;
-      opacity: 0.85; transition: opacity 0.6s;
+    .s-mani__statement em { font-style: normal; font-weight: 900; }
+    .s-mani__statement-kr {
+      font-size: 16px; font-weight: 300; color: var(--ink-40);
+      margin-top: 36px; line-height: 2; max-width: 26ch;
     }
-    .s-mani__video:hover video { opacity: 1; }
+    /* Orange sweep animation on text */
+    .sweep-text { display: inline; }
+    .sweep-text span {
+      display: inline;
+      color: var(--cream);
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent-h) 50%, var(--cream) 50.1%);
+      background-size: 200% 100%;
+      background-position: 100% 0;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: sweepOrange 4s ease-in-out infinite alternate;
+    }
+    .sweep-text span:nth-child(2) { animation-delay: 0.6s; }
+    .sweep-text span:nth-child(3) { animation-delay: 1.2s; }
+    @keyframes sweepOrange {
+      0%   { background-position: 100% 0; }
+      40%  { background-position: 0% 0; }
+      60%  { background-position: 0% 0; }
+      100% { background-position: 100% 0; }
+    }
     .s-mani__quote {
       text-align: right; font-size: 14px; letter-spacing: .08em; color: var(--ink-40); line-height: 2.2;
     }
@@ -693,7 +714,7 @@
       .s-manifesto { grid-template-columns: 1fr; }
       .nums-grid { grid-template-columns: 1fr 1fr; }
       .s-mani__r { border-top: 1px solid var(--ink-10); }
-      .s-mani__video { margin-bottom: 20px; }
+      .s-mani__statement { font-size: clamp(1.4rem, 3vw, 2.2rem); }
       .cap-grid { grid-template-columns: 1fr; gap: 48px; }
       .s-foot { grid-template-columns: 1fr; gap: 48px; }
       .foot-r { text-align: left; }
@@ -825,29 +846,31 @@
         We <em>compute</em> the architect's judgment.
       </p>
       <p class="s-mani__kr rv rv-d2">
-        우리는 설계를 자동화하지 않습니다.<br>
-        건축가의 판단을 계산합니다.<br>
-        증명할 수 있는 결정을 내립니다.
+        설계를 자동화하지 않습니다.<br>
+        건축가의 판단을 계산하고,<br>
+        증명할 수 있는 결정을 만듭니다.
       </p>
     </div>
     <div class="s-mani__r">
-      <div class="s-mani__video rv">
-        <video autoplay muted loop playsinline>
-          <source src="overview.mp4" type="video/mp4">
-        </video>
-      </div>
-      <p class="s-mani__quote rv rv-d1" style="color:var(--ink-40);">Make decisions you can prove.<br>의도를 설계하고, AI가 조율한다.</p>
+      <p class="s-mani__statement rv sweep-text">
+        <span>Make decisions</span><br>
+        <span>you can <em>prove</em>.</span>
+      </p>
+      <p class="s-mani__statement-kr rv rv-d1">
+        의도를 설계하고, AI가 조율한다.<br>
+        From intent to evidence.
+      </p>
     </div>
     <div style="grid-column: 1 / -1;">
       <div class="nums-grid">
         <div class="n-cell rv" style="--bw:100%"><div class="n-cell__v t-mono" data-c="24">0</div><div class="n-cell__l">Micro Apps</div><div class="n-cell__bar"></div></div>
-        <div class="n-cell rv rv-d1" style="--bw:60%"><div class="n-cell__v t-mono" data-c="8">0</div><div class="n-cell__l">Algorithm Domains</div><div class="n-cell__bar"></div></div>
-        <div class="n-cell rv rv-d2" style="--bw:90%"><div class="n-cell__v t-mono" data-c="30" data-s="+">0</div><div class="n-cell__l">Partners</div><div class="n-cell__bar"></div></div>
-        <div class="n-cell rv rv-d3" style="--bw:50%"><div class="n-cell__v t-mono" data-c="10" data-s="+">0</div><div class="n-cell__l">Projects</div><div class="n-cell__bar"></div></div>
-        <div class="n-cell rv" style="--bw:75%"><div class="n-cell__v t-mono" data-c="52" data-s="K">0</div><div class="n-cell__l">Computations / Month</div><div class="n-cell__bar"></div></div>
-        <div class="n-cell rv rv-d1" style="--bw:40%"><div class="n-cell__v t-mono" data-c="0.84" data-dec>0</div><div class="n-cell__l">Avg. Response (sec)</div><div class="n-cell__bar"></div></div>
-        <div class="n-cell rv rv-d2" style="--bw:97%"><div class="n-cell__v t-mono" data-c="97.2" data-dec>0</div><div class="n-cell__l">Success Rate (%)</div><div class="n-cell__bar"></div></div>
-        <div class="n-cell rv rv-d3" style="--bw:45%"><div class="n-cell__v t-mono" data-c="5">0</div><div class="n-cell__l">Cities Deployed</div><div class="n-cell__bar"></div></div>
+        <div class="n-cell rv rv-d1" style="--bw:60%"><div class="n-cell__v t-mono" data-c="7">0</div><div class="n-cell__l">Algorithm Domains</div><div class="n-cell__bar"></div></div>
+        <div class="n-cell rv rv-d2" style="--bw:70%"><div class="n-cell__v t-mono" data-c="137" data-s="+">0</div><div class="n-cell__l">MCP Tools</div><div class="n-cell__bar"></div></div>
+        <div class="n-cell rv rv-d3" style="--bw:50%"><div class="n-cell__v t-mono" data-c="6">0</div><div class="n-cell__l">Domain Agents</div><div class="n-cell__bar"></div></div>
+        <div class="n-cell rv" style="--bw:75%"><div class="n-cell__v t-mono" data-c="5">0</div><div class="n-cell__l">MCP Servers</div><div class="n-cell__bar"></div></div>
+        <div class="n-cell rv rv-d1" style="--bw:55%"><div class="n-cell__v t-mono" data-c="4">0</div><div class="n-cell__l">Divisions</div><div class="n-cell__bar"></div></div>
+        <div class="n-cell rv rv-d2" style="--bw:80%"><div class="n-cell__v t-mono" data-c="10" data-s="+">0</div><div class="n-cell__l">Years Research</div><div class="n-cell__bar"></div></div>
+        <div class="n-cell rv rv-d3" style="--bw:45%"><div class="n-cell__v t-mono" data-c="4">0</div><div class="n-cell__l">Products</div><div class="n-cell__bar"></div></div>
       </div>
     </div>
   </section>
@@ -1189,33 +1212,37 @@
       const ALL_NODES = [
         // World Agent (index 0)
         { id:'W', n:'World Agent', ini:'WA', c:'Master', r:76, isCenter:true },
-        // 24 real apps (bigger)
-        ...APPS.map((a,i) => ({ id:'a'+i, n:a.n, ini: a.n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(), c:a.c, u:a.u, r:32 })),
-        // Dummy nodes for density
-        { id:'d0', n:'Facade Gen', ini:'FG', c:'Generation', r:26 },
-        { id:'d1', n:'Structure Check', ini:'SC', c:'Evaluation', r:26 },
-        { id:'d2', n:'Solar Analysis', ini:'SA', c:'Simulation', r:26 },
-        { id:'d3', n:'Cost Estimator', ini:'CE', c:'Evaluation', r:26 },
-        { id:'d4', n:'Circulation', ini:'CI', c:'Optimization', r:26 },
-        { id:'d5', n:'Site Context', ini:'SX', c:'Evaluation', r:26 },
-        { id:'d6', n:'Floor Plan AI', ini:'FP', c:'Generation', r:26 },
+        // 24 real apps (varied sizes by category importance)
+        ...APPS.map((a,i) => {
+          const sizeMap = { Dashboard:42, Optimization:38, Planning:36, Generation:32, Evaluation:28, Simulation:28 };
+          const r = sizeMap[a.c] || 30;
+          return { id:'a'+i, n:a.n, ini: a.n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(), c:a.c, u:a.u, r: r + (i%3)*4 };
+        }),
+        // Dummy nodes for density (varied sizes)
+        { id:'d0', n:'Facade Gen', ini:'FG', c:'Generation', r:28 },
+        { id:'d1', n:'Structure Check', ini:'SC', c:'Evaluation', r:20 },
+        { id:'d2', n:'Solar Analysis', ini:'SA', c:'Simulation', r:32 },
+        { id:'d3', n:'Cost Estimator', ini:'CE', c:'Evaluation', r:18 },
+        { id:'d4', n:'Circulation', ini:'CI', c:'Optimization', r:30 },
+        { id:'d5', n:'Site Context', ini:'SX', c:'Evaluation', r:16 },
+        { id:'d6', n:'Floor Plan AI', ini:'FP', c:'Generation', r:34 },
         { id:'d7', n:'BIM Export', ini:'BX', c:'Dashboard', r:26 },
-        { id:'d8', n:'Regulation DB', ini:'RD', c:'Evaluation', r:26 },
-        { id:'d9', n:'Setback Calc', ini:'SB', c:'Generation', r:26 },
-        { id:'d10', n:'Daylight Sim', ini:'DS', c:'Simulation', r:26 },
-        { id:'d11', n:'Wind Flow', ini:'WF', c:'Simulation', r:26 },
-        { id:'d12', n:'View Analysis', ini:'VA', c:'Evaluation', r:22 },
-        { id:'d13', n:'Noise Map', ini:'NM', c:'Simulation', r:22 },
-        { id:'d14', n:'GFA Calc', ini:'GF', c:'Evaluation', r:22 },
+        { id:'d8', n:'Regulation DB', ini:'RD', c:'Evaluation', r:22 },
+        { id:'d9', n:'Setback Calc', ini:'SB', c:'Generation', r:24 },
+        { id:'d10', n:'Daylight Sim', ini:'DS', c:'Simulation', r:20 },
+        { id:'d11', n:'Wind Flow', ini:'WF', c:'Simulation', r:18 },
+        { id:'d12', n:'View Analysis', ini:'VA', c:'Evaluation', r:16 },
+        { id:'d13', n:'Noise Map', ini:'NM', c:'Simulation', r:14 },
+        { id:'d14', n:'GFA Calc', ini:'GF', c:'Evaluation', r:18 },
         { id:'d15', n:'MEP Route', ini:'ME', c:'Optimization', r:22 },
-        { id:'d16', n:'Elevation Gen', ini:'EG', c:'Generation', r:22 },
-        { id:'d17', n:'Section Cut', ini:'ST', c:'Generation', r:22 },
-        { id:'d18', n:'Area Table', ini:'AT', c:'Evaluation', r:22 },
-        { id:'d19', n:'Landscape AI', ini:'LA', c:'Optimization', r:22 },
-        { id:'d20', n:'Road Network', ini:'RN', c:'Planning', r:22 },
-        { id:'d21', n:'Skyline Check', ini:'SK', c:'Simulation', r:22 },
-        { id:'d22', n:'Fire Escape', ini:'FE', c:'Evaluation', r:22 },
-        { id:'d23', n:'Density Map', ini:'DM', c:'Evaluation', r:22 },
+        { id:'d16', n:'Elevation Gen', ini:'EG', c:'Generation', r:16 },
+        { id:'d17', n:'Section Cut', ini:'ST', c:'Generation', r:14 },
+        { id:'d18', n:'Area Table', ini:'AT', c:'Evaluation', r:20 },
+        { id:'d19', n:'Landscape AI', ini:'LA', c:'Optimization', r:26 },
+        { id:'d20', n:'Road Network', ini:'RN', c:'Planning', r:24 },
+        { id:'d21', n:'Skyline Check', ini:'SK', c:'Simulation', r:16 },
+        { id:'d22', n:'Fire Escape', ini:'FE', c:'Evaluation', r:14 },
+        { id:'d23', n:'Density Map', ini:'DM', c:'Evaluation', r:18 },
       ];
 
       // App-to-app edges (complex graph)
@@ -1259,21 +1286,29 @@
         nodes.forEach((n, i) => { n.r = ALL_NODES[i].r * rScale; });
       }
 
+      // Header safe zone (top-left corner where text overlay lives)
+      const HEADER_SAFE_W = 420;
+      const HEADER_SAFE_H = 200;
+
       function initNodes() {
         nodes.length = 0;
         ALL_NODES.forEach((nd, i) => {
           if (i === 0) {
-            // World agent at center
             nodes.push({ ...nd, idx:i, x:centerX, y:centerY, vx:0, vy:0, fx:null, fy:null });
           } else {
-            // Scatter randomly across a wide ellipse
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 80 + Math.random() * 280;
+            // Random scatter across full canvas, avoiding header zone
+            let x, y, attempts = 0;
+            do {
+              const angle = Math.random() * Math.PI * 2;
+              const dist = 100 + Math.random() * 350;
+              x = centerX + Math.cos(angle) * dist * (0.8 + Math.random() * 0.6);
+              y = centerY + Math.sin(angle) * dist * (0.5 + Math.random() * 0.5) + (Math.random()-0.5)*120;
+              attempts++;
+            } while (x < HEADER_SAFE_W && y < HEADER_SAFE_H && attempts < 20);
             nodes.push({
-              ...nd, idx:i,
-              x: centerX + Math.cos(angle) * dist * 1.4,
-              y: centerY + Math.sin(angle) * dist * 0.7 + (Math.random()-0.5)*80,
-              vx: 0, vy: 0, fx: null, fy: null
+              ...nd, idx:i, x, y,
+              vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2,
+              fx: null, fy: null
             });
           }
         });
@@ -1330,6 +1365,13 @@
           if (a.isCenter) {
             a.vx += (centerX - a.x) * 0.01;
             a.vy += (centerY - a.y) * 0.01;
+          }
+
+          // Repel from header safe zone (top-left)
+          if (!a.isCenter && a.x < HEADER_SAFE_W + 40 && a.y < HEADER_SAFE_H + 40) {
+            const pushX = (HEADER_SAFE_W + 40 - a.x) * 0.04;
+            const pushY = (HEADER_SAFE_H + 40 - a.y) * 0.04;
+            a.vx += pushX; a.vy += pushY;
           }
         }
 
