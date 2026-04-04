@@ -3,10 +3,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, inquiry } = req.body || {};
+  const { type, name, inquiry } = req.body || {};
   if (!name || !inquiry) {
     return res.status(400).json({ error: 'Name and inquiry are required' });
   }
+  const typeLabel = type || '일반 문의';
 
   const timestamp = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
   const errors = [];
@@ -19,16 +20,22 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: `📩 *새 문의가 접수되었습니다*`,
+          text: `📩 *새 문의가 접수되었습니다* [${typeLabel}]`,
           blocks: [
             {
               type: 'header',
-              text: { type: 'plain_text', text: '📩 새 문의 접수', emoji: true }
+              text: { type: 'plain_text', text: `📩 새 문의 접수 — ${typeLabel}`, emoji: true }
             },
             {
               type: 'section',
               fields: [
-                { type: 'mrkdwn', text: `*이름/기관명*\n${name}` },
+                { type: 'mrkdwn', text: `*문의 유형*\n${typeLabel}` },
+                { type: 'mrkdwn', text: `*이름/기관명*\n${name}` }
+              ]
+            },
+            {
+              type: 'section',
+              fields: [
                 { type: 'mrkdwn', text: `*접수 시간*\n${timestamp}` }
               ]
             },
@@ -66,9 +73,10 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           from: 'AARO Website <onboarding@resend.dev>',
           to: emailTo,
-          subject: `[AARO 문의] ${name}`,
+          subject: `[AARO ${typeLabel}] ${name}`,
           html: `
             <h2>새 문의가 접수되었습니다</h2>
+            <p><strong>문의 유형:</strong> ${typeLabel}</p>
             <p><strong>이름/기관명:</strong> ${name}</p>
             <p><strong>문의 사항:</strong></p>
             <p>${inquiry.replace(/\n/g, '<br>')}</p>

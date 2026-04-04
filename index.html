@@ -698,6 +698,21 @@
     .contact-field textarea::placeholder { color: var(--ink-60); }
     .contact-field input:focus,
     .contact-field textarea:focus { border-color: var(--accent); }
+    .contact-type-group { display: flex; gap: 12px; }
+    .contact-type {
+      cursor: pointer; display: flex; align-items: center;
+    }
+    .contact-type input { display: none; }
+    .contact-type__label {
+      font-family: var(--mono); font-size: 13px; letter-spacing: .05em;
+      color: var(--ink-40); padding: 10px 20px; border-radius: 6px;
+      border: 1px solid var(--ink-80); transition: all 0.3s;
+    }
+    .contact-type input:checked + .contact-type__label {
+      background: var(--accent); color: var(--ink); border-color: var(--accent);
+      font-weight: 600;
+    }
+    .contact-type__label:hover { border-color: var(--ink-60); color: var(--ink-20); }
     .contact-field--grow { flex: 1; display: flex; flex-direction: column; }
     .contact-field--grow textarea { flex: 1; min-height: 120px; }
     .contact-btn {
@@ -1020,6 +1035,19 @@
         <p class="t-eyebrow" style="margin-bottom:28px; color:var(--ink-40);">Contact</p>
         <h2 class="t-heading" style="color:var(--cream); margin-bottom:32px;">문의하기</h2>
         <form class="contact-form" id="contactForm">
+          <div class="contact-field">
+            <label>문의 유형</label>
+            <div class="contact-type-group">
+              <label class="contact-type">
+                <input type="radio" name="type" value="솔루션 문의" checked>
+                <span class="contact-type__label">솔루션 문의</span>
+              </label>
+              <label class="contact-type">
+                <input type="radio" name="type" value="교육 문의">
+                <span class="contact-type__label">교육 문의</span>
+              </label>
+            </div>
+          </div>
           <div class="contact-field">
             <label for="cf-name">이름 / 기관명</label>
             <input type="text" id="cf-name" name="name" placeholder="홍길동 / OO건축사사무소" required>
@@ -1758,6 +1786,7 @@
         e.preventDefault();
         const btn = document.getElementById('contactBtn');
         const msg = document.getElementById('contactMsg');
+        const type = cForm.querySelector('input[name="type"]:checked')?.value || '';
         const name = document.getElementById('cf-name').value.trim();
         const inquiry = document.getElementById('cf-inquiry').value.trim();
         if (!name || !inquiry) return;
@@ -1767,7 +1796,7 @@
           const res = await fetch('/api/contact', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, inquiry })
+            body: JSON.stringify({ type, name, inquiry })
           });
           if (res.ok) {
             msg.textContent = '문의가 접수되었습니다. 감사합니다.';
