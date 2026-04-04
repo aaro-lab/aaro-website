@@ -240,6 +240,10 @@
       font-family: var(--mono); font-size: 10px; color: var(--ink-40);
       letter-spacing: .08em; margin-top: 10px; line-height: 1.8;
     }
+    .gl-demo__hint {
+      font-family: var(--mono); font-size: 9px; color: var(--ink-60);
+      letter-spacing: .05em; margin-top: 6px; line-height: 1.6;
+    }
     @media (max-width: 1024px) {
       .gl-demo { display: none; }
     }
@@ -883,6 +887,7 @@
       <div class="gl-demo__label">Weighted Ground Level</div>
       <canvas id="glCanvas"></canvas>
       <div class="gl-demo__metrics" id="glMetrics"></div>
+      <div class="gl-demo__hint">꼭지점을 드래그하여 필지 형태를 변경하고,<br>더블클릭하여 높이(FH)를 지정하면 가중평균 지표면을 계산합니다.</div>
     </div>
     <div class="s-cover__scroll"><div class="scroll-bar"></div> Scroll</div>
   </section>
@@ -1778,12 +1783,12 @@
       // Polygon vertices with FH (floor height) values
       // Normalized coords 0-1, will scale to canvas
       const verts = [
-        { x: 0.22, y: 0.10, fh: 5.0, label: 'A' },
-        { x: 0.18, y: 0.38, fh: 2.0, label: 'B' },
-        { x: 0.28, y: 0.58, fh: 5.0, label: 'C' },
+        { x: 0.22, y: 0.10, fh: 8.0, label: 'A' },
+        { x: 0.18, y: 0.38, fh: 3.0, label: 'B' },
+        { x: 0.28, y: 0.58, fh: 7.0, label: 'C' },
         { x: 0.58, y: 0.55, fh: 0.0, label: 'D' },
-        { x: 0.68, y: 0.28, fh: 0.0, label: 'E' },
-        { x: 0.55, y: 0.08, fh: 5.0, label: 'F' },
+        { x: 0.68, y: 0.28, fh: 1.0, label: 'E' },
+        { x: 0.55, y: 0.08, fh: 9.0, label: 'F' },
       ];
 
       let W, H, planH, secH;
@@ -1850,10 +1855,71 @@
         };
       }
 
+      // Get plan coordinate from cumulative section distance
+      function getPlanFromSecX(targetX) {
+        let cumDist = 0;
+        const n = verts.length;
+        for (let i = 0; i < n; i++) {
+          const j = (i + 1) % n;
+          const eLen = edgeLen(verts[i], verts[j]);
+          if (targetX <= cumDist + eLen + 1e-6) {
+            const t = eLen > 0 ? Math.min(1, (targetX - cumDist) / eLen) : 0;
+            return {
+              x: verts[i].x + t * (verts[j].x - verts[i].x),
+              y: verts[i].y + t * (verts[j].y - verts[i].y)
+            };
+          }
+          cumDist += eLen;
+        }
+        return null;
+      }
+
+      // Compute 3m boundary intersections with section profile
+      function compute3mBoundaries(m) {
+        const n = verts.length;
+        const heightDiff = m.hMax - m.hMin;
+        if (heightDiff <= 3) return { boundaries: [], intersections: [] };
+
+        // Generate boundary heights at 3m intervals
+        const boundaries = [];
+        for (let h = m.hMin + 3; h < m.hMax; h += 3) boundaries.push(h);
+
+        // Build section points with cumulative distance
+        const secPts = [];
+        let cumDist = 0;
+        for (let i = 0; i <= n; i++) {
+          const idx = i % n;
+          secPts.push({ x: cumDist, fh: verts[idx].fh });
+          if (i < n) {
+            const j = (i + 1) % n;
+            cumDist += edgeLen(verts[i], verts[j]);
+          }
+        }
+
+        // Find intersections for each boundary
+        const intersections = [];
+        for (const bh of boundaries) {
+          const pts = [];
+          for (let i = 0; i < secPts.length - 1; i++) {
+            const h1 = secPts[i].fh, h2 = secPts[i + 1].fh;
+            if (h1 === h2) continue;
+            if ((h1 < bh && h2 >= bh) || (h1 > bh && h2 <= bh)) {
+              const t = (bh - h1) / (h2 - h1);
+              const secX = secPts[i].x + t * (secPts[i + 1].x - secPts[i].x);
+              const planPt = getPlanFromSecX(secX);
+              if (planPt) pts.push({ secX, ...planPt });
+            }
+          }
+          intersections.push({ height: bh, points: pts });
+        }
+        return { boundaries, intersections };
+      }
+
       function draw() {
         ctx.clearRect(0, 0, W, H);
         const m = calcMetrics();
         const n = verts.length;
+        const b3m = compute3mBoundaries(m);
 
         // ─── PLAN VIEW ───
         ctx.save();
@@ -1889,6 +1955,37 @@
           const dx = b.x - a.x, dy = b.y - a.y;
           const nl = Math.sqrt(dx*dx+dy*dy) || 1;
           ctx.fillText(len.toFixed(2), mx + (-dy/nl)*14, my + (dx/nl)*14);
+        }
+
+        // 3m contour lines on plan view (red dashed)
+        if (b3m.intersections.length) {
+          ctx.save();
+          ctx.setLineDash([4, 3]);
+          ctx.strokeStyle = 'rgba(196,119,60,0.5)';
+          ctx.lineWidth = 1;
+          for (const inter of b3m.intersections) {
+            if (inter.points.length >= 2) {
+              ctx.beginPath();
+              inter.points.forEach((pt, i) => {
+                const px = pt.x * W, py = pt.y * planH;
+                i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+              });
+              ctx.stroke();
+              // Label at first point
+              const fp = inter.points[0];
+              ctx.font = `400 8px 'IBM Plex Mono', monospace`;
+              ctx.fillStyle = 'rgba(196,119,60,0.5)';
+              ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+              ctx.fillText(inter.height.toFixed(1) + 'm', fp.x * W + 4, fp.y * planH - 4);
+            }
+            // Draw intersection dots
+            for (const pt of inter.points) {
+              ctx.beginPath(); ctx.arc(pt.x * W, pt.y * planH, 3, 0, Math.PI * 2);
+              ctx.fillStyle = 'rgba(196,119,60,0.5)'; ctx.fill();
+            }
+          }
+          ctx.setLineDash([]);
+          ctx.restore();
         }
 
         // Area in center
@@ -1973,6 +2070,36 @@
           ctx.fillText(h.toFixed(1), padL - 6, gy);
         }
 
+        // 3m boundary lines in section view (red dashed)
+        if (b3m.boundaries.length) {
+          ctx.save();
+          ctx.setLineDash([5, 3]);
+          ctx.strokeStyle = 'rgba(196,119,60,0.5)';
+          ctx.lineWidth = 0.8;
+          for (const bh of b3m.boundaries) {
+            const by = padT + sH - (bh / maxFH) * sH * 0.85;
+            ctx.beginPath();
+            ctx.moveTo(padL, by); ctx.lineTo(padL + sW, by);
+            ctx.stroke();
+            // Label
+            ctx.font = `500 8px 'IBM Plex Mono', monospace`;
+            ctx.fillStyle = 'rgba(196,119,60,0.5)';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+            ctx.fillText(bh.toFixed(1) + 'm', padL + sW + 4, by + 3);
+          }
+          // Draw intersection dots on section
+          for (const inter of b3m.intersections) {
+            const by = padT + sH - (inter.height / maxFH) * sH * 0.85;
+            for (const pt of inter.points) {
+              const sx = padL + (pt.secX / totalPerim) * sW;
+              ctx.beginPath(); ctx.arc(sx, by, 3, 0, Math.PI * 2);
+              ctx.fillStyle = 'rgba(196,119,60,0.5)'; ctx.fill();
+            }
+          }
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+
         // Hatched area under section
         ctx.beginPath();
         ctx.moveTo(secPts[0].x, padT + sH);
@@ -1998,17 +2125,17 @@
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 1.5; ctx.stroke();
 
-        // Weighted Ground Level line (red dashed)
+        // Weighted Ground Level line (accent, prominent)
         const wglY = padT + sH - (m.hWeighted / maxFH) * sH * 0.85;
         ctx.beginPath();
         ctx.setLineDash([6, 4]);
         ctx.moveTo(padL, wglY); ctx.lineTo(padL + sW, wglY);
-        ctx.strokeStyle = '#e53e3e';
-        ctx.lineWidth = 1.2; ctx.stroke();
+        ctx.strokeStyle = '#C4773C';
+        ctx.lineWidth = 1.5; ctx.stroke();
         ctx.setLineDash([]);
         // WGL label
-        ctx.font = `500 9px 'IBM Plex Mono', monospace`;
-        ctx.fillStyle = '#e53e3e';
+        ctx.font = `600 9px 'IBM Plex Mono', monospace`;
+        ctx.fillStyle = '#C4773C';
         ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
         ctx.fillText('WGL: ' + m.hWeighted.toFixed(2) + ' m', padL + sW + 4, wglY + 3);
 
