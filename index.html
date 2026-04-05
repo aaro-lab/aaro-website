@@ -3537,15 +3537,10 @@
         ctx.fill();
         ctx.strokeStyle = '#C4773C'; ctx.lineWidth = 2.5; ctx.stroke();
         ctx.shadowBlur = 0;
-        // aaro favicon-style 2x2 label
-        const fs2 = Math.max(14, ws * 0.22);
-        ctx.font = `800 ${fs2}px system-ui, -apple-system, sans-serif`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillStyle = '#EDE8E0';
-        ctx.fillText('a', w.x - fs2*0.55, w.y - fs2*0.45);
-        ctx.fillText('a', w.x + fs2*0.55, w.y - fs2*0.45);
-        ctx.fillText('r', w.x - fs2*0.55, w.y + fs2*0.55);
-        ctx.fillText('o', w.x + fs2*0.55, w.y + fs2*0.55);
+        ctx.font = `700 ${Math.max(10, ws * 0.2)}px 'IBM Plex Mono', monospace`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('agent', w.x, w.y);
         ctx.restore();
       }
 
