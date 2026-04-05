@@ -223,7 +223,8 @@
 
     /* Ground Level Demo */
     .gl-demo {
-      position: absolute; bottom: clamp(48px, 6vh, 80px); right: clamp(32px,5vw,80px);
+      position: absolute; top: 50%; right: clamp(32px,5vw,80px);
+      transform: translateY(-45%);
       width: clamp(280px, 34vw, 520px); height: clamp(300px, 40vh, 480px);
       z-index: 5;
     }
@@ -2142,12 +2143,12 @@
       // Polygon vertices with FH (floor height) values
       // Normalized coords 0-1, will scale to canvas
       const verts = [
-        { x: 0.22, y: 0.10, fh: 8.0, label: 'A' },
-        { x: 0.18, y: 0.38, fh: 3.0, label: 'B' },
-        { x: 0.28, y: 0.58, fh: 7.0, label: 'C' },
-        { x: 0.58, y: 0.55, fh: 0.0, label: 'D' },
-        { x: 0.68, y: 0.28, fh: 1.0, label: 'E' },
-        { x: 0.55, y: 0.08, fh: 9.0, label: 'F' },
+        { x: 0.20, y: 0.12, fh: 8.0, label: 'A' },
+        { x: 0.15, y: 0.50, fh: 3.0, label: 'B' },
+        { x: 0.30, y: 0.78, fh: 7.0, label: 'C' },
+        { x: 0.65, y: 0.75, fh: 0.0, label: 'D' },
+        { x: 0.75, y: 0.38, fh: 1.0, label: 'E' },
+        { x: 0.58, y: 0.10, fh: 9.0, label: 'F' },
       ];
 
       let W, H, planH, secH;
@@ -2514,8 +2515,8 @@
 
         ctx.restore();
 
-        // Metrics
-        metricsEl.textContent =
+        // Metrics (element removed, skip)
+        if (metricsEl) metricsEl.textContent =
           `Section Area: ${m.secArea.toFixed(2)}  |  Perimeter: ${m.perimeter.toFixed(2)}  |  h_min: ${m.hMin.toFixed(2)} + (${m.secArea.toFixed(2)}/${m.perimeter.toFixed(2)}) = ${m.hWeighted.toFixed(4)}`;
       }
 
