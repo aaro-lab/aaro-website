@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>aaro</title>
   <meta name="description" content="AARO: Architectural Algorithm Research Office.">
-  <link rel="icon" type="image/svg+xml" href="assets/logo/aaro-favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%230D0D0C'/%3E%3Cstyle%3Etext%7Bfont-family:system-ui,-apple-system,sans-serif;font-weight:700;font-size:18px;fill:%23EDE8E0%7D%3C/style%3E%3Ctext text-anchor='middle' x='24' y='30'%3Ea%3C/text%3E%3Ctext text-anchor='middle' x='40' y='30'%3Ea%3C/text%3E%3Ctext text-anchor='middle' x='24' y='46'%3Er%3C/text%3E%3Ctext text-anchor='middle' x='40' y='46'%3Eo%3C/text%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="assets/logo/aaro-favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -245,7 +246,13 @@
       letter-spacing: .05em; margin-top: 8px; line-height: 1.8;
     }
     @media (max-width: 1024px) {
-      .gl-demo { display: none; }
+      .gl-demo {
+        position: relative; top: auto; right: auto;
+        transform: none;
+        width: 80vw; height: 40vh;
+        margin: 20px auto 0;
+      }
+      .gl-demo__hint { display: none; }
     }
 
 
