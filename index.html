@@ -2237,12 +2237,12 @@
       const BROWNIAN = 0.15;
       const WOBBLE_AMP = 4;
       const WOBBLE_SPEED = 0.0015;
-      // Burst-and-rest wandering for World Agent
+      // Single-jump wandering for World Agent
       let wanderAngle = Math.random() * Math.PI * 2;
       let wanderTimer = 0;
       let wanderPhase = 'rest';
-      const MOVE_DURATION = 80;  // ~1.3s burst (0.8x of 100)
-      const REST_DURATION = 90;  // ~1.5s pause
+      let currentMoveDuration = 0;
+      const REST_DURATION = 120; // ~2s pause between jumps
       let alpha = 1.0;
 
       function simulate() {
@@ -2251,19 +2251,20 @@
         const w = nodes[0];
         if (!w) return;
 
-        // World Agent: burst-move then rest
+        // World Agent: single quick jump then rest
         if (w.fx === null) {
           wanderTimer++;
           if (wanderPhase === 'rest' && wanderTimer >= REST_DURATION) {
             wanderPhase = 'move';
             wanderTimer = 0;
             wanderAngle = Math.random() * Math.PI * 2;
-          } else if (wanderPhase === 'move' && wanderTimer >= MOVE_DURATION) {
+            currentMoveDuration = 8 + Math.floor(Math.random() * 25); // random 8-32 frames
+          } else if (wanderPhase === 'move' && wanderTimer >= currentMoveDuration) {
             wanderPhase = 'rest';
             wanderTimer = 0;
           }
           if (wanderPhase === 'move') {
-            const speed = 4.2; // 3x of original 1.4
+            const speed = 16.8; // 4x of 4.2
             w.baseX += Math.cos(wanderAngle) * speed;
             w.baseY += Math.sin(wanderAngle) * speed;
           }
