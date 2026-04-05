@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { type, name, inquiry } = req.body || {};
+  const { type, name, email, phone, inquiry } = req.body || {};
   if (!name || !inquiry) {
     return res.status(400).json({ error: 'Name and inquiry are required' });
   }
@@ -31,6 +31,13 @@ export default async function handler(req, res) {
               fields: [
                 { type: 'mrkdwn', text: `*문의 유형*\n${typeLabel}` },
                 { type: 'mrkdwn', text: `*이름/기관명*\n${name}` }
+              ]
+            },
+            {
+              type: 'section',
+              fields: [
+                { type: 'mrkdwn', text: `*이메일*\n${email || '미입력'}` },
+                { type: 'mrkdwn', text: `*연락처*\n${phone || '미입력'}` }
               ]
             },
             {
@@ -78,6 +85,8 @@ export default async function handler(req, res) {
             <h2>새 문의가 접수되었습니다</h2>
             <p><strong>문의 유형:</strong> ${typeLabel}</p>
             <p><strong>이름/기관명:</strong> ${name}</p>
+            <p><strong>이메일:</strong> ${email || '미입력'}</p>
+            <p><strong>연락처:</strong> ${phone || '미입력'}</p>
             <p><strong>문의 사항:</strong></p>
             <p>${inquiry.replace(/\n/g, '<br>')}</p>
             <hr>

@@ -1301,6 +1301,14 @@
             <label for="cf-name">이름 / 기관명</label>
             <input type="text" id="cf-name" name="name" placeholder="홍길동 / OO건축사사무소" required>
           </div>
+          <div class="contact-field">
+            <label for="cf-email">이메일</label>
+            <input type="email" id="cf-email" name="email" placeholder="example@email.com">
+          </div>
+          <div class="contact-field">
+            <label for="cf-phone">연락처</label>
+            <input type="tel" id="cf-phone" name="phone" placeholder="010-0000-0000">
+          </div>
           <div class="contact-field contact-field--grow">
             <label for="cf-inquiry">문의 사항</label>
             <textarea id="cf-inquiry" name="inquiry" placeholder="문의하실 내용을 작성해주세요." required></textarea>
@@ -2641,6 +2649,8 @@
         const msg = document.getElementById('contactMsg');
         const type = cForm.querySelector('input[name="type"]:checked')?.value || '';
         const name = document.getElementById('cf-name').value.trim();
+        const email = document.getElementById('cf-email').value.trim();
+        const phone = document.getElementById('cf-phone').value.trim();
         const inquiry = document.getElementById('cf-inquiry').value.trim();
         if (!name || !inquiry) return;
         btn.disabled = true; btn.textContent = '전송 중...';
@@ -2649,7 +2659,7 @@
           const res = await fetch('/api/contact', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type, name, inquiry })
+            body: JSON.stringify({ type, name, email, phone, inquiry })
           });
           if (res.ok) {
             msg.textContent = '문의가 접수되었습니다. 감사합니다.';
