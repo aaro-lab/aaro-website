@@ -847,8 +847,8 @@
     .node-bubble-overlay.visible { pointer-events: auto; }
     .node-bubble {
       position: fixed;
-      width: 380px; height: 280px;
-      border-radius: 16px;
+      width: 260px; height: 180px;
+      border-radius: 12px;
       overflow: hidden;
       background: var(--ink-90);
       border: 1px solid rgba(255,255,255,0.12);
@@ -1359,7 +1359,7 @@
         overlay.className = 'node-bubble-overlay';
         document.body.appendChild(overlay);
       }
-      const bw = 380, bh = 280;
+      const bw = 260, bh = 180;
       // Position bubble above or below the click point
       let left = clickX - bw / 2;
       let top = clickY - bh - 24;
@@ -1959,8 +1959,7 @@
           const moved = Math.hypot(mx - mouseDownPos.x, my - mouseDownPos.y);
           // Click = short press + little movement
           if (elapsed < 300 && moved < 5 && dragNode.u) {
-            const appData = APPS.find(a => a.u === dragNode.u);
-            if (appData) showAppBubble(appData); else showNodeBubble(dragNode, e.clientX, e.clientY);
+            showNodeBubble(dragNode, e.clientX, e.clientY);
           }
           dragNode.fx = null; dragNode.fy = null;
           dragNode = null;
@@ -1999,7 +1998,7 @@
       canvas.addEventListener('touchend', e => {
         if (dragNode) {
           const elapsed = Date.now()-touchStartTime;
-          if (elapsed < 300 && dragNode.u) { const appData = APPS.find(a => a.u === dragNode.u); if (appData) showAppBubble(appData); else { const t = e.changedTouches[0]; showNodeBubble(dragNode, t.clientX, t.clientY); } }
+          if (elapsed < 300 && dragNode.u) { const t = e.changedTouches[0]; showNodeBubble(dragNode, t.clientX, t.clientY); }
           dragNode.fx=null; dragNode.fy=null; dragNode=null;
         }
       });
