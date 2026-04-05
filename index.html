@@ -157,7 +157,7 @@
     .s-cover__nav-links a:hover { color: var(--accent); }
     .s-cover__nav-links a:hover::after { width: 100%; }
 
-    .s-cover__title { margin-bottom: 20px; text-transform: lowercase; }
+    .s-cover__title { margin-bottom: 20px; text-transform: lowercase; position: relative; z-index: 5; }
     .s-cover__title .line {
       display: block; overflow: hidden;
       padding-bottom: 0.15em;
@@ -202,6 +202,7 @@
     .s-cover__sub {
       font-family: var(--mono); font-size: 13px; letter-spacing: 0.2em;
       text-transform: uppercase; color: var(--ink-40); margin-top: 28px;
+      position: relative; z-index: 5;
     }
     .s-cover__scroll {
       position: absolute; bottom: 36px; right: clamp(32px,5vw,80px);
@@ -223,10 +224,9 @@
 
     /* Cover Graph */
     .cover-graph {
-      position: absolute; right: calc(clamp(32px,5vw,80px) - 40px);
-      bottom: clamp(48px, 6vh, 80px);
-      width: clamp(280px, 30vw, 440px);
-      z-index: 5;
+      position: absolute; right: 0; top: 0;
+      width: 60vw; height: 100%;
+      z-index: 2;
     }
     .cover-graph canvas {
       width: 100%; height: 100%; display: block;
@@ -238,11 +238,10 @@
       }
       .s-cover__title { margin-bottom: 12px; text-align: center; }
       .cover-graph {
-        position: relative; top: auto; right: auto; bottom: auto;
-        transform: none;
-        width: 85vw; height: 35vh;
-        margin: 0 auto;
-        order: -1;
+        position: absolute; top: 0; right: 0; bottom: 0;
+        width: 100%; height: 100%;
+        margin: 0;
+        order: unset;
       }
       .s-cover__sub { text-align: center; margin-top: 16px; }
     }
@@ -1056,7 +1055,7 @@
       .s-cover__sub { font-size: 10px; letter-spacing: 0.08em; }
       .s-cover__scroll { display: none; }
       .t-mega { font-size: clamp(2.4rem, 10vw, 3.5rem); }
-      .cover-graph { width: 90vw; height: 30vh; }
+      .cover-graph { width: 100%; height: 100%; }
       .s-mani__text { font-size: clamp(1.4rem, 5vw, 1.8rem); }
       .s-mani__l, .s-mani__r { padding: 32px 20px; }
       .s-mani__kr { font-size: 14px; }
@@ -2157,18 +2156,6 @@
       const coverTitle = document.getElementById('coverTitle');
       if (!canvas) return;
 
-      // Sync cover-graph height: from title top to subtitle bottom
-      const coverSub = document.querySelector('.s-cover__sub');
-      function syncHeight() {
-        if (coverTitle && coverGraph && window.innerWidth > 1024) {
-          const titleTop = coverTitle.getBoundingClientRect().top;
-          const bottomEl = coverSub || coverTitle;
-          const bottomY = bottomEl.getBoundingClientRect().bottom;
-          coverGraph.style.height = (bottomY - titleTop - 40) + 'px';
-        }
-      }
-      syncHeight();
-      window.addEventListener('resize', syncHeight);
       const ctx = canvas.getContext('2d');
       const dpr = window.devicePixelRatio || 1;
 
