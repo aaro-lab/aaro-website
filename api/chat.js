@@ -115,7 +115,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${openaiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-mini',
+        model: 'gpt-5.4-mini',
         max_tokens: 512,
         messages
       })
