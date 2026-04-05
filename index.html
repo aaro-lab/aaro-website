@@ -2237,11 +2237,12 @@
       const BROWNIAN = 0.15;
       const WOBBLE_AMP = 4;
       const WOBBLE_SPEED = 0.0015;
-      // Slow random wandering for World Agent
+      // Burst-and-rest wandering for World Agent
       let wanderAngle = Math.random() * Math.PI * 2;
       let wanderTimer = 0;
-      const WANDER_SPEED = 0.15; // pixels per frame
-      const WANDER_INTERVAL = 180; // frames between direction changes (~3s)
+      let wanderPhase = 'rest'; // 'move' or 'rest'
+      const MOVE_DURATION = 40;  // frames of movement (~0.7s burst)
+      const REST_DURATION = 150; // frames of rest (~2.5s pause)
       let alpha = 1.0;
 
       function simulate() {
@@ -2250,15 +2251,22 @@
         const w = nodes[0];
         if (!w) return;
 
-        // World Agent: wobble + slow wander near center (never near edges/nav)
+        // World Agent: burst-move then rest, wobble always
         if (w.fx === null) {
           wanderTimer++;
-          if (wanderTimer >= WANDER_INTERVAL) {
-            wanderAngle += (Math.random() - 0.5) * 1.0;
+          if (wanderPhase === 'rest' && wanderTimer >= REST_DURATION) {
+            wanderPhase = 'move';
+            wanderTimer = 0;
+            wanderAngle = Math.random() * Math.PI * 2;
+          } else if (wanderPhase === 'move' && wanderTimer >= MOVE_DURATION) {
+            wanderPhase = 'rest';
             wanderTimer = 0;
           }
-          w.baseX += Math.cos(wanderAngle) * WANDER_SPEED;
-          w.baseY += Math.sin(wanderAngle) * WANDER_SPEED;
+          if (wanderPhase === 'move') {
+            const speed = 0.8;
+            w.baseX += Math.cos(wanderAngle) * speed;
+            w.baseY += Math.sin(wanderAngle) * speed;
+          }
           // Keep within safe zone: 40%-60% of canvas (small area near center)
           const safeL = W * 0.40, safeR = W * 0.60;
           const safeT = Math.max(H * 0.40, 120), safeB = H * 0.60;
