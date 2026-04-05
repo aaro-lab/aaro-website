@@ -2140,10 +2140,14 @@
       const coverTitle = document.getElementById('coverTitle');
       if (!canvas) return;
 
-      // Sync gl-demo height with cover title height
+      // Sync gl-demo height: from title top to subtitle bottom
+      const coverSub = document.querySelector('.s-cover__sub');
       function syncHeight() {
         if (coverTitle && glDemo) {
-          glDemo.style.height = coverTitle.offsetHeight + 'px';
+          const titleTop = coverTitle.getBoundingClientRect().top;
+          const bottomEl = coverSub || coverTitle;
+          const bottomY = bottomEl.getBoundingClientRect().bottom;
+          glDemo.style.height = (bottomY - titleTop) + 'px';
         }
       }
       syncHeight();
