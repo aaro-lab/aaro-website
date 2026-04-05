@@ -223,9 +223,9 @@
 
     /* Ground Level Demo */
     .gl-demo {
-      position: absolute; top: 50%; right: clamp(32px,5vw,80px);
-      transform: translateY(-45%);
-      width: clamp(280px, 34vw, 520px); height: clamp(300px, 40vh, 480px);
+      position: absolute; right: clamp(32px,5vw,80px);
+      bottom: clamp(48px, 6vh, 80px);
+      width: clamp(280px, 30vw, 440px);
       z-index: 5;
     }
     .gl-demo canvas {
@@ -2136,7 +2136,18 @@
     (function initGLDemo() {
       const canvas = document.getElementById('glCanvas');
       const metricsEl = document.getElementById('glMetrics');
+      const glDemo = document.getElementById('glDemo');
+      const coverTitle = document.getElementById('coverTitle');
       if (!canvas) return;
+
+      // Sync gl-demo height with cover title height
+      function syncHeight() {
+        if (coverTitle && glDemo) {
+          glDemo.style.height = coverTitle.offsetHeight + 'px';
+        }
+      }
+      syncHeight();
+      window.addEventListener('resize', syncHeight);
       const ctx = canvas.getContext('2d');
       const dpr = window.devicePixelRatio || 1;
 
