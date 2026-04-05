@@ -194,11 +194,11 @@
         <label class="pg-upload-btn"><input type="file" id="brickImgInput" accept="image/*" hidden>Image</label>
         <span class="pg-ctrl">
           <label>W</label>
-          <input type="range" id="brickColSlider" min="8" max="60" value="30">
+          <input type="range" id="brickColSlider" min="8" max="100" value="30">
         </span>
         <span class="pg-ctrl">
           <label>H</label>
-          <input type="range" id="brickRowSlider" min="4" max="40" value="20">
+          <input type="range" id="brickRowSlider" min="4" max="100" value="70">
         </span>
       </div>
     </article>
@@ -532,10 +532,11 @@
       const fileInput = document.getElementById('brickImgInput');
       const colSlider = document.getElementById('brickColSlider');
       const rowSlider = document.getElementById('brickRowSlider');
+      
       if (!canvas) return;
       let ctx, W, H;
 
-      let COLS = 30, ROWS = 20;
+      let COLS = 30, ROWS = 70;
       const MORTAR = 0.3, MAX_ANGLE = 60;
       const BW = 2.4, BH = 1.0, BD = 0.8;
       let bricks = [], currentAngles = [], targetAngles = [];
@@ -603,11 +604,7 @@
         ctx.clearRect(0, 0, W, H);
         ctx.font = "500 9px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillText('BRICK WALL', 8, 14);
         time += 0.016;
-        if (!hasImage) {
-          animPhase += 0.008;
-          const curMax = 20 + 40 * (0.5 + 0.5 * Math.sin(animPhase));
-          for (let i = 0; i < bricks.length; i++) targetAngles[i] = Math.sin(bricks[i].c * 0.25 + bricks[i].r * 0.15 + time * 0.6) * curMax;
-        }
+
         for (let i = 0; i < bricks.length; i++) currentAngles[i] += (targetAngles[i] - currentAngles[i]) * 0.06;
 
         const sorted = bricks.map((b, i) => ({ idx: i, z: project(b.wx, 0, b.wz).z }));
@@ -615,19 +612,19 @@
 
         for (const { idx } of sorted) {
           const b = bricks[idx], angle = currentAngles[idx] * Math.PI / 180;
-          const brightness = 0.10 + Math.abs(currentAngles[idx] / MAX_ANGLE) * 0.40;
+          const brightness = 0.45 + Math.abs(currentAngles[idx] / MAX_ANGLE) * 0.55;
           const hw = BW / 2, hd = BD / 2, cosA = Math.cos(angle), sinA = Math.sin(angle);
           const corners = [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]].map(([lx, ly]) => ({ wx: b.wx + lx * cosA - ly * sinA, wy: ly * cosA + lx * sinA }));
           const topPts = corners.map(c => project(c.wx, c.wy, b.wz + BH / 2));
           const botPts = corners.map(c => project(c.wx, c.wy, b.wz - BH / 2));
           ctx.beginPath(); botPts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)); ctx.closePath();
-          ctx.fillStyle = `rgba(255,255,255,${brightness * 0.25})`; ctx.fill();
+          ctx.fillStyle = `rgba(180,170,155,${brightness * 0.7})`; ctx.fill();
           for (let e = 0; e < 4; e++) {
             const e2 = (e + 1) % 4, nm = (topPts[e2].x - topPts[e].x) * (botPts[e].y - topPts[e].y) - (topPts[e2].y - topPts[e].y) * (botPts[e].x - topPts[e].x);
-            if (nm > 0) { ctx.beginPath(); ctx.moveTo(topPts[e].x, topPts[e].y); ctx.lineTo(topPts[e2].x, topPts[e2].y); ctx.lineTo(botPts[e2].x, botPts[e2].y); ctx.lineTo(botPts[e].x, botPts[e].y); ctx.closePath(); ctx.fillStyle = `rgba(255,255,255,${brightness * 0.45})`; ctx.fill(); ctx.strokeStyle = `rgba(255,255,255,${brightness * 0.12})`; ctx.lineWidth = 0.3; ctx.stroke(); }
+            if (nm > 0) { ctx.beginPath(); ctx.moveTo(topPts[e].x, topPts[e].y); ctx.lineTo(topPts[e2].x, topPts[e2].y); ctx.lineTo(botPts[e2].x, botPts[e2].y); ctx.lineTo(botPts[e].x, botPts[e].y); ctx.closePath(); ctx.fillStyle = `rgba(200,190,175,${brightness * 0.85})`; ctx.fill(); ctx.strokeStyle = `rgba(80,75,65,${brightness * 0.5})`; ctx.lineWidth = 0.5; ctx.stroke(); }
           }
           ctx.beginPath(); topPts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)); ctx.closePath();
-          ctx.fillStyle = `rgba(255,255,255,${brightness})`; ctx.fill(); ctx.strokeStyle = `rgba(255,255,255,${brightness * 0.18})`; ctx.lineWidth = 0.3; ctx.stroke();
+          ctx.fillStyle = `rgba(220,210,195,${brightness})`; ctx.fill(); ctx.strokeStyle = `rgba(80,75,65,${brightness * 0.5})`; ctx.lineWidth = 0.5; ctx.stroke();
         }
         const maxCur = bricks.length > 0 ? Math.max(...currentAngles.map(Math.abs)).toFixed(1) : '0';
         metricsEl.textContent = `Bricks: ${bricks.length}  |  ${COLS}\u00D7${ROWS}  |  Max Angle: ${maxCur}\u00B0  |  ${hasImage ? 'Image' : 'Wave 20\u00B0\u201360\u00B0'}`;
@@ -666,6 +663,7 @@
         storedImgData = oc.getContext('2d').getImageData(0, 0, defImg.width, defImg.height).data;
         storedImgW = defImg.width; storedImgH = defImg.height;
         targetAngles = sampleImage(storedImgData, storedImgW, storedImgH);
+        currentAngles = Float32Array.from(targetAngles);
         hasImage = true;
       };
       defImg.src = '/playground/default-brick.png';
@@ -856,6 +854,30 @@
         return spots.filter((_,i)=>!rm.has(i));
       }
 
+      // Access lane box: from spot far edge, AW deep in normal direction
+      function mkLane(s){
+        const p=s.poly;
+        const dx=p[3].x-p[0].x,dy=p[3].y-p[0].y,len=Math.hypot(dx,dy)||1;
+        const nx=dx/len,ny=dy/len;
+        return[p[3],p[2],{x:p[2].x+nx*AW,y:p[2].y+ny*AW},{x:p[3].x+nx*AW,y:p[3].y+ny*AW}];
+      }
+
+      // Remove spots whose access lane overlaps another spot (iterative)
+      function cleanLanes(spots){
+        let d=true;
+        while(d){d=false;
+          for(let i=0;i<spots.length&&!d;i++){
+            const lane=mkLane(spots[i]);
+            for(let j=0;j<spots.length&&!d;j++){
+              if(i===j)continue;
+              if(spots[i].edge!==undefined&&spots[j].edge!==undefined&&spots[i].edge===spots[j].edge)continue;
+              if(polyOverlap(lane,spots[j].poly)){spots.splice(i,1);d=true;}
+            }
+          }
+        }
+        return spots;
+      }
+
       function allInside(poly,boundary){return poly.every(p=>pip(p.x,p.y,boundary));}
 
       function compute(){
@@ -907,6 +929,7 @@
         // 2. Greedy spot-spot → space-spot
         edgeSpots=greedySpot(edgeSpots);
         edgeSpots=greedySpace(edgeSpots);
+        edgeSpots=cleanLanes(edgeSpots);
 
         // ══ 3. Spine: road centerline (closed loop) ══
         if(roadClPoly.length>=3){
@@ -981,21 +1004,22 @@
           edgeSpots=after2.filter(s=>s.type==='edge');
           innerSpots=after2.filter(s=>s.type==='inner');
 
-          // Inner aisle lines → connect to road spine
+          // Inner aisle lines clipped to innerBdyPoly
           for(const a of bestAisles){
-            spineSegs.push([a.a,a.b]);
-            if(roadClPoly.length>=3){
-              for(const ep of[a.a,a.b]){
-                let bestD=Infinity,bestPt=null;
-                for(let i=0;i<roadClPoly.length;i++){
-                  const j=(i+1)%roadClPoly.length,sa=roadClPoly[i],sb=roadClPoly[j];
-                  const dx=sb.x-sa.x,dy=sb.y-sa.y,l2=dx*dx+dy*dy;
-                  const t=l2>0?Math.max(0,Math.min(1,((ep.x-sa.x)*dx+(ep.y-sa.y)*dy)/l2)):0;
-                  const px=sa.x+t*dx,py=sa.y+t*dy,d=Math.hypot(ep.x-px,ep.y-py);
-                  if(d<bestD){bestD=d;bestPt={x:px,y:py};}
-                }
-                if(bestPt&&bestD>0.3&&bestD<60)spineSegs.push([ep,bestPt]);
-              }
+            // Clip line to innerBdyPoly
+            const dx=a.b.x-a.a.x,dy=a.b.y-a.a.y,ts=[];
+            for(let i=0;i<innerBdyPoly.length;i++){
+              const j=(i+1)%innerBdyPoly.length;
+              const ex=innerBdyPoly[j].x-innerBdyPoly[i].x,ey=innerBdyPoly[j].y-innerBdyPoly[i].y;
+              const den=dx*ey-dy*ex;
+              if(Math.abs(den)<1e-10)continue;
+              const t=((innerBdyPoly[i].x-a.a.x)*ey-(innerBdyPoly[i].y-a.a.y)*ex)/den;
+              const u=((innerBdyPoly[i].x-a.a.x)*dy-(innerBdyPoly[i].y-a.a.y)*dx)/den;
+              if(t>=0&&t<=1&&u>=0&&u<=1)ts.push(t);
+            }
+            if(ts.length>=2){
+              ts.sort((a,b)=>a-b);
+              spineSegs.push([{x:a.a.x+dx*ts[0],y:a.a.y+dy*ts[0]},{x:a.a.x+dx*ts[ts.length-1],y:a.a.y+dy*ts[ts.length-1]}]);
             }
           }
         }
@@ -1003,16 +1027,27 @@
         allStalls=[...edgeSpots,...innerSpots];
       }
 
-      // Draw U-shape: 3 sides, open toward access space
+      // Draw stall: access lane in front of spot + white rectangle
       function drawStallU(stall){
-        const p=stall.poly,sp=stall.space;
-        const scx=(sp[0].x+sp[1].x+sp[2].x+sp[3].x)/4,scy=(sp[0].y+sp[1].y+sp[2].y+sp[3].y)/4;
-        let oe=0,md=Infinity;
-        for(let e=0;e<4;e++){const mx=(p[e].x+p[(e+1)%4].x)/2,my=(p[e].y+p[(e+1)%4].y)/2,d=Math.hypot(mx-scx,my-scy);if(d<md){md=d;oe=e;}}
+        const p=stall.poly;
+        // Access lane: from spot far edge (p[3]→p[2]) extending AW in normal direction
+        const dx=p[3].x-p[0].x,dy=p[3].y-p[0].y,len=Math.hypot(dx,dy)||1;
+        const nx=dx/len,ny=dy/len;
+        const al=[p[3],p[2],
+          {x:p[2].x+nx*AW,y:p[2].y+ny*AW},
+          {x:p[3].x+nx*AW,y:p[3].y+ny*AW}];
         ctx.beginPath();
-        const s=(oe+1)%4,p0=w2s(p[s].x,p[s].y);ctx.moveTo(p0.x,p0.y);
-        for(let k=1;k<=3;k++){const idx=(s+k)%4,pp=w2s(p[idx].x,p[idx].y);ctx.lineTo(pp.x,pp.y);}
-        ctx.strokeStyle='rgba(215,215,215,0.65)';ctx.lineWidth=0.5;ctx.stroke();
+        const a0=w2s(al[0].x,al[0].y);ctx.moveTo(a0.x,a0.y);
+        for(let k=1;k<4;k++){const ap=w2s(al[k].x,al[k].y);ctx.lineTo(ap.x,ap.y);}
+        ctx.closePath();
+        ctx.fillStyle='rgba(220,160,50,0.08)';ctx.fill();
+        ctx.strokeStyle='rgba(220,160,50,0.20)';ctx.lineWidth=0.5;ctx.stroke();
+        // Spot rectangle (white)
+        ctx.beginPath();
+        const p0=w2s(p[0].x,p[0].y);ctx.moveTo(p0.x,p0.y);
+        for(let k=1;k<4;k++){const pp=w2s(p[k].x,p[k].y);ctx.lineTo(pp.x,pp.y);}
+        ctx.closePath();
+        ctx.strokeStyle='rgba(255,255,255,0.85)';ctx.lineWidth=1;ctx.stroke();
       }
 
       function draw(){
@@ -1025,11 +1060,8 @@
         for(let x=0;x<=80;x+=10){const p1=w2s(x,0),p2=w2s(x,80);ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();}
         for(let y=0;y<=80;y+=10){const p1=w2s(0,y),p2=w2s(80,y);ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();}
 
-        // Inner boundary
-        if(innerBdyPoly.length>=3){ctx.save();ctx.setLineDash([6,4]);ctx.strokeStyle='rgba(140,140,140,0.45)';ctx.lineWidth=1;ctx.beginPath();innerBdyPoly.forEach((v,i)=>{const p=w2s(v.x,v.y);i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);});ctx.closePath();ctx.stroke();ctx.setLineDash([]);ctx.restore();}
-
-        // Circulation spine
-        ctx.save();ctx.setLineDash([5,3]);ctx.strokeStyle='rgba(200,150,50,0.40)';ctx.lineWidth=0.8;
+        // Circulation spine — orange dashed
+        ctx.save();ctx.setLineDash([6,4]);ctx.strokeStyle='rgba(220,160,50,0.65)';ctx.lineWidth=1.2;
         for(const[a,b]of spineSegs){const p1=w2s(a.x,a.y),p2=w2s(b.x,b.y);ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();}
         ctx.setLineDash([]);ctx.restore();
 
