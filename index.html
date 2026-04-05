@@ -2258,7 +2258,7 @@
             wanderPhase = 'move';
             wanderTimer = 0;
             wanderAngle = Math.random() * Math.PI * 2;
-            currentMoveDuration = 8 + Math.floor(Math.random() * 25); // random 8-32 frames
+            currentMoveDuration = 4 + Math.floor(Math.random() * 10); // random 4-13 frames
           } else if (wanderPhase === 'move' && wanderTimer >= currentMoveDuration) {
             wanderPhase = 'rest';
             wanderTimer = 0;
