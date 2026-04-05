@@ -2268,8 +2268,8 @@
             w.baseY += Math.sin(wanderAngle) * speed;
           }
           // Keep within safe zone: 40%-60% of canvas (small area near center)
-          const safeL = W * 0.40, safeR = W * 0.60;
-          const safeT = Math.max(H * 0.40, 120), safeB = H * 0.60;
+          const safeL = W * 0.25, safeR = W * 0.75;
+          const safeT = Math.max(H * 0.25, 120), safeB = H * 0.75;
           if (w.baseX < safeL || w.baseX > safeR) wanderAngle = Math.PI - wanderAngle;
           if (w.baseY < safeT || w.baseY > safeB) wanderAngle = -wanderAngle;
           w.baseX = Math.max(safeL, Math.min(safeR, w.baseX));
