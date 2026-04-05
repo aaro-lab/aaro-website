@@ -68,9 +68,9 @@ export default async function handler(req, res) {
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
 
-  if (!anthropicKey) {
+  if (!openaiKey) {
     return res.status(500).json({ error: 'API not configured' });
   }
 
@@ -93,8 +93,8 @@ export default async function handler(req, res) {
     }
   }
 
-  // Build messages for Claude
-  const messages = [];
+  // Build messages for OpenAI
+  const messages = [{ role: 'system', content: SYSTEM_PROMPT }];
   if (Array.isArray(history)) {
     const trimmed = history.slice(-20); // last 10 turns
     for (const h of trimmed) {
@@ -105,34 +105,32 @@ export default async function handler(req, res) {
   }
   messages.push({ role: 'user', content: message });
 
-  // Call Claude API
+  // Call OpenAI API (GPT-4.1-mini)
   let reply = '';
   try {
-    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+    const gptRes = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${openaiKey}`
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'gpt-4.1-mini',
         max_tokens: 512,
-        system: SYSTEM_PROMPT,
         messages
       })
     });
 
-    if (!claudeRes.ok) {
-      const errBody = await claudeRes.text();
-      console.error('Claude API error:', claudeRes.status, errBody);
+    if (!gptRes.ok) {
+      const errBody = await gptRes.text();
+      console.error('OpenAI API error:', gptRes.status, errBody);
       return res.status(502).json({ error: 'AI 응답 오류가 발생했습니다.' });
     }
 
-    const claudeData = await claudeRes.json();
-    reply = claudeData.content?.[0]?.text || '죄송합니다, 응답을 생성하지 못했습니다.';
+    const gptData = await gptRes.json();
+    reply = gptData.choices?.[0]?.message?.content || '죄송합니다, 응답을 생성하지 못했습니다.';
   } catch (e) {
-    console.error('Claude API call failed:', e);
+    console.error('OpenAI API call failed:', e);
     return res.status(502).json({ error: 'AI 서비스에 연결할 수 없습니다.' });
   }
 
