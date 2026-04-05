@@ -2770,7 +2770,7 @@
         HUB_TARGET = 320 * Math.max(scale, 0.4);
         // Scale node radii
         const rScale = Math.max(scale, W < 768 ? 0.35 : 0.55);
-        nodes.forEach((n, i) => { n.r = ALL_NODES[i].r * rScale; });
+        nodes.forEach((n, i) => { if (ALL_NODES[i]) n.r = ALL_NODES[i].r * rScale; });
       }
 
       // Header safe zone (top-left corner where text overlay lives)
@@ -3264,24 +3264,51 @@
         nodes.forEach((n, i) => { n.r = ALL_NODES[i].r * rScale; });
       }
 
+      const INITIAL_COUNT = 35; // start with ~35 nodes
+      const MAX_COUNT = ALL_NODES.length; // 1.5x target already in ALL_NODES
+      let spawnTimer = 0;
+      const SPAWN_INTERVAL = 180; // ~3s between spawns
+      let nextSpawnIdx = INITIAL_COUNT;
+
       function initNodes() {
         nodes.length = 0;
-        ALL_NODES.forEach((nd, i) => {
+        const count = Math.min(INITIAL_COUNT, ALL_NODES.length);
+        for (let i = 0; i < count; i++) {
+          const nd = ALL_NODES[i];
           if (i === 0) {
-            nodes.push({ ...nd, idx:i, x:centerX, y:centerY, vx:0, vy:0, fx:null, fy:null, baseX:centerX, baseY:centerY });
+            nodes.push({ ...nd, idx:i, x:centerX, y:centerY, vx:0, vy:0, fx:null, fy:null, baseX:centerX, baseY:centerY, opacity:1 });
           } else {
-            // Random positions around center (like S04 agent graph initial state)
-            const angle = (i / ALL_NODES.length) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
+            const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
             const dist = 80 + Math.random() * Math.min(W, H) * 0.35;
             const x = Math.max(nd.r + 20, Math.min(W - nd.r - 20, centerX + Math.cos(angle) * dist));
             const y = Math.max(nd.r + 80, Math.min(H - nd.r - 20, centerY + Math.sin(angle) * dist));
             nodes.push({
               ...nd, idx:i, x, y,
               vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5,
-              fx: null, fy: null
+              fx: null, fy: null, opacity: 1
             });
           }
+        }
+        nextSpawnIdx = count;
+      }
+
+      function spawnNode() {
+        if (nextSpawnIdx >= MAX_COUNT) return;
+        const w = nodes[0];
+        if (!w) return;
+        const nd = ALL_NODES[nextSpawnIdx];
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 30 + Math.random() * 20;
+        const scale = Math.min(W, H) / 900;
+        const rScale = Math.max(scale, W < 768 ? 0.35 : 0.55);
+        nodes.push({
+          ...nd, idx: nextSpawnIdx,
+          x: w.x + Math.cos(angle) * dist,
+          y: w.y + Math.sin(angle) * dist,
+          vx: Math.cos(angle) * 3, vy: Math.sin(angle) * 3,
+          fx: null, fy: null, opacity: 0, r: nd.r * rScale
         });
+        nextSpawnIdx++;
       }
 
       // Circle-packing physics — slow gentle convergence over 5-8 seconds
@@ -3301,6 +3328,18 @@
 
       function simulate() {
         alpha = Math.max(alpha * 0.999, 0.01);
+
+        // Spawn new nodes periodically from World Agent
+        spawnTimer++;
+        if (spawnTimer >= SPAWN_INTERVAL && nextSpawnIdx < MAX_COUNT) {
+          spawnNode();
+          spawnTimer = 0;
+        }
+
+        // Fade in new nodes
+        for (const n of nodes) {
+          if (n.opacity !== undefined && n.opacity < 1) n.opacity = Math.min(1, n.opacity + 0.02);
+        }
 
         const w = nodes[0];
         if (!w) return;
@@ -3422,11 +3461,13 @@
         if (!w) return;
         const worldHovered = hoveredNode === w;
 
-        // Hub edges (World Agent to all) — proximity opacity
+        // Hub edges (World Agent to all) — proximity opacity * node opacity
         for (let i = 1; i < nodes.length; i++) {
           const n = nodes[i];
+          const nOp = n.opacity !== undefined ? n.opacity : 1;
+          if (nOp < 0.01) continue;
           const dist = Math.hypot(w.x - n.x, w.y - n.y);
-          const proximity = Math.max(0.04, Math.min(0.35, 1 - dist / 500));
+          const proximity = Math.max(0.04, Math.min(0.35, 1 - dist / 500)) * nOp;
           const isHL = hoveredNode === n || worldHovered;
           ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(n.x, n.y);
           ctx.strokeStyle = isHL ? 'rgba(196,119,60,0.45)' : `rgba(196,119,60,${proximity})`;
@@ -3459,6 +3500,9 @@
         // App nodes (rounded rect with SVG icon or initials fallback)
         for (let i = 1; i < nodes.length; i++) {
           const n = nodes[i];
+          const nOp = n.opacity !== undefined ? n.opacity : 1;
+          if (nOp < 0.01) continue;
+          ctx.globalAlpha = nOp;
           const s = n.r * 2;
           const rad = s * 0.3;
           const col = CAT_COLORS[n.c] || '#888';
@@ -3524,6 +3568,7 @@
           }
           ctx.restore();
         }
+        ctx.globalAlpha = 1;
 
         // World Agent node (large rounded rect, orange border, radial glow)
         ctx.save();
