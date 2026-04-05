@@ -2671,15 +2671,15 @@
 
 <!-- CHAT WIDGET -->
 <div class="chat-widget" id="chatWidget">
-  <button class="chat-toggle" id="chatToggle" aria-label="Chat with AARO Agent">
+  <button class="chat-toggle" id="chatToggle" aria-label="Chat with aaro agent">
     <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.2L4 17.2V4h16v12z"/></svg>
   </button>
   <div class="chat-panel" id="chatPanel">
     <div class="chat-header">
       <div class="chat-header__dot"></div>
       <div>
-        <div class="chat-header__title">AARO Agent</div>
-        <div class="chat-header__sub">Ask anything about AARO</div>
+        <div class="chat-header__title">aaro agent</div>
+        <div class="chat-header__sub">ask anything about aaro</div>
       </div>
       <button class="chat-header__close" id="chatClose">&times;</button>
     </div>
@@ -2752,7 +2752,7 @@
     panel.classList.toggle('open', isOpen);
     if (isOpen && history.length === 0) {
       setTimeout(() => {
-        const welcome = '안녕하세요! AARO Agent입니다. AARO의 마이크로 앱, 교육 프로그램, 제품에 대해 궁금한 점을 물어보세요.';
+        const welcome = '안녕하세요! aaro agent입니다. aaro의 마이크로 앱, 교육 프로그램, 제품에 대해 궁금한 점을 물어보세요.';
         addMsg(welcome, 'agent');
         history.push({ role: 'assistant', content: welcome });
         save();

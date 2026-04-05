@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 const SYSTEM_PROMPT = `You are the AARO Agent, a friendly assistant on the AARO website (aaro.app).
 
 ABOUT AARO:
@@ -76,10 +78,7 @@ export default async function handler(req, res) {
   if (supabaseUrl && supabaseKey) {
     try {
       const ip = (req.headers['x-forwarded-for'] || '127.0.0.1').split(',')[0].trim();
-      const encoder = new TextEncoder();
-      const data = encoder.encode(ip + (process.env.RATE_LIMIT_SALT || 'aaro'));
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      var ipHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+      var ipHash = createHash('sha256').update(ip + (process.env.RATE_LIMIT_SALT || 'aaro')).digest('hex');
 
       const countRes = await fetch(
         `${supabaseUrl}/rest/v1/chat_logs?select=id&ip_hash=eq.${ipHash}&created_at=gte.${new Date(Date.now() - 60000).toISOString()}`,
