@@ -769,6 +769,63 @@
       margin-top: 52px; letter-spacing: .1em;
     }
 
+    /* ── APP BUBBLE OVERLAY ── */
+    .app-bubble-overlay {
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(0,0,0,0);
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+      transition: background 0.4s;
+    }
+    .app-bubble-overlay.visible {
+      background: rgba(0,0,0,0.7);
+      pointer-events: auto;
+      backdrop-filter: blur(8px);
+    }
+    .app-bubble {
+      background: var(--ink-90);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 32px;
+      padding: 60px 80px;
+      text-align: center;
+      transform: scale(0.6);
+      opacity: 0;
+      transition: transform 0.5s var(--ease), opacity 0.4s;
+    }
+    .app-bubble-overlay.visible .app-bubble {
+      transform: scale(1);
+      opacity: 1;
+    }
+    .app-bubble__icon {
+      width: 96px; height: 96px; margin: 0 auto 24px;
+      border-radius: 24px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .app-bubble__icon svg {
+      width: 48px; height: 48px; fill: var(--cream); stroke: none;
+    }
+    .app-bubble__name {
+      font-size: 28px; font-weight: 800; color: var(--cream);
+      letter-spacing: -0.02em; margin-bottom: 8px;
+    }
+    .app-bubble__cat {
+      font-family: var(--mono); font-size: 11px; letter-spacing: .15em;
+      text-transform: uppercase; color: var(--ink-40);
+      display: block; margin-bottom: 28px;
+    }
+    .app-bubble__link {
+      font-family: var(--mono); font-size: 13px; letter-spacing: .08em;
+      color: var(--accent); text-decoration: none;
+      padding: 12px 28px; border: 1px solid var(--accent);
+      border-radius: 8px; transition: all 0.3s;
+      display: inline-block;
+    }
+    .app-bubble__link:hover {
+      background: var(--accent); color: var(--ink);
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 1024px) {
       .s-manifesto { grid-template-columns: 1fr; }
@@ -1111,11 +1168,8 @@
     }
 
     function createMarqueeTile(app) {
-      const a = document.createElement('a');
+      const a = document.createElement('div');
       a.className = 'm-tile';
-      a.href = app.u;
-      a.target = '_blank';
-      a.rel = 'noopener';
       a.innerHTML = `
         <div class="m-tile__card">
           <div class="m-tile__preview">
@@ -1151,7 +1205,41 @@
         card.style.transform = '';
       });
 
+      // Click: show landing bubble
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        showAppBubble(app);
+      });
+
       return a;
+    }
+
+    // App landing bubble overlay
+    function showAppBubble(app) {
+      let overlay = document.getElementById('appBubbleOverlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'appBubbleOverlay';
+        overlay.className = 'app-bubble-overlay';
+        document.body.appendChild(overlay);
+      }
+      overlay.innerHTML = `
+        <div class="app-bubble">
+          <div class="app-bubble__icon">
+            <svg viewBox="0 0 40 40"><path d="${app.p}"/></svg>
+          </div>
+          <h3 class="app-bubble__name">${app.n}</h3>
+          <span class="app-bubble__cat">${app.c}</span>
+          <a class="app-bubble__link" href="${app.u}" target="_blank" rel="noopener">앱 열기 &nearr;</a>
+        </div>
+      `;
+      requestAnimationFrame(() => overlay.classList.add('visible'));
+      overlay.addEventListener('click', e => {
+        if (e.target === overlay) {
+          overlay.classList.remove('visible');
+          setTimeout(() => { overlay.innerHTML = ''; }, 400);
+        }
+      });
     }
 
     // Build marquee rows
@@ -2234,8 +2322,39 @@
       }, { passive: false });
       canvas.addEventListener('touchend', () => { dragIdx = -1; });
 
-      resize(); draw();
-      window.addEventListener('resize', () => { resize(); draw(); });
+      // Store original positions for drift bounds
+      const origVerts = verts.map(v => ({ x: v.x, y: v.y }));
+      const driftTargets = verts.map(() => ({ dx: 0, dy: 0 }));
+      const DRIFT_RANGE = 0.04; // max drift from original position
+      const DRIFT_SPEED = 0.003; // lerp speed
+
+      function pickNewTarget(i) {
+        driftTargets[i].dx = (Math.random() - 0.5) * DRIFT_RANGE * 2;
+        driftTargets[i].dy = (Math.random() - 0.5) * DRIFT_RANGE * 2;
+      }
+      verts.forEach((_, i) => pickNewTarget(i));
+
+      function animateGL() {
+        // Only drift when not dragging
+        if (dragIdx < 0) {
+          verts.forEach((v, i) => {
+            const tx = origVerts[i].x + driftTargets[i].dx;
+            const ty = origVerts[i].y + driftTargets[i].dy;
+            v.x += (tx - v.x) * DRIFT_SPEED;
+            v.y += (ty - v.y) * DRIFT_SPEED;
+            // Pick new target when close enough
+            if (Math.abs(v.x - tx) < 0.002 && Math.abs(v.y - ty) < 0.002) {
+              pickNewTarget(i);
+            }
+          });
+        }
+        draw();
+        requestAnimationFrame(animateGL);
+      }
+
+      resize();
+      requestAnimationFrame(animateGL);
+      window.addEventListener('resize', () => { resize(); });
     })();
 
 
