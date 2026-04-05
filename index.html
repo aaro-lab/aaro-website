@@ -2769,7 +2769,7 @@
         EDGE_TARGET = 150 * Math.max(scale, 0.4);
         HUB_TARGET = 320 * Math.max(scale, 0.4);
         // Scale node radii
-        const rScale = Math.max(scale, 0.55);
+        const rScale = Math.max(scale, W < 768 ? 0.35 : 0.55);
         nodes.forEach((n, i) => { n.r = ALL_NODES[i].r * rScale; });
       }
 
