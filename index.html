@@ -1329,30 +1329,15 @@
           <iframe class="app-bubble__iframe" src="${app.u}" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe>
         </div>
       `;
-      // Hide fallback when iframe loads successfully
+      // Hide fallback when iframe loads
       const iframe = overlay.querySelector('.app-bubble__iframe');
       const fallback = overlay.querySelector('.app-bubble__fallback');
       if (iframe) {
-        iframe.addEventListener('load', () => {
-          try {
-            // Check if iframe actually loaded content (not blocked)
-            if (iframe.contentDocument && iframe.contentDocument.body && iframe.contentDocument.body.innerHTML.length > 0) {
-              fallback.style.display = 'none';
-            }
-          } catch (e) {
-            // Cross-origin — iframe loaded but we can't access it, that's OK
-            fallback.style.display = 'none';
-          }
-        });
-        iframe.addEventListener('error', () => {
-          // Keep fallback visible
-        });
-        // Timeout fallback — if iframe doesn't load in 5s, keep "COMING SOON"
+        iframe.addEventListener('load', () => { fallback.style.display = 'none'; });
+        // Timeout: if iframe doesn't fire load in 8s, keep COMING SOON
         setTimeout(() => {
-          if (fallback.style.display !== 'none') {
-            iframe.style.display = 'none';
-          }
-        }, 5000);
+          if (fallback.style.display !== 'none') iframe.style.display = 'none';
+        }, 8000);
       }
       requestAnimationFrame(() => overlay.classList.add('visible'));
       const close = () => {
@@ -1412,11 +1397,8 @@
       const iframe = overlay.querySelector('.node-bubble__iframe');
       const fallback = overlay.querySelector('.node-bubble__fallback');
       if (iframe && fallback) {
-        iframe.addEventListener('load', () => {
-          try { if (iframe.contentDocument) fallback.style.display = 'none'; }
-          catch(e) { fallback.style.display = 'none'; }
-        });
-        setTimeout(() => { if (fallback.style.display !== 'none') iframe.style.display = 'none'; }, 5000);
+        iframe.addEventListener('load', () => { fallback.style.display = 'none'; });
+        setTimeout(() => { if (fallback.style.display !== 'none') iframe.style.display = 'none'; }, 8000);
       }
 
       const close = () => {
@@ -1977,7 +1959,8 @@
           const moved = Math.hypot(mx - mouseDownPos.x, my - mouseDownPos.y);
           // Click = short press + little movement
           if (elapsed < 300 && moved < 5 && dragNode.u) {
-            showNodeBubble(dragNode, e.clientX, e.clientY);
+            const appData = APPS.find(a => a.u === dragNode.u);
+            if (appData) showAppBubble(appData); else showNodeBubble(dragNode, e.clientX, e.clientY);
           }
           dragNode.fx = null; dragNode.fy = null;
           dragNode = null;
@@ -2016,7 +1999,7 @@
       canvas.addEventListener('touchend', e => {
         if (dragNode) {
           const elapsed = Date.now()-touchStartTime;
-          if (elapsed < 300 && dragNode.u) { const t = e.changedTouches[0]; showNodeBubble(dragNode, t.clientX, t.clientY); }
+          if (elapsed < 300 && dragNode.u) { const appData = APPS.find(a => a.u === dragNode.u); if (appData) showAppBubble(appData); else { const t = e.changedTouches[0]; showNodeBubble(dragNode, t.clientX, t.clientY); } }
           dragNode.fx=null; dragNode.fy=null; dragNode=null;
         }
       });
