@@ -221,25 +221,23 @@
     /* Cover grid lines — hidden */
     .cover-grid { display: none; }
 
-    /* Ground Level Demo */
-    .gl-demo {
+    /* Cover Graph */
+    .cover-graph {
       position: absolute; right: calc(clamp(32px,5vw,80px) - 40px);
       bottom: clamp(48px, 6vh, 80px);
       width: clamp(280px, 30vw, 440px);
       z-index: 5;
     }
-    .gl-demo canvas {
+    .cover-graph canvas {
       width: 100%; height: 100%; display: block;
-      cursor: grab;
     }
-    .gl-demo canvas:active { cursor: grabbing; }
     @media (max-width: 1024px) {
       .s-cover {
         justify-content: center; align-items: center;
         padding: 80px 24px 40px;
       }
       .s-cover__title { margin-bottom: 12px; text-align: center; }
-      .gl-demo {
+      .cover-graph {
         position: relative; top: auto; right: auto; bottom: auto;
         transform: none;
         width: 85vw; height: 35vh;
@@ -1058,7 +1056,7 @@
       .s-cover__sub { font-size: 10px; letter-spacing: 0.08em; }
       .s-cover__scroll { display: none; }
       .t-mega { font-size: clamp(2.4rem, 10vw, 3.5rem); }
-      .gl-demo { width: 90vw; height: 30vh; }
+      .cover-graph { width: 90vw; height: 30vh; }
       .s-mani__text { font-size: clamp(1.4rem, 5vw, 1.8rem); }
       .s-mani__l, .s-mani__r { padding: 32px 20px; }
       .s-mani__kr { font-size: 14px; }
@@ -1132,8 +1130,8 @@
     <div class="s-cover__sub rv rv-d2">
       <span class="tick" data-text="SEOUL, 2026 -- DESIGN LAB & ACADEMY">SEOUL, 2026 -- DESIGN LAB & ACADEMY</span>
     </div>
-    <div class="gl-demo" id="glDemo">
-      <canvas id="glCanvas"></canvas>
+    <div class="cover-graph" id="coverGraph">
+      <canvas id="coverCanvas"></canvas>
     </div>
     <div class="s-cover__scroll"><div class="scroll-bar"></div> Scroll</div>
   </section>
@@ -2152,22 +2150,21 @@
       if (e.key === 'ArrowUp' && cur > 0) { e.preventDefault(); ss[cur - 1].scrollIntoView({ behavior: 'smooth' }); }
     });
 
-    // ── Ground Level Demo ──
-    (function initGLDemo() {
-      const canvas = document.getElementById('glCanvas');
-      const metricsEl = document.getElementById('glMetrics');
-      const glDemo = document.getElementById('glDemo');
+    // ── Cover Graph ──
+    (function initCoverGraph() {
+      const canvas = document.getElementById('coverCanvas');
+      const coverGraph = document.getElementById('coverGraph');
       const coverTitle = document.getElementById('coverTitle');
       if (!canvas) return;
 
-      // Sync gl-demo height: from title top to subtitle bottom
+      // Sync cover-graph height: from title top to subtitle bottom
       const coverSub = document.querySelector('.s-cover__sub');
       function syncHeight() {
-        if (coverTitle && glDemo) {
+        if (coverTitle && coverGraph && window.innerWidth > 1024) {
           const titleTop = coverTitle.getBoundingClientRect().top;
           const bottomEl = coverSub || coverTitle;
           const bottomY = bottomEl.getBoundingClientRect().bottom;
-          glDemo.style.height = (bottomY - titleTop - 40) + 'px';
+          coverGraph.style.height = (bottomY - titleTop - 40) + 'px';
         }
       }
       syncHeight();
@@ -2175,485 +2172,397 @@
       const ctx = canvas.getContext('2d');
       const dpr = window.devicePixelRatio || 1;
 
-      // Polygon vertices with FH (floor height) values
-      // Normalized coords 0-1, will scale to canvas
-      const verts = [
-        { x: 0.20, y: 0.12, fh: 8.0, label: 'A' },
-        { x: 0.15, y: 0.50, fh: 3.0, label: 'B' },
-        { x: 0.30, y: 0.78, fh: 7.0, label: 'C' },
-        { x: 0.65, y: 0.75, fh: 0.0, label: 'D' },
-        { x: 0.75, y: 0.38, fh: 1.0, label: 'E' },
-        { x: 0.58, y: 0.10, fh: 9.0, label: 'F' },
+      // Node data (duplicated from agent graph for independent cover instance)
+      const COVER_APPS = [
+        { n: "Circle Packing", ini: "CP", c: "Generation", r: 30 },
+        { n: "Floor Plan AI", ini: "FP", c: "Generation", r: 30 },
+        { n: "Solar Analysis", ini: "SA", c: "Simulation", r: 30 },
+        { n: "Structure Check", ini: "SC", c: "Evaluation", r: 30 },
+        { n: "Cost Estimator", ini: "CE", c: "Evaluation", r: 30 },
+        { n: "Circulation", ini: "CI", c: "Optimization", r: 30 },
+        { n: "Site Context", ini: "SX", c: "Evaluation", r: 30 },
+        { n: "BIM Export", ini: "BX", c: "Dashboard", r: 30 },
+        { n: "Regulation DB", ini: "RD", c: "Evaluation", r: 30 },
+        { n: "Setback Calc", ini: "SB", c: "Generation", r: 30 },
+        { n: "Daylight Sim", ini: "DS", c: "Simulation", r: 30 },
+        { n: "Wind Flow", ini: "WF", c: "Simulation", r: 30 },
+        { n: "View Analysis", ini: "VA", c: "Evaluation", r: 30 },
+        { n: "Noise Map", ini: "NM", c: "Simulation", r: 30 },
+        { n: "GFA Calc", ini: "GF", c: "Evaluation", r: 30 },
+        { n: "MEP Route", ini: "ME", c: "Optimization", r: 30 },
+        { n: "Elevation Gen", ini: "EG", c: "Generation", r: 30 },
+        { n: "Section Cut", ini: "ST", c: "Generation", r: 30 },
+        { n: "Area Table", ini: "AT", c: "Evaluation", r: 30 },
+        { n: "Landscape AI", ini: "LA", c: "Optimization", r: 30 },
+        { n: "Road Network", ini: "RN", c: "Planning", r: 30 },
+        { n: "Skyline Check", ini: "SK", c: "Simulation", r: 30 },
+        { n: "Fire Escape", ini: "FE", c: "Evaluation", r: 30 },
+        { n: "Density Map", ini: "DM", c: "Evaluation", r: 30 },
       ];
 
-      let W, H, planH, secH;
-      const PLAN_RATIO = 0.55; // plan takes 55% of height
-      let dragIdx = -1;
-      let hovIdx = -1;
+      const COVER_ALL_NODES = [
+        { id: 'W', n: 'World Agent', ini: 'WA', c: 'Master', r: 76, isCenter: true },
+        ...COVER_APPS.map((a, i) => ({ id: 'a' + i, ...a })),
+      ];
+
+      const COVER_EDGES = [
+        [1,21],[1,10],[2,3],[3,4],[5,6],[5,11],[7,8],[8,22],[9,10],[10,14],
+        [11,12],[13,14],[15,16],[17,18],[19,20],[21,22],[23,24],[4,15],[6,21],
+        [3,19],[7,23],[12,13],[16,17],[9,24],[20,22],[8,11],[2,7],[14,19],
+        [1,5],[4,21],[6,14],[10,22],[3,8],[15,24],[11,17],[2,20],[9,13],
+      ];
+
+      const CAT_COLORS = {
+        'Master':'#C4773C','Generation':'#C4773C','Evaluation':'#4682B4',
+        'Optimization':'#4C9900','Planning':'#9966CC','Simulation':'#C85050','Dashboard':'#6B6B6B',
+      };
+
+      const nodes = [];
+      let W, H, centerX, centerY;
 
       function resize() {
         const rect = canvas.parentElement.getBoundingClientRect();
-        W = rect.width; H = rect.height;
+        W = rect.width; H = canvas.offsetHeight || rect.height || 400;
         canvas.width = W * dpr; canvas.height = H * dpr;
         canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        planH = H * PLAN_RATIO;
-        secH = H * (1 - PLAN_RATIO);
+        centerX = W * 0.5; centerY = H * 0.5;
+        const scale = Math.min(W, H) / 900;
+        EDGE_TARGET = 100 * Math.max(scale, 0.4);
+        HUB_TARGET = 220 * Math.max(scale, 0.4);
+        const rScale = Math.max(scale, 0.45);
+        nodes.forEach((n, i) => { n.r = COVER_ALL_NODES[i].r * rScale; });
       }
 
-      function toCanvas(v) { return { x: v.x * W, y: v.y * planH }; }
-      function fromCanvas(cx, cy) { return { x: cx / W, y: cy / planH }; }
-
-      function edgeLen(a, b) {
-        const dx = (a.x - b.x) * W, dy = (a.y - b.y) * planH;
-        return Math.sqrt(dx * dx + dy * dy);
-      }
-
-      function calcMetrics() {
-        let perimeter = 0, area = 0, wSum = 0;
-        const n = verts.length;
-        for (let i = 0; i < n; i++) {
-          const j = (i + 1) % n;
-          const len = edgeLen(verts[i], verts[j]);
-          perimeter += len;
-          // Shoelace for area
-          const ax = verts[i].x * W, ay = verts[i].y * planH;
-          const bx = verts[j].x * W, by = verts[j].y * planH;
-          area += ax * by - bx * ay;
-          // Weighted height: average FH of edge endpoints * edge length
-          const avgH = (verts[i].fh + verts[j].fh) / 2;
-          wSum += avgH * len;
-        }
-        area = Math.abs(area) / 2;
-        const hMin = Math.min(...verts.map(v => v.fh));
-        const hMax = Math.max(...verts.map(v => v.fh));
-        // Scale to reasonable m² (1px ≈ 0.05m)
-        const scale = 0.05;
-        const perimM = perimeter * scale;
-        // Section area (trapezoid sum along unfolded perimeter above h_min)
-        let secArea = 0;
-        for (let i = 0; i < n; i++) {
-          const j = (i + 1) % n;
-          const len = edgeLen(verts[i], verts[j]) * scale;
-          const h1 = verts[i].fh - hMin, h2 = verts[j].fh - hMin;
-          secArea += (h1 + h2) / 2 * len;
-        }
-        // Weighted Ground Level: h_min + sectionArea / perimeter
-        const hWeighted = perimM > 0 ? hMin + secArea / perimM : hMin;
-        return {
-          area: area * scale * scale,
-          perimeter: perimM,
-          secArea,
-          hWeighted,
-          hMin,
-          hMax
-        };
-      }
-
-      // Get plan coordinate from cumulative section distance
-      function getPlanFromSecX(targetX) {
-        let cumDist = 0;
-        const n = verts.length;
-        for (let i = 0; i < n; i++) {
-          const j = (i + 1) % n;
-          const eLen = edgeLen(verts[i], verts[j]);
-          if (targetX <= cumDist + eLen + 1e-6) {
-            const t = eLen > 0 ? Math.min(1, (targetX - cumDist) / eLen) : 0;
-            return {
-              x: verts[i].x + t * (verts[j].x - verts[i].x),
-              y: verts[i].y + t * (verts[j].y - verts[i].y)
-            };
+      function initNodes() {
+        nodes.length = 0;
+        COVER_ALL_NODES.forEach((nd, i) => {
+          if (i === 0) {
+            nodes.push({ ...nd, idx: i, x: centerX, y: centerY, vx: 0, vy: 0, fx: null, fy: null });
+          } else {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 60 + Math.random() * 180;
+            nodes.push({
+              ...nd, idx: i,
+              x: centerX + Math.cos(angle) * dist,
+              y: centerY + Math.sin(angle) * dist,
+              vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2,
+              fx: null, fy: null
+            });
           }
-          cumDist += eLen;
-        }
-        return null;
+        });
       }
 
-      // Compute 3m boundary intersections with section profile
-      function compute3mBoundaries(m) {
-        const n = verts.length;
-        const heightDiff = m.hMax - m.hMin;
-        if (heightDiff <= 3) return { boundaries: [], intersections: [] };
+      const REPULSION = 4000;
+      const EDGE_ATTRACTION = 0.002;
+      let EDGE_TARGET = 100;
+      const HUB_PULL = 0.002;
+      let HUB_TARGET = 220;
+      const DAMPING = 0.84;
+      let alpha = 1.0;
+      let frame = 0;
 
-        // Generate boundary heights at 3m intervals
-        const boundaries = [];
-        for (let h = m.hMin + 3; h < m.hMax; h += 3) boundaries.push(h);
+      function simulate() {
+        alpha = Math.max(alpha * 0.998, 0.008);
+        frame++;
 
-        // Build section points with cumulative distance
-        const secPts = [];
-        let cumDist = 0;
-        for (let i = 0; i <= n; i++) {
-          const idx = i % n;
-          secPts.push({ x: cumDist, fh: verts[idx].fh });
-          if (i < n) {
-            const j = (i + 1) % n;
-            cumDist += edgeLen(verts[i], verts[j]);
+        for (let i = 0; i < nodes.length; i++) {
+          const a = nodes[i];
+          if (a.fx !== null) { a.x = a.fx; a.y = a.fy; a.vx = 0; a.vy = 0; continue; }
+
+          for (let j = i + 1; j < nodes.length; j++) {
+            const b = nodes[j];
+            let dx = a.x - b.x, dy = a.y - b.y;
+            let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const minD = a.r + b.r + 10;
+            if (dist < minD) dist = minD;
+            const f = (REPULSION * alpha) / (dist * dist);
+            const fx = (dx / dist) * f, fy = (dy / dist) * f;
+            a.vx += fx; a.vy += fy;
+            if (b.fx === null) { b.vx -= fx; b.vy -= fy; }
           }
-        }
 
-        // Find intersections for each boundary
-        const intersections = [];
-        for (const bh of boundaries) {
-          const pts = [];
-          for (let i = 0; i < secPts.length - 1; i++) {
-            const h1 = secPts[i].fh, h2 = secPts[i + 1].fh;
-            if (h1 === h2) continue;
-            if ((h1 < bh && h2 >= bh) || (h1 > bh && h2 <= bh)) {
-              const t = (bh - h1) / (h2 - h1);
-              const secX = secPts[i].x + t * (secPts[i + 1].x - secPts[i].x);
-              const planPt = getPlanFromSecX(secX);
-              if (planPt) pts.push({ secX, ...planPt });
+          if (!a.isCenter) {
+            const w = nodes[0];
+            let dx = w.x - a.x, dy = w.y - a.y;
+            let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const pull = (dist - HUB_TARGET) * HUB_PULL * alpha;
+            a.vx += (dx / dist) * pull; a.vy += (dy / dist) * pull;
+            if (dist < 80) {
+              const push = (80 - dist) * 0.05;
+              a.vx -= (dx / dist) * push; a.vy -= (dy / dist) * push;
             }
           }
-          intersections.push({ height: bh, points: pts });
+
+          if (a.isCenter) {
+            a.vx += (centerX - a.x) * 0.01;
+            a.vy += (centerY - a.y) * 0.01;
+          }
         }
-        return { boundaries, intersections };
+
+        for (const [ai, bi] of COVER_EDGES) {
+          if (ai >= nodes.length || bi >= nodes.length) continue;
+          const a = nodes[ai], b = nodes[bi];
+          let dx = b.x - a.x, dy = b.y - a.y;
+          let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const pull = (dist - EDGE_TARGET) * EDGE_ATTRACTION * alpha;
+          const fx = (dx / dist) * pull, fy = (dy / dist) * pull;
+          if (a.fx === null) { a.vx += fx; a.vy += fy; }
+          if (b.fx === null) { b.vx -= fx; b.vy -= fy; }
+        }
+
+        for (const a of nodes) {
+          if (a.fx !== null) continue;
+          if (!a.isCenter) {
+            a.vx += (Math.random() - 0.5) * 0.35;
+            a.vy += (Math.random() - 0.5) * 0.35;
+          }
+          a.vx *= DAMPING; a.vy *= DAMPING;
+          a.x += a.vx; a.y += a.vy;
+          a.x = Math.max(a.r + 4, Math.min(W - a.r - 4, a.x));
+          a.y = Math.max(a.r + 4, Math.min(H - a.r - 4, a.y));
+        }
       }
+
+      const packets = [];
+      function spawnPacket() {
+        if (nodes.length < 2) return;
+        const edge = COVER_EDGES[Math.floor(Math.random() * COVER_EDGES.length)];
+        if (!edge || edge[0] >= nodes.length || edge[1] >= nodes.length) return;
+        const dir = Math.random() > 0.5;
+        packets.push({ from: nodes[dir ? edge[0] : edge[1]], to: nodes[dir ? edge[1] : edge[0]], t: 0, dur: 1500 + Math.random() * 1000 });
+      }
+
+      let hoveredNode = null;
+      let dragNode = null;
+      let dragOffset = { x: 0, y: 0 };
+      let mouseDownTime = 0;
+      let mouseDownPos = { x: 0, y: 0 };
 
       function draw() {
         ctx.clearRect(0, 0, W, H);
-        const m = calcMetrics();
-        const n = verts.length;
-        const b3m = compute3mBoundaries(m);
 
-        // ─── PLAN VIEW ───
-        ctx.save();
-        // Section label
-        ctx.font = `500 9px 'IBM Plex Mono', monospace`;
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
-        ctx.fillText('PLAN VIEW', 8, 14);
-
-        // Fill polygon
-        ctx.beginPath();
-        verts.forEach((v, i) => {
-          const p = toCanvas(v);
-          i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
-        });
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(255,255,255,0.03)';
-        ctx.fill();
-
-        // Edges with lengths
-        for (let i = 0; i < n; i++) {
-          const j = (i + 1) % n;
-          const a = toCanvas(verts[i]), b = toCanvas(verts[j]);
-          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-          ctx.lineWidth = 1; ctx.stroke();
-          // Edge length label
-          const len = edgeLen(verts[i], verts[j]) * 0.05;
-          const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-          ctx.font = `400 9px 'IBM Plex Mono', monospace`;
-          ctx.fillStyle = 'rgba(255,255,255,0.35)';
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          // Offset label perpendicular to edge
-          const dx = b.x - a.x, dy = b.y - a.y;
-          const nl = Math.sqrt(dx*dx+dy*dy) || 1;
-          ctx.fillText(len.toFixed(2), mx + (-dy/nl)*14, my + (dx/nl)*14);
-        }
-
-        // 3m contour lines on plan view (red dashed)
-        if (b3m.intersections.length) {
-          ctx.save();
-          ctx.setLineDash([4, 3]);
-          ctx.strokeStyle = 'rgba(196,119,60,0.5)';
-          ctx.lineWidth = 1;
-          for (const inter of b3m.intersections) {
-            if (inter.points.length >= 2) {
-              ctx.beginPath();
-              inter.points.forEach((pt, i) => {
-                const px = pt.x * W, py = pt.y * planH;
-                i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-              });
-              ctx.stroke();
-              // Label at first point
-              const fp = inter.points[0];
-              ctx.font = `400 8px 'IBM Plex Mono', monospace`;
-              ctx.fillStyle = 'rgba(196,119,60,0.5)';
-              ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-              ctx.fillText(inter.height.toFixed(1) + 'm', fp.x * W + 4, fp.y * planH - 4);
-            }
-            // Draw intersection dots
-            for (const pt of inter.points) {
-              ctx.beginPath(); ctx.arc(pt.x * W, pt.y * planH, 3, 0, Math.PI * 2);
-              ctx.fillStyle = 'rgba(196,119,60,0.5)'; ctx.fill();
-            }
-          }
-          ctx.setLineDash([]);
-          ctx.restore();
-        }
-
-        // Area in center
-        const cx = verts.reduce((s, v) => s + v.x, 0) / n * W;
-        const cy = verts.reduce((s, v) => s + v.y, 0) / n * planH;
-        ctx.font = `600 14px 'IBM Plex Mono', monospace`;
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(m.area.toFixed(2) + ' m²', cx, cy);
-
-        // Vertices
-        for (let i = 0; i < n; i++) {
-          const p = toCanvas(verts[i]);
-          const isHov = hovIdx === i;
-          const isDrag = dragIdx === i;
-          // Dot
-          ctx.beginPath(); ctx.arc(p.x, p.y, isHov || isDrag ? 7 : 5, 0, Math.PI * 2);
-          ctx.fillStyle = isDrag ? '#C4773C' : isHov ? '#E8944A' : '#fff';
-          ctx.fill();
-          // Label
-          ctx.font = `700 12px 'DM Sans', sans-serif`;
-          ctx.fillStyle = '#fff';
-          ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-          ctx.fillText(verts[i].label, p.x, p.y - 12);
-          // FH value
-          ctx.font = `400 10px 'IBM Plex Mono', monospace`;
-          ctx.fillStyle = 'rgba(255,255,255,0.5)';
-          ctx.textBaseline = 'top';
-          ctx.fillText('FH:' + verts[i].fh.toFixed(2), p.x, p.y + 10);
-        }
-        ctx.restore();
-
-        // ─── DIVIDER ───
-        ctx.beginPath();
-        ctx.moveTo(0, planH); ctx.lineTo(W, planH);
-        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-        ctx.lineWidth = 1; ctx.stroke();
-        // Section label
-        ctx.font = `500 9px 'IBM Plex Mono', monospace`;
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
-        ctx.fillText('SECTION VIEW', 8, planH + 14);
-
-        // ─── SECTION VIEW ───
-        ctx.save();
-        ctx.translate(0, planH);
-        const padL = 40, padR = 20, padT = 30, padB = 36;
-        const sW = W - padL - padR;
-        const sH = secH - padT - padB;
-        const maxFH = Math.max(...verts.map(v => v.fh), 1);
-
-        // Build unfolded perimeter points
-        const secPts = [];
-        let cumDist = 0;
-        let totalPerim = 0;
-        for (let i = 0; i < n; i++) {
-          const j = (i + 1) % n;
-          totalPerim += edgeLen(verts[i], verts[j]);
-        }
-        cumDist = 0;
-        for (let i = 0; i <= n; i++) {
-          const idx = i % n;
-          const sx = padL + (cumDist / totalPerim) * sW;
-          const sy = padT + sH - (verts[idx].fh / maxFH) * sH * 0.85;
-          secPts.push({ x: sx, y: sy, label: verts[idx].label, fh: verts[idx].fh });
-          if (i < n) {
-            const j = (i + 1) % n;
-            cumDist += edgeLen(verts[i], verts[j]);
-          }
-        }
-
-        // Height grid lines every 1m
-        ctx.font = `400 8px 'IBM Plex Mono', monospace`;
-        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-        for (let h = 0; h <= maxFH; h += 1) {
-          const gy = padT + sH - (h / maxFH) * sH * 0.85;
-          ctx.beginPath();
-          ctx.moveTo(padL, gy); ctx.lineTo(padL + sW, gy);
-          ctx.strokeStyle = h === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)';
-          ctx.lineWidth = h === 0 ? 0.5 : 0.3;
+        const w = nodes[0];
+        if (!w) return;
+        const worldHovered = hoveredNode === w;
+        for (let i = 1; i < nodes.length; i++) {
+          const n = nodes[i];
+          const dist = Math.hypot(w.x - n.x, w.y - n.y);
+          const proximity = Math.max(0.04, Math.min(0.35, 1 - dist / 400));
+          const isHL = hoveredNode === n || worldHovered;
+          ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(n.x, n.y);
+          ctx.strokeStyle = isHL ? 'rgba(196,119,60,0.45)' : `rgba(196,119,60,${proximity})`;
+          ctx.lineWidth = isHL ? 1.5 : Math.max(0.3, 1.2 - dist / 400);
           ctx.stroke();
-          ctx.fillStyle = 'rgba(255,255,255,0.25)';
-          ctx.fillText(h.toFixed(1), padL - 6, gy);
+        }
+        for (const [ai, bi] of COVER_EDGES) {
+          if (ai >= nodes.length || bi >= nodes.length) continue;
+          const a = nodes[ai], b = nodes[bi];
+          const isHL = hoveredNode && (hoveredNode === a || hoveredNode === b);
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+          ctx.strokeStyle = isHL ? 'rgba(196,119,60,0.4)' : 'rgba(255,255,255,0.06)';
+          ctx.lineWidth = isHL ? 1.2 : 0.5;
+          ctx.stroke();
         }
 
-        // 3m boundary lines in section view (red dashed)
-        if (b3m.boundaries.length) {
+        for (const pk of packets) {
+          const p = pk.t / pk.dur;
+          const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+          const px = pk.from.x + (pk.to.x - pk.from.x) * ease;
+          const py = pk.from.y + (pk.to.y - pk.from.y) * ease;
+          const op = p < 0.1 ? p * 10 : p > 0.9 ? (1 - p) * 10 : 0.6;
+          ctx.beginPath(); ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(196,119,60,${op})`; ctx.fill();
+        }
+
+        for (let i = 1; i < nodes.length; i++) {
+          const n = nodes[i];
+          const s = n.r * 2;
+          const rad = s * 0.3;
+          const col = CAT_COLORS[n.c] || '#888';
+          const isHov = hoveredNode === n;
+          const isDrag = dragNode === n;
+
           ctx.save();
-          ctx.setLineDash([5, 3]);
-          ctx.strokeStyle = 'rgba(196,119,60,0.5)';
-          ctx.lineWidth = 0.8;
-          for (const bh of b3m.boundaries) {
-            const by = padT + sH - (bh / maxFH) * sH * 0.85;
+          ctx.beginPath();
+          ctx.moveTo(n.x - s / 2 + rad, n.y - s / 2);
+          ctx.arcTo(n.x + s / 2, n.y - s / 2, n.x + s / 2, n.y + s / 2, rad);
+          ctx.arcTo(n.x + s / 2, n.y + s / 2, n.x - s / 2, n.y + s / 2, rad);
+          ctx.arcTo(n.x - s / 2, n.y + s / 2, n.x - s / 2, n.y - s / 2, rad);
+          ctx.arcTo(n.x - s / 2, n.y - s / 2, n.x + s / 2, n.y - s / 2, rad);
+          ctx.closePath();
+          if (isHov || isDrag) { ctx.shadowColor = col; ctx.shadowBlur = 16; }
+          ctx.fillStyle = isHov ? '#2A2A26' : '#1A1A18';
+          ctx.fill();
+          ctx.strokeStyle = isHov ? col : 'rgba(255,255,255,0.06)';
+          ctx.lineWidth = isHov ? 1.5 : 0.5;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = isHov ? '#fff' : 'rgba(255,255,255,0.45)';
+          ctx.font = `700 ${Math.max(10, s * 0.32)}px 'DM Sans', sans-serif`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(n.ini, n.x, n.y);
+
+          if (isHov) {
+            const name = n.n;
+            ctx.font = `600 12px 'DM Sans', sans-serif`;
+            const tw = ctx.measureText(name).width;
+            const bx = n.x, by = n.y - s / 2 - 22;
+            const bw = tw + 20, bh = 26;
             ctx.beginPath();
-            ctx.moveTo(padL, by); ctx.lineTo(padL + sW, by);
-            ctx.stroke();
-            // Label
-            ctx.font = `500 8px 'IBM Plex Mono', monospace`;
-            ctx.fillStyle = 'rgba(196,119,60,0.5)';
-            ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-            ctx.fillText(bh.toFixed(1) + 'm', padL + sW + 4, by + 3);
+            const br = 8;
+            ctx.moveTo(bx - bw / 2 + br, by - bh / 2);
+            ctx.arcTo(bx + bw / 2, by - bh / 2, bx + bw / 2, by + bh / 2, br);
+            ctx.arcTo(bx + bw / 2, by + bh / 2, bx - bw / 2, by + bh / 2, br);
+            ctx.arcTo(bx - bw / 2, by + bh / 2, bx - bw / 2, by - bh / 2, br);
+            ctx.arcTo(bx - bw / 2, by - bh / 2, bx + bw / 2, by - bh / 2, br);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 0.5; ctx.stroke();
+            ctx.fillStyle = '#111';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(name, bx, by);
           }
-          // Draw intersection dots on section
-          for (const inter of b3m.intersections) {
-            const by = padT + sH - (inter.height / maxFH) * sH * 0.85;
-            for (const pt of inter.points) {
-              const sx = padL + (pt.secX / totalPerim) * sW;
-              ctx.beginPath(); ctx.arc(sx, by, 3, 0, Math.PI * 2);
-              ctx.fillStyle = 'rgba(196,119,60,0.5)'; ctx.fill();
-            }
-          }
-          ctx.setLineDash([]);
           ctx.restore();
         }
 
-        // Hatched area under section
-        ctx.beginPath();
-        ctx.moveTo(secPts[0].x, padT + sH);
-        secPts.forEach(p => ctx.lineTo(p.x, p.y));
-        ctx.lineTo(secPts[secPts.length - 1].x, padT + sH);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(255,255,255,0.03)';
-        ctx.fill();
-        // Hatch lines
+        // World Agent node
         ctx.save();
-        ctx.clip();
-        for (let hx = padL; hx < padL + sW; hx += 8) {
-          ctx.beginPath();
-          ctx.moveTo(hx, padT); ctx.lineTo(hx - 30, padT + sH + 10);
-          ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-          ctx.lineWidth = 0.5; ctx.stroke();
-        }
-        ctx.restore();
-
-        // Section profile line
+        const wH = hoveredNode === w;
+        const ws = w.r * 2;
+        const wRad = ws * 0.3;
+        const glowS = ws + 120;
+        const glowGrad = ctx.createRadialGradient(w.x, w.y, ws / 2, w.x, w.y, glowS / 2);
+        glowGrad.addColorStop(0, 'rgba(196,119,60,0.08)');
+        glowGrad.addColorStop(1, 'transparent');
         ctx.beginPath();
-        secPts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1.5; ctx.stroke();
-
-        // Weighted Ground Level line (accent, prominent)
-        const wglY = padT + sH - (m.hWeighted / maxFH) * sH * 0.85;
+        ctx.moveTo(w.x - glowS / 2 + wRad * 2, w.y - glowS / 2);
+        ctx.arcTo(w.x + glowS / 2, w.y - glowS / 2, w.x + glowS / 2, w.y + glowS / 2, wRad * 2);
+        ctx.arcTo(w.x + glowS / 2, w.y + glowS / 2, w.x - glowS / 2, w.y + glowS / 2, wRad * 2);
+        ctx.arcTo(w.x - glowS / 2, w.y + glowS / 2, w.x - glowS / 2, w.y - glowS / 2, wRad * 2);
+        ctx.arcTo(w.x - glowS / 2, w.y - glowS / 2, w.x + glowS / 2, w.y - glowS / 2, wRad * 2);
+        ctx.closePath();
+        ctx.fillStyle = glowGrad; ctx.fill();
         ctx.beginPath();
-        ctx.setLineDash([6, 4]);
-        ctx.moveTo(padL, wglY); ctx.lineTo(padL + sW, wglY);
-        ctx.strokeStyle = '#C4773C';
-        ctx.lineWidth = 1.5; ctx.stroke();
-        ctx.setLineDash([]);
-        // WGL label
-        ctx.font = `600 9px 'IBM Plex Mono', monospace`;
+        ctx.moveTo(w.x - ws / 2 + wRad, w.y - ws / 2);
+        ctx.arcTo(w.x + ws / 2, w.y - ws / 2, w.x + ws / 2, w.y + ws / 2, wRad);
+        ctx.arcTo(w.x + ws / 2, w.y + ws / 2, w.x - ws / 2, w.y + ws / 2, wRad);
+        ctx.arcTo(w.x - ws / 2, w.y + ws / 2, w.x - ws / 2, w.y - ws / 2, wRad);
+        ctx.arcTo(w.x - ws / 2, w.y - ws / 2, w.x + ws / 2, w.y - ws / 2, wRad);
+        ctx.closePath();
+        if (wH) { ctx.shadowColor = 'rgba(196,119,60,0.5)'; ctx.shadowBlur = 50; }
+        ctx.fillStyle = wH ? '#252018' : '#1A1A18';
+        ctx.fill();
+        ctx.strokeStyle = '#C4773C'; ctx.lineWidth = 2.5; ctx.stroke();
+        ctx.shadowBlur = 0;
         ctx.fillStyle = '#C4773C';
-        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-        ctx.fillText('WGL: ' + m.hWeighted.toFixed(2) + ' m', padL + sW + 4, wglY + 3);
-
-        // Section vertices
-        secPts.forEach(p => {
-          ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-          ctx.fillStyle = '#fff'; ctx.fill();
-          // Label
-          ctx.font = `600 10px 'DM Sans', sans-serif`;
-          ctx.fillStyle = 'rgba(255,255,255,0.5)';
-          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-          ctx.fillText(p.label, p.x, padT + sH + 6);
-          // FH label
-          ctx.font = `400 8px 'IBM Plex Mono', monospace`;
-          ctx.fillText('FH:' + p.fh.toFixed(2), p.x, p.y - 14);
-        });
-
+        ctx.font = `600 11px 'IBM Plex Mono', monospace`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('AARO', w.x, w.y - 18);
+        ctx.fillStyle = '#EDE8E0';
+        ctx.font = `800 22px 'DM Sans', sans-serif`;
+        ctx.fillText('World Agent', w.x, w.y + 4);
         ctx.restore();
-
-        // Metrics (element removed, skip)
-        if (metricsEl) metricsEl.textContent =
-          `Section Area: ${m.secArea.toFixed(2)}  |  Perimeter: ${m.perimeter.toFixed(2)}  |  h_min: ${m.hMin.toFixed(2)} + (${m.secArea.toFixed(2)}/${m.perimeter.toFixed(2)}) = ${m.hWeighted.toFixed(4)}`;
       }
 
-      // ── Interaction ──
-      function hitTest(mx, my) {
-        for (let i = 0; i < verts.length; i++) {
-          const p = toCanvas(verts[i]);
-          if (Math.hypot(mx - p.x, my - p.y) < 14) return i;
+      function getNodeAt(mx, my) {
+        const w = nodes[0];
+        if (!w) return null;
+        if (Math.abs(mx - w.x) < w.r && Math.abs(my - w.y) < w.r) return w;
+        for (let i = nodes.length - 1; i >= 1; i--) {
+          const n = nodes[i];
+          if (Math.abs(mx - n.x) < n.r && Math.abs(my - n.y) < n.r) return n;
         }
-        return -1;
+        return null;
       }
 
       canvas.addEventListener('mousemove', e => {
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-        if (dragIdx >= 0) {
-          const nv = fromCanvas(mx, my);
-          verts[dragIdx].x = Math.max(0.05, Math.min(0.95, nv.x));
-          verts[dragIdx].y = Math.max(0.05, Math.min(0.95, nv.y));
-          draw();
+        if (dragNode) {
+          dragNode.fx = mx + dragOffset.x; dragNode.fy = my + dragOffset.y;
+          alpha = Math.max(alpha, 0.15);
           return;
         }
-        const prev = hovIdx;
-        hovIdx = hitTest(mx, my);
-        canvas.style.cursor = hovIdx >= 0 ? 'pointer' : 'default';
-        if (hovIdx !== prev) draw();
+        hoveredNode = getNodeAt(mx, my);
+        canvas.style.cursor = hoveredNode ? 'pointer' : 'default';
       });
 
       canvas.addEventListener('mousedown', e => {
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-        dragIdx = hitTest(mx, my);
-        if (dragIdx >= 0) { canvas.style.cursor = 'grabbing'; e.preventDefault(); }
-      });
-
-      canvas.addEventListener('mouseup', () => { dragIdx = -1; canvas.style.cursor = 'default'; });
-      canvas.addEventListener('mouseleave', () => { dragIdx = -1; hovIdx = -1; draw(); });
-
-      // Double-click to adjust FH
-      canvas.addEventListener('dblclick', e => {
-        const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-        const idx = hitTest(mx, my);
-        if (idx >= 0) {
-          const val = prompt(`${verts[idx].label} 높이 (FH) 입력:`, verts[idx].fh.toFixed(2));
-          if (val !== null && !isNaN(+val)) { verts[idx].fh = Math.max(0, +val); draw(); }
+        const node = getNodeAt(mx, my);
+        mouseDownTime = Date.now();
+        mouseDownPos = { x: mx, y: my };
+        if (node) {
+          dragNode = node;
+          dragOffset.x = node.x - mx; dragOffset.y = node.y - my;
+          node.fx = node.x; node.fy = node.y;
+          canvas.style.cursor = 'grabbing';
+          e.preventDefault();
         }
       });
 
-      // Touch
+      canvas.addEventListener('mouseup', e => {
+        if (dragNode) {
+          dragNode.fx = null; dragNode.fy = null;
+          dragNode = null;
+          canvas.style.cursor = 'default';
+        }
+      });
+
+      canvas.addEventListener('mouseleave', () => {
+        if (dragNode) { dragNode.fx = null; dragNode.fy = null; dragNode = null; }
+        hoveredNode = null; canvas.style.cursor = 'default';
+      });
+
+      let touchStartTime = 0;
       canvas.addEventListener('touchstart', e => {
         const t = e.touches[0], rect = canvas.getBoundingClientRect();
-        dragIdx = hitTest(t.clientX - rect.left, t.clientY - rect.top);
-        if (dragIdx >= 0) e.preventDefault();
+        const mx = t.clientX - rect.left, my = t.clientY - rect.top;
+        const node = getNodeAt(mx, my);
+        touchStartTime = Date.now();
+        mouseDownPos = { x: mx, y: my };
+        if (node) {
+          dragNode = node;
+          dragOffset.x = node.x - mx; dragOffset.y = node.y - my;
+          node.fx = node.x; node.fy = node.y;
+          e.preventDefault();
+        }
       }, { passive: false });
       canvas.addEventListener('touchmove', e => {
-        if (dragIdx < 0) return;
+        if (!dragNode) return;
         const t = e.touches[0], rect = canvas.getBoundingClientRect();
-        const nv = fromCanvas(t.clientX - rect.left, t.clientY - rect.top);
-        verts[dragIdx].x = Math.max(0.05, Math.min(0.95, nv.x));
-        verts[dragIdx].y = Math.max(0.05, Math.min(0.95, nv.y));
-        draw(); e.preventDefault();
+        dragNode.fx = t.clientX - rect.left + dragOffset.x;
+        dragNode.fy = t.clientY - rect.top + dragOffset.y;
+        alpha = Math.max(alpha, 0.15);
+        e.preventDefault();
       }, { passive: false });
-      canvas.addEventListener('touchend', () => { dragIdx = -1; });
-
-      // Store original positions and FH for drift bounds
-      const origVerts = verts.map(v => ({ x: v.x, y: v.y, fh: v.fh }));
-      const driftTargets = verts.map(() => ({ dx: 0, dy: 0, dfh: 0 }));
-      const DRIFT_RANGE = 0.10; // max position drift
-      const DRIFT_SPEED = 0.012; // lerp speed (faster)
-      const FH_DRIFT = 2.0; // max FH drift ±
-
-      function pickNewTarget(i) {
-        driftTargets[i].dx = (Math.random() - 0.5) * DRIFT_RANGE * 2;
-        driftTargets[i].dy = (Math.random() - 0.5) * DRIFT_RANGE * 2;
-        driftTargets[i].dfh = (Math.random() - 0.5) * FH_DRIFT * 2;
-      }
-      verts.forEach((_, i) => pickNewTarget(i));
-
-      function animateGL() {
-        // Only drift when not dragging
-        if (dragIdx < 0) {
-          verts.forEach((v, i) => {
-            const tx = origVerts[i].x + driftTargets[i].dx;
-            const ty = origVerts[i].y + driftTargets[i].dy;
-            const tfh = Math.max(0, origVerts[i].fh + driftTargets[i].dfh);
-            v.x += (tx - v.x) * DRIFT_SPEED;
-            v.y += (ty - v.y) * DRIFT_SPEED;
-            v.fh += (tfh - v.fh) * DRIFT_SPEED;
-            // Pick new target when close enough
-            if (Math.abs(v.x - tx) < 0.003 && Math.abs(v.y - ty) < 0.003) {
-              pickNewTarget(i);
-            }
-          });
+      canvas.addEventListener('touchend', e => {
+        if (dragNode) {
+          dragNode.fx = null; dragNode.fy = null; dragNode = null;
         }
+      });
+
+      let lastPacket = 0;
+      function loop(ts) {
+        simulate();
+        for (let i = packets.length - 1; i >= 0; i--) { packets[i].t += 16; if (packets[i].t > packets[i].dur) packets.splice(i, 1); }
+        if (ts - lastPacket > 500) { spawnPacket(); lastPacket = ts; }
         draw();
-        requestAnimationFrame(animateGL);
+        requestAnimationFrame(loop);
       }
 
       resize();
-      requestAnimationFrame(animateGL);
-      window.addEventListener('resize', () => { resize(); });
+      initNodes();
+      requestAnimationFrame(loop);
+
+      window.addEventListener('resize', () => {
+        resize();
+        if (nodes.length > 0) { nodes[0].x = centerX; nodes[0].y = centerY; }
+        alpha = 0.5;
+      });
     })();
 
 
