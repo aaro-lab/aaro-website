@@ -3540,7 +3540,10 @@
         ctx.fillStyle = '#C4773C';
         ctx.font = `700 ${Math.max(10, ws * 0.2)}px 'IBM Plex Mono', monospace`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('world', w.x, w.y);
+        const lfs = Math.max(10, ws * 0.2);
+        ctx.fillText('aaro', w.x, w.y - lfs * 0.55);
+        ctx.fillStyle = '#EDE8E0';
+        ctx.fillText('world', w.x, w.y + lfs * 0.55);
         ctx.restore();
       }
 
