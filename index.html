@@ -230,7 +230,9 @@
     }
     .cover-graph canvas {
       width: 100%; height: 100%; display: block;
+      cursor: grab;
     }
+    .cover-graph canvas:active { cursor: grabbing; }
     @media (max-width: 1024px) {
       .s-cover {
         justify-content: center; align-items: center;
@@ -2215,8 +2217,8 @@
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         centerX = W * 0.5; centerY = H * 0.5;
         const scale = Math.min(W, H) / 900;
-        EDGE_TARGET = 130 * Math.max(scale, 0.4);
-        HUB_TARGET = 260 * Math.max(scale, 0.4);
+        EDGE_TARGET = 180 * Math.max(scale, 0.4);
+        HUB_TARGET = 350 * Math.max(scale, 0.4);
         const rScale = Math.max(scale, 0.45);
         nodes.forEach((n, i) => { n.r = COVER_ALL_NODES[i].r * rScale; });
       }
@@ -2240,12 +2242,12 @@
         });
       }
 
-      const REPULSION = 5000;
-      const EDGE_ATTRACTION = 0.001;
-      let EDGE_TARGET = 130;
-      const HUB_PULL = 0.001;
-      let HUB_TARGET = 260;
-      const DAMPING = 0.96;
+      const REPULSION = 6000;
+      const EDGE_ATTRACTION = 0.0005;
+      let EDGE_TARGET = 180;
+      const HUB_PULL = 0.0005;
+      let HUB_TARGET = 350;
+      const DAMPING = 0.985;
       let alpha = 1.0;
       let frame = 0;
 
@@ -2301,8 +2303,8 @@
         for (const a of nodes) {
           if (a.fx !== null) continue;
           if (!a.isCenter) {
-            a.vx += (Math.random() - 0.5) * 0.6;
-            a.vy += (Math.random() - 0.5) * 0.6;
+            a.vx += (Math.random() - 0.5) * 0.8;
+            a.vy += (Math.random() - 0.5) * 0.8;
           }
           a.vx *= DAMPING; a.vy *= DAMPING;
           a.x += a.vx; a.y += a.vy;
@@ -2474,7 +2476,7 @@
           return;
         }
         hoveredNode = getNodeAt(mx, my);
-        canvas.style.cursor = hoveredNode ? 'pointer' : 'default';
+        canvas.style.cursor = hoveredNode ? 'grab' : '';
       });
 
       canvas.addEventListener('mousedown', e => {
@@ -2496,13 +2498,13 @@
         if (dragNode) {
           dragNode.fx = null; dragNode.fy = null;
           dragNode = null;
-          canvas.style.cursor = 'default';
+          canvas.style.cursor = '';
         }
       });
 
       canvas.addEventListener('mouseleave', () => {
         if (dragNode) { dragNode.fx = null; dragNode.fy = null; dragNode = null; }
-        hoveredNode = null; canvas.style.cursor = 'default';
+        hoveredNode = null; canvas.style.cursor = '';
       });
 
       let touchStartTime = 0;
