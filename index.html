@@ -2231,18 +2231,18 @@
       }
 
       // Circle-packing physics — slow gentle convergence over 5-8 seconds
-      const GRAVITY = 0.0004;
+      const GRAVITY = 0.002;
       const REPULSION = 5000;
-      const DAMPING = 0.88;
-      const BROWNIAN = 0.4;
+      const DAMPING = 0.92;
+      const BROWNIAN = 0.15;
       const WOBBLE_AMP = 4;
       const WOBBLE_SPEED = 0.0015;
       // Burst-and-rest wandering for World Agent
       let wanderAngle = Math.random() * Math.PI * 2;
       let wanderTimer = 0;
-      let wanderPhase = 'rest'; // 'move' or 'rest'
-      const MOVE_DURATION = 100; // frames of movement (~1.6s burst, 2x distance)
-      const REST_DURATION = 90;  // frames of rest (~1.5s pause)
+      let wanderPhase = 'rest';
+      const MOVE_DURATION = 80;  // ~1.3s burst (0.8x of 100)
+      const REST_DURATION = 90;  // ~1.5s pause
       let alpha = 1.0;
 
       function simulate() {
@@ -2251,23 +2251,23 @@
         const w = nodes[0];
         if (!w) return;
 
-        // World Agent: burst-move then rest, wobble always
+        // World Agent: burst-move then rest
         if (w.fx === null) {
           wanderTimer++;
           if (wanderPhase === 'rest' && wanderTimer >= REST_DURATION) {
             wanderPhase = 'move';
             wanderTimer = 0;
-            wanderAngle = Math.random() * Math.PI * 2; // fully random direction each burst
+            wanderAngle = Math.random() * Math.PI * 2;
           } else if (wanderPhase === 'move' && wanderTimer >= MOVE_DURATION) {
             wanderPhase = 'rest';
             wanderTimer = 0;
           }
           if (wanderPhase === 'move') {
-            const speed = 2.8;
+            const speed = 4.2; // 3x of original 1.4
             w.baseX += Math.cos(wanderAngle) * speed;
             w.baseY += Math.sin(wanderAngle) * speed;
           }
-          // Keep within safe zone: 40%-60% of canvas (small area near center)
+          // Keep within safe zone: 25%-75% of canvas
           const safeL = W * 0.25, safeR = W * 0.75;
           const safeT = Math.max(H * 0.25, 120), safeB = H * 0.75;
           if (w.baseX < safeL || w.baseX > safeR) wanderAngle = Math.PI - wanderAngle;
@@ -2499,12 +2499,12 @@
         ctx.strokeStyle = '#C4773C'; ctx.lineWidth = 2.5; ctx.stroke();
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#C4773C';
-        ctx.font = `700 13px 'IBM Plex Mono', monospace`;
+        ctx.font = `700 18px 'IBM Plex Mono', monospace`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('aaro', w.x, w.y - 12);
+        ctx.fillText('aaro', w.x, w.y - 14);
         ctx.fillStyle = '#EDE8E0';
         ctx.font = `700 14px 'DM Sans', sans-serif`;
-        ctx.fillText('world agent', w.x, w.y + 6);
+        ctx.fillText('world agent', w.x, w.y + 8);
         ctx.restore();
       }
 
