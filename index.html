@@ -3450,6 +3450,7 @@
           const isDrag = dragNode === n;
 
           ctx.save();
+          ctx.globalAlpha = isHov ? 1 : 0.5;
           ctx.beginPath();
           ctx.moveTo(n.x-s/2+rad, n.y-s/2);
           ctx.arcTo(n.x+s/2,n.y-s/2, n.x+s/2,n.y+s/2, rad);
