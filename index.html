@@ -839,6 +839,14 @@
       pointer-events: auto; z-index: 4;
     }
     .app-bubble__close:hover { background: rgba(255,255,255,0.2); }
+    .app-bubble__fallback {
+      position: absolute; inset: 0; z-index: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: var(--ink-90);
+    }
+    .app-bubble__iframe.loaded + .app-bubble__fallback { display: none; }
+    .app-bubble__iframe { position: relative; z-index: 1; }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 1024px) {
@@ -1250,9 +1258,39 @@
             <div class="app-bubble__close" id="bubbleClose">&times;</div>
           </div>
           <div class="app-bubble__blocker"></div>
+          <div class="app-bubble__fallback">
+            <svg viewBox="0 0 40 40" width="48" height="48" style="fill:rgba(255,255,255,0.15);margin-bottom:16px"><path d="${app.p}"/></svg>
+            <div style="font-size:18px;font-weight:700;color:var(--cream);margin-bottom:6px">${app.n}</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--ink-40);letter-spacing:.1em">COMING SOON</div>
+          </div>
           <iframe class="app-bubble__iframe" src="${app.u}" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe>
         </div>
       `;
+      // Hide fallback when iframe loads successfully
+      const iframe = overlay.querySelector('.app-bubble__iframe');
+      const fallback = overlay.querySelector('.app-bubble__fallback');
+      if (iframe) {
+        iframe.addEventListener('load', () => {
+          try {
+            // Check if iframe actually loaded content (not blocked)
+            if (iframe.contentDocument && iframe.contentDocument.body && iframe.contentDocument.body.innerHTML.length > 0) {
+              fallback.style.display = 'none';
+            }
+          } catch (e) {
+            // Cross-origin — iframe loaded but we can't access it, that's OK
+            fallback.style.display = 'none';
+          }
+        });
+        iframe.addEventListener('error', () => {
+          // Keep fallback visible
+        });
+        // Timeout fallback — if iframe doesn't load in 5s, keep "COMING SOON"
+        setTimeout(() => {
+          if (fallback.style.display !== 'none') {
+            iframe.style.display = 'none';
+          }
+        }, 5000);
+      }
       requestAnimationFrame(() => overlay.classList.add('visible'));
       const close = () => {
         overlay.classList.remove('visible');
