@@ -839,6 +839,69 @@
       pointer-events: auto; z-index: 4;
     }
     .app-bubble__close:hover { background: rgba(255,255,255,0.2); }
+    /* ── NODE SPEECH BUBBLE (agent graph) ── */
+    .node-bubble-overlay {
+      position: fixed; inset: 0; z-index: 10000;
+      pointer-events: none;
+    }
+    .node-bubble-overlay.visible { pointer-events: auto; }
+    .node-bubble {
+      position: fixed;
+      width: 380px; height: 280px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--ink-90);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+      transform: scale(0.5);
+      opacity: 0;
+      transition: transform 0.4s var(--ease), opacity 0.3s;
+    }
+    .node-bubble-overlay.visible .node-bubble {
+      transform: scale(1);
+      opacity: 1;
+    }
+    .node-bubble__arrow {
+      position: absolute; width: 16px; height: 16px;
+      background: var(--ink-90);
+      border: 1px solid rgba(255,255,255,0.12);
+      transform: rotate(45deg);
+      z-index: -1;
+    }
+    .node-bubble__blocker {
+      position: absolute; inset: 0; z-index: 2;
+    }
+    .node-bubble__header {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+    }
+    .node-bubble__header-name {
+      font-size: 12px; font-weight: 700; color: var(--cream);
+    }
+    .node-bubble__header-cat {
+      font-family: var(--mono); font-size: 8px; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--ink-40);
+    }
+    .node-bubble__close {
+      margin-left: auto; width: 22px; height: 22px;
+      border-radius: 50%; background: rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; color: var(--ink-20); cursor: pointer;
+      transition: background 0.3s; z-index: 4;
+    }
+    .node-bubble__close:hover { background: rgba(255,255,255,0.25); }
+    .node-bubble__iframe {
+      width: 100%; height: 100%; border: none; background: #111;
+    }
+    .node-bubble__fallback {
+      position: absolute; inset: 0; z-index: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: var(--ink-90);
+    }
+
     .app-bubble__fallback {
       position: absolute; inset: 0; z-index: 1;
       display: flex; flex-direction: column;
@@ -1300,6 +1363,68 @@
         if (e.target === overlay) close();
       });
       document.getElementById('bubbleClose').addEventListener('click', close);
+    }
+
+    // Node speech bubble (agent graph)
+    function showNodeBubble(node, clickX, clickY) {
+      let overlay = document.getElementById('nodeBubbleOverlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'nodeBubbleOverlay';
+        overlay.className = 'node-bubble-overlay';
+        document.body.appendChild(overlay);
+      }
+      const bw = 380, bh = 280;
+      // Position bubble above or below the click point
+      let left = clickX - bw / 2;
+      let top = clickY - bh - 24;
+      let arrowSide = 'bottom'; // arrow points down
+      if (top < 20) { top = clickY + 24; arrowSide = 'top'; }
+      left = Math.max(16, Math.min(window.innerWidth - bw - 16, left));
+      const arrowX = clickX - left;
+
+      // Find the SVG path for this node
+      const appData = APPS.find(a => a.u === node.u);
+      const svgPath = appData ? appData.p : '';
+
+      overlay.innerHTML = `
+        <div class="node-bubble" style="left:${left}px;top:${top}px">
+          <div class="node-bubble__arrow" style="left:${arrowX - 8}px;${arrowSide === 'bottom' ? 'bottom:-8px' : 'top:-8px'}"></div>
+          <div class="node-bubble__header">
+            <div>
+              <div class="node-bubble__header-name">${node.n}</div>
+              <div class="node-bubble__header-cat">${node.c}</div>
+            </div>
+            <div class="node-bubble__close" id="nodeBubbleClose">&times;</div>
+          </div>
+          <div class="node-bubble__blocker"></div>
+          <div class="node-bubble__fallback">
+            ${svgPath ? `<svg viewBox="0 0 40 40" width="36" height="36" style="fill:rgba(255,255,255,0.12);margin-bottom:12px"><path d="${svgPath}"/></svg>` : ''}
+            <div style="font-size:14px;font-weight:700;color:var(--cream);margin-bottom:4px">${node.n}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--ink-40);letter-spacing:.1em">COMING SOON</div>
+          </div>
+          ${node.u ? `<iframe class="node-bubble__iframe" src="${node.u}" sandbox="allow-scripts allow-same-origin" loading="lazy"></iframe>` : ''}
+        </div>
+      `;
+      requestAnimationFrame(() => overlay.classList.add('visible'));
+
+      // iframe load detection
+      const iframe = overlay.querySelector('.node-bubble__iframe');
+      const fallback = overlay.querySelector('.node-bubble__fallback');
+      if (iframe && fallback) {
+        iframe.addEventListener('load', () => {
+          try { if (iframe.contentDocument) fallback.style.display = 'none'; }
+          catch(e) { fallback.style.display = 'none'; }
+        });
+        setTimeout(() => { if (fallback.style.display !== 'none') iframe.style.display = 'none'; }, 5000);
+      }
+
+      const close = () => {
+        overlay.classList.remove('visible');
+        setTimeout(() => { overlay.innerHTML = ''; }, 400);
+      };
+      overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+      document.getElementById('nodeBubbleClose').addEventListener('click', close);
     }
 
     // Build marquee rows
@@ -1852,7 +1977,7 @@
           const moved = Math.hypot(mx - mouseDownPos.x, my - mouseDownPos.y);
           // Click = short press + little movement
           if (elapsed < 300 && moved < 5 && dragNode.u) {
-            window.open(dragNode.u, '_blank', 'noopener');
+            showNodeBubble(dragNode, e.clientX, e.clientY);
           }
           dragNode.fx = null; dragNode.fy = null;
           dragNode = null;
@@ -1891,7 +2016,7 @@
       canvas.addEventListener('touchend', e => {
         if (dragNode) {
           const elapsed = Date.now()-touchStartTime;
-          if (elapsed < 300 && dragNode.u) window.open(dragNode.u,'_blank','noopener');
+          if (elapsed < 300 && dragNode.u) { const t = e.changedTouches[0]; showNodeBubble(dragNode, t.clientX, t.clientY); }
           dragNode.fx=null; dragNode.fy=null; dragNode=null;
         }
       });
@@ -2382,15 +2507,17 @@
       }, { passive: false });
       canvas.addEventListener('touchend', () => { dragIdx = -1; });
 
-      // Store original positions for drift bounds
-      const origVerts = verts.map(v => ({ x: v.x, y: v.y }));
-      const driftTargets = verts.map(() => ({ dx: 0, dy: 0 }));
-      const DRIFT_RANGE = 0.04; // max drift from original position
-      const DRIFT_SPEED = 0.003; // lerp speed
+      // Store original positions and FH for drift bounds
+      const origVerts = verts.map(v => ({ x: v.x, y: v.y, fh: v.fh }));
+      const driftTargets = verts.map(() => ({ dx: 0, dy: 0, dfh: 0 }));
+      const DRIFT_RANGE = 0.10; // max position drift
+      const DRIFT_SPEED = 0.012; // lerp speed (faster)
+      const FH_DRIFT = 2.0; // max FH drift ±
 
       function pickNewTarget(i) {
         driftTargets[i].dx = (Math.random() - 0.5) * DRIFT_RANGE * 2;
         driftTargets[i].dy = (Math.random() - 0.5) * DRIFT_RANGE * 2;
+        driftTargets[i].dfh = (Math.random() - 0.5) * FH_DRIFT * 2;
       }
       verts.forEach((_, i) => pickNewTarget(i));
 
@@ -2400,10 +2527,12 @@
           verts.forEach((v, i) => {
             const tx = origVerts[i].x + driftTargets[i].dx;
             const ty = origVerts[i].y + driftTargets[i].dy;
+            const tfh = Math.max(0, origVerts[i].fh + driftTargets[i].dfh);
             v.x += (tx - v.x) * DRIFT_SPEED;
             v.y += (ty - v.y) * DRIFT_SPEED;
+            v.fh += (tfh - v.fh) * DRIFT_SPEED;
             // Pick new target when close enough
-            if (Math.abs(v.x - tx) < 0.002 && Math.abs(v.y - ty) < 0.002) {
+            if (Math.abs(v.x - tx) < 0.003 && Math.abs(v.y - ty) < 0.003) {
               pickNewTarget(i);
             }
           });
