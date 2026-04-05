@@ -2763,7 +2763,7 @@
         canvas.width = W * dpr; canvas.height = H * dpr;
         canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        centerX = W * 0.5; centerY = H * 0.5;
+        centerX = W * 0.5; centerY = W < 768 ? H * 0.65 : H * 0.5;
         // Scale force params for smaller viewports
         const scale = Math.min(W, H) / 900;
         EDGE_TARGET = 150 * Math.max(scale, 0.4);
@@ -2774,8 +2774,9 @@
       }
 
       // Header safe zone (top-left corner where text overlay lives)
-      const HEADER_SAFE_W = 420;
-      const HEADER_SAFE_H = 200;
+      const isMobile = window.innerWidth < 768;
+      const HEADER_SAFE_W = isMobile ? window.innerWidth : 420;
+      const HEADER_SAFE_H = isMobile ? window.innerHeight * 0.45 : 200;
 
       function initNodes() {
         nodes.length = 0;
