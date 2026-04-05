@@ -3279,7 +3279,7 @@
       let wanderTimer = 0;
       let wanderPhase = 'rest';
       let currentMoveDuration = 0;
-      const REST_DURATION = 120; // ~2s pause between jumps
+      const REST_DURATION = 90; // ~1.5s pause between jumps
       let alpha = 1.0;
 
       function simulate() {
@@ -3301,7 +3301,7 @@
             wanderTimer = 0;
           }
           if (wanderPhase === 'move') {
-            const speed = 16.8; // 4x of 4.2
+            const speed = 13.4;
             w.baseX += Math.cos(wanderAngle) * speed;
             w.baseY += Math.sin(wanderAngle) * speed;
           }
