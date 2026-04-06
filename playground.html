@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playground — aaro</title>
+  <meta name="description" content="AARO — Live algorithm playground.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%230D0D0C'/%3E%3Cstyle%3Etext%7Bfont-family:system-ui,-apple-system,sans-serif;font-weight:800;font-size:26px;fill:%23EDE8E0%7D%3C/style%3E%3Ctext text-anchor='middle' x='22' y='26'%3Ea%3C/text%3E%3Ctext text-anchor='middle' x='42' y='26'%3Ea%3C/text%3E%3Ctext text-anchor='middle' x='22' y='48'%3Er%3C/text%3E%3Ctext text-anchor='middle' x='42' y='48'%3Eo%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:     #0D0D0C;
+      --ink-90:  #1A1A18;
+      --ink-80:  #2E2E2A;
+      --ink-60:  #5A5A52;
+      --ink-40:  #8A8A82;
+      --ink-20:  #BFBDB5;
+      --ink-10:  #D8D3CB;
+      --cream:   #EDE8E0;
+      --white:   #F8F6F1;
+      --accent:  #C4773C;
+      --accent-h:#E8944A;
+      --sans: 'DM Sans', 'Noto Sans KR', sans-serif;
+      --mono: 'IBM Plex Mono', monospace;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--ink);
+      color: var(--cream);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
+    ::selection { background: var(--accent); color: var(--ink); }
+    ::-webkit-scrollbar { width: 0; }
+
+    .grain {
+      position: fixed; inset: 0; z-index: 9998; pointer-events: none;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+
+    .t-eyebrow {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.25em; text-transform: uppercase; color: var(--ink-40);
+    }
+
+    .rv { opacity: 1; transform: none; }
+
+    .pg-header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 24px clamp(32px, 5vw, 80px);
+      background: rgba(13,13,12,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--ink-80);
+    }
+    .pg-header__logo {
+      font-size: 22px; font-weight: 900; letter-spacing: -0.03em; color: var(--cream);
+    }
+    .pg-header__back {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--ink-40);
+      display: inline-flex; align-items: center; gap: 8px; transition: color 0.4s;
+    }
+    .pg-header__back:hover { color: var(--accent); }
+    .pg-header__back svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    .pg-footer {
+      padding: 36px clamp(32px, 5vw, 80px);
+      border-top: 1px solid var(--ink-80);
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--ink-40);
+      flex-wrap: wrap; gap: 20px;
+    }
+    .pg-footer a { transition: color 0.4s; }
+    .pg-footer a:hover { color: var(--accent); }
+    .pg-footer__links { display: flex; gap: 24px; }
+  </style>
+</head>
+<body>
+
+  <div class="grain"></div>
+
+  <header class="pg-header">
+    <a href="index.html" class="pg-header__logo">aaro</a>
+    <a href="index.html" class="pg-header__back">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
+      Back to home
+    </a>
+  </header>
+
+  <!-- ▼▼▼ PLAYGROUND CONTENT INJECTED BELOW ▼▼▼ -->
+    <!-- S04b: PLAYGROUND (inline) -->
+  <section class="sec" id="s4b" style="min-height:auto;padding:0;padding-top:clamp(24px,4vh,40px);">
+    <style>
+      /* Playground scoped styles */
+      .pg-section-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: clamp(10px, 1.2vw, 20px);
+        padding: clamp(10px, 1.5vw, 24px);
+        height: calc(100vh - 80px);
+      }
+      .pg-section-grid .pg-cell {
+        background: rgba(255,255,255,0.015);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 6px;
+        padding: clamp(10px, 1vw, 16px);
+        display: flex; flex-direction: column;
+        min-height: 0; position: relative;
+        transition: border-color 0.4s var(--ease);
+        overflow: hidden;
+      }
+      .pg-section-grid .pg-cell:hover { border-color: rgba(196,119,60,0.15); }
+      .pg-cell__label {
+        font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em;
+        text-transform: uppercase; color: var(--ink-40); margin-bottom: 6px;
+        display: flex; align-items: baseline; gap: 8px; flex-shrink: 0;
+      }
+      .pg-cell__label-kr {
+        font-family: 'Noto Sans KR', sans-serif; font-size: 9px;
+        letter-spacing: 0.05em; text-transform: none; color: var(--ink-60);
+      }
+      .pg-cell__canvas-wrap {
+        flex: 1; min-height: 0; position: relative; border-radius: 4px; overflow: hidden;
+      }
+      .pg-cell__canvas-wrap canvas {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block;
+      }
+      .pg-cell__metrics {
+        font-family: var(--mono); font-size: 9px; color: var(--ink-40);
+        letter-spacing: 0.06em; margin-top: 6px; white-space: nowrap;
+        overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;
+      }
+      .pg-cell__hint {
+        font-family: var(--mono); font-size: 8px; color: var(--ink-60);
+        letter-spacing: 0.04em; margin-top: 3px; line-height: 1.5; flex-shrink: 0;
+      }
+      .pg-cell__hint .accent { color: var(--accent); }
+      .pg-upload-btn {
+        display: inline-block; cursor: pointer;
+        border: 1px solid rgba(196,119,60,0.4); border-radius: 3px;
+        padding: 2px 8px; margin-left: 6px;
+        font-family: var(--mono); font-size: 8px; letter-spacing: 0.1em;
+        text-transform: uppercase; color: var(--accent);
+        transition: all 0.3s var(--ease);
+      }
+      .pg-upload-btn:hover { background: rgba(196,119,60,0.1); border-color: var(--accent); }
+      .pg-ctrl {
+        display: inline-flex; align-items: center; gap: 4px; margin-left: 6px;
+      }
+      .pg-ctrl input[type="range"] {
+        width: 60px; height: 3px; -webkit-appearance: none; appearance: none;
+        background: rgba(255,255,255,0.15); border-radius: 2px; outline: none; cursor: pointer;
+      }
+      .pg-ctrl input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%;
+        background: var(--accent); cursor: pointer;
+      }
+      .pg-ctrl label {
+        font-family: var(--mono); font-size: 8px; color: var(--ink-40); letter-spacing: 0.05em;
+      }
+      @media (max-width: 1200px) {
+        .pg-section-grid { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+        .pg-section-grid .pg-cell { min-height: clamp(350px, 55vh, 520px); }
+      }
+    </style>
+    <div style="padding:0 clamp(24px,4vw,48px) clamp(10px,1.5vh,16px);">
+      <p class="t-eyebrow rv" style="color:var(--ink-20);">Playground</p>
+    </div>
+    <div class="pg-section-grid">
+
+    <!-- Demo 1: Weighted Ground Level -->
+    <article class="pg-cell" id="demoWGL">
+      <div class="pg-cell__label">Weighted Ground Level <span class="pg-cell__label-kr">가중평균 지표면</span></div>
+      <div class="pg-cell__canvas-wrap"><canvas id="wglCanvas"></canvas></div>
+      <div class="pg-cell__metrics" id="wglMetrics"></div>
+      <div class="pg-cell__hint">
+        드래그: 꼭지점 이동 | 더블클릭: 높이(FH) 지정
+        <span class="accent">WGL = h_min + (단면적 / 둘레)</span>
+      </div>
+    </article>
+
+    <!-- Demo 2: Brick Generation -->
+    <article class="pg-cell" id="demoBrick">
+      <div class="pg-cell__label">Brick Generation <span class="pg-cell__label-kr">벽돌 생성</span></div>
+      <div class="pg-cell__canvas-wrap"><canvas id="brickCanvas"></canvas></div>
+      <div class="pg-cell__metrics" id="brickMetrics"></div>
+      <div class="pg-cell__hint">
+        이미지 밝기 &rarr; 벽돌 회전 | 드래그: 3D 회전
+        <label class="pg-upload-btn"><input type="file" id="brickImgInput" accept="image/*" hidden>Image</label>
+        <span class="pg-ctrl">
+          <label>W</label>
+          <input type="range" id="brickColSlider" min="8" max="100" value="30">
+        </span>
+        <span class="pg-ctrl">
+          <label>H</label>
+          <input type="range" id="brickRowSlider" min="4" max="100" value="70">
+        </span>
+      </div>
+    </article>
+
+    <!-- Demo 3: Parking Layout -->
+    <article class="pg-cell" id="demoParking">
+      <div class="pg-cell__label">Parking Layout <span class="pg-cell__label-kr">주차 배치</span></div>
+      <div class="pg-cell__canvas-wrap"><canvas id="parkingCanvas"></canvas></div>
+      <div class="pg-cell__metrics" id="parkingMetrics"></div>
+      <div class="pg-cell__hint">
+        드래그: 경계점 이동 | 더블클릭: 꼭지점 추가/삭제 |
+        <span class="accent">Edge + Inner + Circulation</span>
+      </div>
+    </article>
+  
+    </div>
+    <script>
+    (function(){
+
+    // ── Shared ──
+    const DPR = window.devicePixelRatio || 1;
+
+    function setupCanvas(canvas) {
+      const wrap = canvas.parentElement;
+      const rect = wrap.getBoundingClientRect();
+      const w = rect.width, h = rect.height;
+      canvas.width = w * DPR; canvas.height = h * DPR;
+      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      return { w, h, ctx };
+    }
+
+    function pointInPolygon(px, py, poly) {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i].x, yi = poly[i].y;
+        const xj = poly[j].x, yj = poly[j].y;
+        if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi))
+          inside = !inside;
+      }
+      return inside;
+    }
+
+    function rectInPolygon(cx, cy, hw, hh, angle, poly) {
+      const cos = Math.cos(angle), sin = Math.sin(angle);
+      const corners = [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]];
+      for (const [lx, ly] of corners) {
+        const wx = cx + lx * cos - ly * sin;
+        const wy = cy + lx * sin + ly * cos;
+        if (!pointInPolygon(wx, wy, poly)) return false;
+      }
+      return true;
+    }
+
+    const glow = document.getElementById('cursorGlow');
+    document.addEventListener('mousemove', e => {
+      if (glow) { glow.style.left = e.clientX + 'px'; glow.style.top = e.clientY + 'px'; }
+    });
+
+    const demos = [];
+    function masterLoop() {
+      for (const fn of demos) fn();
+      requestAnimationFrame(masterLoop);
+    }
+    requestAnimationFrame(masterLoop);
+
+
+    // ══════════════════════════════════════════
+    // Demo 1: Weighted Ground Level
+    // ══════════════════════════════════════════
+    (function initWGL() {
+      const canvas = document.getElementById('wglCanvas');
+      const metricsEl = document.getElementById('wglMetrics');
+      if (!canvas) return;
+      let ctx, W, H, planH, secH;
+      const PLAN_RATIO = 0.55;
+      let dragIdx = -1, hovIdx = -1;
+
+      const verts = [
+        { x: 0.22, y: 0.10, fh: 8.0, label: 'A' },
+        { x: 0.18, y: 0.38, fh: 3.0, label: 'B' },
+        { x: 0.28, y: 0.58, fh: 7.0, label: 'C' },
+        { x: 0.58, y: 0.55, fh: 0.0, label: 'D' },
+        { x: 0.68, y: 0.28, fh: 1.0, label: 'E' },
+        { x: 0.55, y: 0.08, fh: 9.0, label: 'F' },
+      ];
+
+      function resize() {
+        const s = setupCanvas(canvas);
+        W = s.w; H = s.h; ctx = s.ctx;
+        planH = H * PLAN_RATIO; secH = H * (1 - PLAN_RATIO);
+      }
+      const PLAN_SHIFT = 50; // push plan content down toward center
+      function toCanvas(v) { return { x: v.x * W, y: v.y * (planH - PLAN_SHIFT) + PLAN_SHIFT }; }
+      function fromCanvas(cx, cy) { return { x: cx / W, y: (cy - PLAN_SHIFT) / (planH - PLAN_SHIFT) }; }
+      function edgeLen(a, b) {
+        const dx = (a.x - b.x) * W, dy = (a.y - b.y) * planH;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+
+      function calcMetrics() {
+        let perimeter = 0, area = 0;
+        const n = verts.length;
+        for (let i = 0; i < n; i++) {
+          const j = (i + 1) % n;
+          perimeter += edgeLen(verts[i], verts[j]);
+          const ax = verts[i].x * W, ay = verts[i].y * planH;
+          const bx = verts[j].x * W, by = verts[j].y * planH;
+          area += ax * by - bx * ay;
+        }
+        area = Math.abs(area) / 2;
+        const hMin = Math.min(...verts.map(v => v.fh));
+        const hMax = Math.max(...verts.map(v => v.fh));
+        const scale = 0.05, perimM = perimeter * scale;
+        let secArea = 0;
+        for (let i = 0; i < n; i++) {
+          const j = (i + 1) % n;
+          const len = edgeLen(verts[i], verts[j]) * scale;
+          secArea += (verts[i].fh - hMin + verts[j].fh - hMin) / 2 * len;
+        }
+        return { area: area * scale * scale, perimeter: perimM, secArea, hWeighted: perimM > 0 ? hMin + secArea / perimM : hMin, hMin, hMax };
+      }
+
+      function getPlanFromSecX(targetX) {
+        let cumDist = 0; const n = verts.length;
+        for (let i = 0; i < n; i++) {
+          const j = (i + 1) % n, eLen = edgeLen(verts[i], verts[j]);
+          if (targetX <= cumDist + eLen + 1e-6) {
+            const t = eLen > 0 ? Math.min(1, (targetX - cumDist) / eLen) : 0;
+            return { x: verts[i].x + t * (verts[j].x - verts[i].x), y: verts[i].y + t * (verts[j].y - verts[i].y) };
+          }
+          cumDist += eLen;
+        }
+        return null;
+      }
+
+      function compute3mBoundaries(m) {
+        const n = verts.length;
+        if (m.hMax - m.hMin <= 3) return { boundaries: [], intersections: [] };
+        const boundaries = [];
+        for (let h = m.hMin + 3; h < m.hMax; h += 3) boundaries.push(h);
+        const secPts = []; let cumDist = 0;
+        for (let i = 0; i <= n; i++) {
+          secPts.push({ x: cumDist, fh: verts[i % n].fh });
+          if (i < n) cumDist += edgeLen(verts[i], verts[(i + 1) % n]);
+        }
+        const intersections = [];
+        for (const bh of boundaries) {
+          const pts = [];
+          for (let i = 0; i < secPts.length - 1; i++) {
+            const h1 = secPts[i].fh, h2 = secPts[i + 1].fh;
+            if (h1 === h2) continue;
+            if ((h1 < bh && h2 >= bh) || (h1 > bh && h2 <= bh)) {
+              const t = (bh - h1) / (h2 - h1);
+              const secX = secPts[i].x + t * (secPts[i + 1].x - secPts[i].x);
+              const planPt = getPlanFromSecX(secX);
+              if (planPt) pts.push({ secX, ...planPt });
+            }
+          }
+          intersections.push({ height: bh, points: pts });
+        }
+        return { boundaries, intersections };
+      }
+
+      function draw() {
+        if (!W) return;
+        ctx.clearRect(0, 0, W, H);
+        const m = calcMetrics(), n = verts.length, b3m = compute3mBoundaries(m);
+
+        ctx.save();
+        ctx.font = "500 9px 'IBM Plex Mono', monospace";
+        ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillText('PLAN VIEW', 8, 14);
+        ctx.beginPath();
+        verts.forEach((v, i) => { const p = toCanvas(v); i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y); });
+        ctx.closePath(); ctx.fillStyle = 'rgba(255,255,255,0.03)'; ctx.fill();
+
+        for (let i = 0; i < n; i++) {
+          const j = (i + 1) % n, a = toCanvas(verts[i]), b = toCanvas(verts[j]);
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+          ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+          const len = edgeLen(verts[i], verts[j]) * 0.05;
+          const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+          ctx.font = "400 9px 'IBM Plex Mono', monospace";
+          ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          const dx = b.x - a.x, dy = b.y - a.y, nl = Math.sqrt(dx*dx+dy*dy) || 1;
+          ctx.fillText(len.toFixed(2), mx + (-dy/nl)*14, my + (dx/nl)*14);
+        }
+        if (b3m.intersections.length) {
+          ctx.save(); ctx.setLineDash([4, 3]); ctx.strokeStyle = 'rgba(196,119,60,0.5)'; ctx.lineWidth = 1;
+          for (const inter of b3m.intersections) {
+            if (inter.points.length >= 2) {
+              ctx.beginPath();
+              inter.points.forEach((pt, i) => { const py = pt.y * (planH-PLAN_SHIFT)+PLAN_SHIFT; i === 0 ? ctx.moveTo(pt.x * W, py) : ctx.lineTo(pt.x * W, py); });
+              ctx.stroke();
+              ctx.font = "400 8px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(196,119,60,0.5)';
+              ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+              ctx.fillText(inter.height.toFixed(1) + 'm', inter.points[0].x * W + 4, inter.points[0].y * (planH-PLAN_SHIFT)+PLAN_SHIFT - 4);
+            }
+            for (const pt of inter.points) { ctx.beginPath(); ctx.arc(pt.x * W, pt.y * (planH-PLAN_SHIFT)+PLAN_SHIFT, 3, 0, Math.PI * 2); ctx.fillStyle = 'rgba(196,119,60,0.5)'; ctx.fill(); }
+          }
+          ctx.setLineDash([]); ctx.restore();
+        }
+        const cxP = verts.reduce((s, v) => s + v.x, 0) / n * W, cyP = verts.reduce((s, v) => s + v.y, 0) / n * (planH-PLAN_SHIFT) + PLAN_SHIFT;
+        ctx.font = "600 14px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(m.area.toFixed(2) + ' m\u00B2', cxP, cyP);
+
+        for (let i = 0; i < n; i++) {
+          const p = toCanvas(verts[i]), isH = hovIdx === i, isD = dragIdx === i;
+          ctx.beginPath(); ctx.arc(p.x, p.y, isH || isD ? 7 : 5, 0, Math.PI * 2);
+          ctx.fillStyle = isD ? '#C4773C' : isH ? '#E8944A' : '#fff'; ctx.fill();
+          ctx.font = "700 12px 'DM Sans', sans-serif"; ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(verts[i].label, p.x, p.y - 12);
+          ctx.font = "400 10px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.textBaseline = 'top'; ctx.fillText('FH:' + verts[i].fh.toFixed(2), p.x, p.y + 10);
+        }
+        ctx.restore();
+
+        ctx.beginPath(); ctx.moveTo(0, planH); ctx.lineTo(W, planH);
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.font = "500 9px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillText('SECTION VIEW', 8, planH + 14);
+
+        ctx.save(); ctx.translate(0, planH);
+        const padL = 36, padR = 16, padT = 26, padB = 30;
+        const sW = W - padL - padR, sH = secH - padT - padB;
+        const maxFH = Math.max(...verts.map(v => v.fh), 1);
+        const secPts = []; let cumDist = 0, totalPerim = 0;
+        for (let i = 0; i < n; i++) totalPerim += edgeLen(verts[i], verts[(i + 1) % n]);
+        for (let i = 0; i <= n; i++) {
+          const idx = i % n;
+          secPts.push({ x: padL + (cumDist / totalPerim) * sW, y: padT + sH - (verts[idx].fh / maxFH) * sH * 0.85, label: verts[idx].label, fh: verts[idx].fh });
+          if (i < n) cumDist += edgeLen(verts[i], verts[(i + 1) % n]);
+        }
+        ctx.font = "400 8px 'IBM Plex Mono', monospace"; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for (let h = 0; h <= maxFH; h += 1) {
+          const gy = padT + sH - (h / maxFH) * sH * 0.85;
+          ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(padL + sW, gy);
+          ctx.strokeStyle = h === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)';
+          ctx.lineWidth = h === 0 ? 0.5 : 0.3; ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillText(h.toFixed(1), padL - 4, gy);
+        }
+        if (b3m.boundaries.length) {
+          ctx.save(); ctx.setLineDash([5, 3]); ctx.strokeStyle = 'rgba(196,119,60,0.5)'; ctx.lineWidth = 0.8;
+          for (const bh of b3m.boundaries) {
+            const by = padT + sH - (bh / maxFH) * sH * 0.85;
+            ctx.beginPath(); ctx.moveTo(padL, by); ctx.lineTo(padL + sW, by); ctx.stroke();
+            ctx.font = "500 8px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(196,119,60,0.5)';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(bh.toFixed(1) + 'm', padL + sW + 3, by + 3);
+          }
+          for (const inter of b3m.intersections) {
+            const by = padT + sH - (inter.height / maxFH) * sH * 0.85;
+            for (const pt of inter.points) { const sx = padL + (pt.secX / totalPerim) * sW; ctx.beginPath(); ctx.arc(sx, by, 3, 0, Math.PI * 2); ctx.fillStyle = 'rgba(196,119,60,0.5)'; ctx.fill(); }
+          }
+          ctx.setLineDash([]); ctx.restore();
+        }
+        ctx.beginPath(); ctx.moveTo(secPts[0].x, padT + sH);
+        secPts.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.lineTo(secPts[secPts.length - 1].x, padT + sH); ctx.closePath();
+        ctx.fillStyle = 'rgba(255,255,255,0.03)'; ctx.fill();
+        ctx.save(); ctx.clip();
+        for (let hx = padL; hx < padL + sW; hx += 8) {
+          ctx.beginPath(); ctx.moveTo(hx, padT); ctx.lineTo(hx - 30, padT + sH + 10);
+          ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 0.5; ctx.stroke();
+        }
+        ctx.restore();
+        ctx.beginPath(); secPts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        const wglY = padT + sH - (m.hWeighted / maxFH) * sH * 0.85;
+        ctx.beginPath(); ctx.setLineDash([6, 4]);
+        ctx.moveTo(padL, wglY); ctx.lineTo(padL + sW, wglY);
+        ctx.strokeStyle = '#C4773C'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+        ctx.font = "600 9px 'IBM Plex Mono', monospace"; ctx.fillStyle = '#C4773C';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        ctx.fillText('WGL: ' + m.hWeighted.toFixed(2) + ' m', padL + sW + 3, wglY + 3);
+        secPts.forEach(p => {
+          ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+          ctx.font = "600 10px 'DM Sans', sans-serif"; ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(p.label, p.x, padT + sH + 5);
+          ctx.font = "400 8px 'IBM Plex Mono', monospace"; ctx.fillText('FH:' + p.fh.toFixed(2), p.x, p.y - 13);
+        });
+        ctx.restore();
+        metricsEl.textContent = `Section Area: ${m.secArea.toFixed(2)}  |  Perimeter: ${m.perimeter.toFixed(2)}  |  h_min: ${m.hMin.toFixed(2)} + (${m.secArea.toFixed(2)}/${m.perimeter.toFixed(2)}) = ${m.hWeighted.toFixed(4)}`;
+      }
+
+      function hitTest(mx, my) {
+        for (let i = 0; i < verts.length; i++) { const p = toCanvas(verts[i]); if (Math.hypot(mx - p.x, my - p.y) < 14) return i; }
+        return -1;
+      }
+      canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect(), mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        if (dragIdx >= 0) { const nv = fromCanvas(mx, my); verts[dragIdx].x = Math.max(0.05, Math.min(0.95, nv.x)); verts[dragIdx].y = Math.max(0.05, Math.min(0.95, nv.y)); return; }
+        hovIdx = hitTest(mx, my); canvas.style.cursor = hovIdx >= 0 ? 'pointer' : 'default';
+      });
+      canvas.addEventListener('mousedown', e => {
+        const rect = canvas.getBoundingClientRect();
+        dragIdx = hitTest(e.clientX - rect.left, e.clientY - rect.top);
+        if (dragIdx >= 0) { canvas.style.cursor = 'grabbing'; e.preventDefault(); }
+      });
+      canvas.addEventListener('mouseup', () => { dragIdx = -1; canvas.style.cursor = 'default'; });
+      canvas.addEventListener('mouseleave', () => { dragIdx = -1; hovIdx = -1; });
+      canvas.addEventListener('dblclick', e => {
+        const rect = canvas.getBoundingClientRect();
+        const idx = hitTest(e.clientX - rect.left, e.clientY - rect.top);
+        if (idx >= 0) { const val = prompt(`${verts[idx].label} \uB192\uC774 (FH) \uC785\uB825:`, verts[idx].fh.toFixed(2)); if (val !== null && !isNaN(+val)) verts[idx].fh = Math.max(0, +val); }
+      });
+      canvas.addEventListener('touchstart', e => { const t = e.touches[0], rect = canvas.getBoundingClientRect(); dragIdx = hitTest(t.clientX - rect.left, t.clientY - rect.top); if (dragIdx >= 0) e.preventDefault(); }, { passive: false });
+      canvas.addEventListener('touchmove', e => { if (dragIdx < 0) return; const t = e.touches[0], rect = canvas.getBoundingClientRect(); const nv = fromCanvas(t.clientX - rect.left, t.clientY - rect.top); verts[dragIdx].x = Math.max(0.05, Math.min(0.95, nv.x)); verts[dragIdx].y = Math.max(0.05, Math.min(0.95, nv.y)); e.preventDefault(); }, { passive: false });
+      canvas.addEventListener('touchend', () => { dragIdx = -1; });
+
+      const origVerts = verts.map(v => ({ x: v.x, y: v.y, fh: v.fh }));
+      const driftTargets = verts.map(() => ({ dx: 0, dy: 0, dfh: 0 }));
+      function pickTarget(i) { driftTargets[i].dx = (Math.random() - 0.5) * 0.2; driftTargets[i].dy = (Math.random() - 0.5) * 0.2; driftTargets[i].dfh = (Math.random() - 0.5) * 4; }
+      verts.forEach((_, i) => pickTarget(i));
+      resize(); window.addEventListener('resize', resize);
+      demos.push(() => {
+        if (dragIdx < 0) verts.forEach((v, i) => {
+          const tx = origVerts[i].x + driftTargets[i].dx, ty = origVerts[i].y + driftTargets[i].dy, tfh = Math.max(0, origVerts[i].fh + driftTargets[i].dfh);
+          v.x += (tx - v.x) * 0.012; v.y += (ty - v.y) * 0.012; v.fh += (tfh - v.fh) * 0.012;
+          if (Math.abs(v.x - tx) < 0.003 && Math.abs(v.y - ty) < 0.003) pickTarget(i);
+        });
+        draw();
+      });
+    })();
+
+
+    // ══════════════════════════════════════════
+    // Demo 2: Brick Wall (3D — standing upright)
+    // ══════════════════════════════════════════
+    (function initBrick() {
+      const canvas = document.getElementById('brickCanvas');
+      const metricsEl = document.getElementById('brickMetrics');
+      const fileInput = document.getElementById('brickImgInput');
+      const colSlider = document.getElementById('brickColSlider');
+      const rowSlider = document.getElementById('brickRowSlider');
+      
+      if (!canvas) return;
+      let ctx, W, H;
+
+      let COLS = 30, ROWS = 70;
+      const MORTAR = 0.3, MAX_ANGLE = 60;
+      const BW = 2.4, BH = 1.0, BD = 0.8;
+      let bricks = [], currentAngles = [], targetAngles = [];
+      let gridIdx = {}; // (r,c) -> brick index for O(1) neighbor lookup
+      let hasImage = false, storedImgData = null, storedImgW = 0, storedImgH = 0;
+      let time = 0, animPhase = 0;
+
+      let rotY = 0.25, rotX = -0.15, zoom3D = 1.0;
+      let orbiting = false, orbLastX = 0, orbLastY = 0;
+
+      function buildGrid() {
+        bricks = []; gridIdx = {};
+        const totalW = COLS * (BW + MORTAR), totalH = ROWS * (BH + MORTAR);
+        for (let r = 0; r < ROWS; r++) {
+          const off = (r % 2 === 1) ? BW / 2 : 0;
+          for (let c = 0; c < COLS; c++) {
+            gridIdx[r + ',' + c] = bricks.length;
+            bricks.push({ wx: c * (BW + MORTAR) + off - totalW / 2, wz: r * (BH + MORTAR) - totalH / 2, r, c });
+          }
+        }
+        currentAngles = bricks.map(() => 0);
+        targetAngles = bricks.map(() => 0);
+        if (hasImage && storedImgData) targetAngles = sampleImage(storedImgData, storedImgW, storedImgH);
+      }
+
+      function sampleImage(imgData, imgW, imgH) {
+        const angles = new Float32Array(bricks.length);
+        for (let i = 0; i < bricks.length; i++) {
+          const b = bricks[i];
+          const u = (b.c + 0.5) / COLS, v = 1 - (b.r + 0.5) / ROWS;
+          const ix = Math.min(imgW - 1, Math.floor(u * imgW)), iy = Math.min(imgH - 1, Math.floor(v * imgH));
+          const idx = (iy * imgW + ix) * 4;
+          angles[i] = ((imgData[idx] + imgData[idx + 1] + imgData[idx + 2]) / (3 * 255) - 0.5) * 2 * MAX_ANGLE;
+        }
+        // O(n) Laplacian smooth using grid index (not O(n²) full scan)
+        for (let pass = 0; pass < 2; pass++) {
+          const sm = new Float32Array(angles);
+          for (let i = 0; i < bricks.length; i++) {
+            const br = bricks[i].r, bc = bricks[i].c;
+            let s = angles[i], cnt = 1;
+            for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+              if (dr === 0 && dc === 0) continue;
+              const ni = gridIdx[(br + dr) + ',' + (bc + dc)];
+              if (ni !== undefined) { s += angles[ni]; cnt++; }
+            }
+            sm[i] = s / cnt;
+          }
+          angles.set(sm);
+        }
+        return Array.from(angles);
+      }
+
+      function project(wx, wy, wz) {
+        const cy = Math.cos(rotY), sy = Math.sin(rotY), cx = Math.cos(rotX), sx = Math.sin(rotX);
+        const x1 = wx * cy + wy * sy, y1 = -wx * sy + wy * cy, z1 = wz;
+        const x2 = x1, y2 = y1 * cx - z1 * sx, z2 = y1 * sx + z1 * cx;
+        const sc = zoom3D * Math.min(W, H) / (Math.max(COLS * (BW + MORTAR), ROWS * (BH + MORTAR)) * 1.3);
+        return { x: W / 2 + x2 * sc, y: H / 2 - z2 * sc, z: y2 };
+      }
+
+      function resize() { const s = setupCanvas(canvas); W = s.w; H = s.h; ctx = s.ctx; if (colSlider) COLS = parseInt(colSlider.value); if (rowSlider) ROWS = parseInt(rowSlider.value); buildGrid(); }
+
+      function draw() {
+        if (!W) return;
+        ctx.clearRect(0, 0, W, H);
+        ctx.font = "500 9px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillText('BRICK WALL', 8, 14);
+        time += 0.016;
+
+        for (let i = 0; i < bricks.length; i++) currentAngles[i] += (targetAngles[i] - currentAngles[i]) * 0.06;
+
+        const sorted = bricks.map((b, i) => ({ idx: i, z: project(b.wx, 0, b.wz).z }));
+        sorted.sort((a, b) => a.z - b.z);
+
+        for (const { idx } of sorted) {
+          const b = bricks[idx], angle = currentAngles[idx] * Math.PI / 180;
+          const brightness = 0.45 + Math.abs(currentAngles[idx] / MAX_ANGLE) * 0.55;
+          const hw = BW / 2, hd = BD / 2, cosA = Math.cos(angle), sinA = Math.sin(angle);
+          const corners = [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]].map(([lx, ly]) => ({ wx: b.wx + lx * cosA - ly * sinA, wy: ly * cosA + lx * sinA }));
+          const topPts = corners.map(c => project(c.wx, c.wy, b.wz + BH / 2));
+          const botPts = corners.map(c => project(c.wx, c.wy, b.wz - BH / 2));
+          ctx.beginPath(); botPts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)); ctx.closePath();
+          ctx.fillStyle = `rgba(180,170,155,${brightness * 0.7})`; ctx.fill();
+          for (let e = 0; e < 4; e++) {
+            const e2 = (e + 1) % 4, nm = (topPts[e2].x - topPts[e].x) * (botPts[e].y - topPts[e].y) - (topPts[e2].y - topPts[e].y) * (botPts[e].x - topPts[e].x);
+            if (nm > 0) { ctx.beginPath(); ctx.moveTo(topPts[e].x, topPts[e].y); ctx.lineTo(topPts[e2].x, topPts[e2].y); ctx.lineTo(botPts[e2].x, botPts[e2].y); ctx.lineTo(botPts[e].x, botPts[e].y); ctx.closePath(); ctx.fillStyle = `rgba(200,190,175,${brightness * 0.85})`; ctx.fill(); ctx.strokeStyle = `rgba(80,75,65,${brightness * 0.5})`; ctx.lineWidth = 0.5; ctx.stroke(); }
+          }
+          ctx.beginPath(); topPts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)); ctx.closePath();
+          ctx.fillStyle = `rgba(220,210,195,${brightness})`; ctx.fill(); ctx.strokeStyle = `rgba(80,75,65,${brightness * 0.5})`; ctx.lineWidth = 0.5; ctx.stroke();
+        }
+        const maxCur = bricks.length > 0 ? Math.max(...currentAngles.map(Math.abs)).toFixed(1) : '0';
+        metricsEl.textContent = `Bricks: ${bricks.length}  |  ${COLS}\u00D7${ROWS}  |  Max Angle: ${maxCur}\u00B0  |  ${hasImage ? 'Image' : 'Wave 20\u00B0\u201360\u00B0'}`;
+      }
+
+      // Orbit — FIX: subtract dx so right-drag rotates right
+      canvas.addEventListener('mousedown', e => { orbiting = true; orbLastX = e.clientX; orbLastY = e.clientY; canvas.style.cursor = 'grabbing'; e.preventDefault(); });
+      canvas.addEventListener('mousemove', e => {
+        if (!orbiting) return;
+        rotY -= (e.clientX - orbLastX) * 0.005;
+        rotX += (e.clientY - orbLastY) * 0.005;
+        rotX = Math.max(-1.2, Math.min(0.4, rotX));
+        orbLastX = e.clientX; orbLastY = e.clientY;
+      });
+      canvas.addEventListener('mouseup', () => { orbiting = false; canvas.style.cursor = 'grab'; });
+      canvas.addEventListener('mouseleave', () => { orbiting = false; canvas.style.cursor = 'grab'; });
+      canvas.style.cursor = 'grab';
+      canvas.addEventListener('touchstart', e => { if (e.touches.length === 1) { orbiting = true; orbLastX = e.touches[0].clientX; orbLastY = e.touches[0].clientY; e.preventDefault(); } }, { passive: false });
+      canvas.addEventListener('touchmove', e => { if (!orbiting || e.touches.length !== 1) return; rotY -= (e.touches[0].clientX - orbLastX) * 0.005; rotX += (e.touches[0].clientY - orbLastY) * 0.005; rotX = Math.max(-1.2, Math.min(0.4, rotX)); orbLastX = e.touches[0].clientX; orbLastY = e.touches[0].clientY; e.preventDefault(); }, { passive: false });
+      canvas.addEventListener('touchend', () => { orbiting = false; });
+      // Zoom
+      canvas.addEventListener('wheel', e => { e.preventDefault(); zoom3D *= e.deltaY > 0 ? 0.92 : 1.08; zoom3D = Math.max(0.3, Math.min(5, zoom3D)); }, { passive: false });
+
+      fileInput.addEventListener('change', e => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { const img = new Image(); img.onload = () => { const oc = document.createElement('canvas'); oc.width = img.width; oc.height = img.height; oc.getContext('2d').drawImage(img, 0, 0); storedImgData = oc.getContext('2d').getImageData(0, 0, img.width, img.height).data; storedImgW = img.width; storedImgH = img.height; targetAngles = sampleImage(storedImgData, storedImgW, storedImgH); hasImage = true; }; img.src = reader.result; }; reader.readAsDataURL(file); });
+      if (colSlider) colSlider.addEventListener('input', () => { COLS = parseInt(colSlider.value); buildGrid(); });
+      if (rowSlider) rowSlider.addEventListener('input', () => { ROWS = parseInt(rowSlider.value); buildGrid(); });
+      resize(); window.addEventListener('resize', resize);
+      demos.push(draw);
+
+      // Load default brick image
+      const defImg = new Image();
+      defImg.onload = () => {
+        const oc = document.createElement('canvas');
+        oc.width = defImg.width; oc.height = defImg.height;
+        oc.getContext('2d').drawImage(defImg, 0, 0);
+        storedImgData = oc.getContext('2d').getImageData(0, 0, defImg.width, defImg.height).data;
+        storedImgW = defImg.width; storedImgH = defImg.height;
+        targetAngles = sampleImage(storedImgData, storedImgW, storedImgH);
+        currentAngles = Float32Array.from(targetAngles);
+        hasImage = true;
+      };
+      defImg.src = '/playground/default-brick.png';
+    })();
+
+
+
+    // ══════════════════════════════════════════
+    // Demo 3: Parking Layout
+    // Matching parking_algorithm repo logic:
+    // - Edge: shift-optimized, spot+space containment in boundary+0.1m
+    // - Space = origin to origin+normal*6m (includes spot 5m + 1m aisle start)
+    // - Collision: 0.99-scaled spot-spot greedy + 0.98-scaled space-spot greedy
+    // - Road CL = boundary -8m, Inner bdy = boundary -11m
+    // - Inner: center inside innerBdy, ALL corners inside innerBdy+0.1m
+    // ══════════════════════════════════════════
+    (function initParking() {
+      const canvas = document.getElementById('parkingCanvas');
+      const metricsEl = document.getElementById('parkingMetrics');
+      if (!canvas) return;
+      let ctx, W, H, dragIdx = -1, hovIdx = -1;
+      let vpCx = 40, vpCy = 40, vpZoom = 0.8, panning = false, panLX = 0, panLY = 0;
+
+      const bdy = [{x:8,y:6},{x:6,y:52},{x:24,y:70},{x:56,y:68},{x:72,y:44},{x:66,y:10}];
+      const SW = 2.5, SD = 5.0, AW = 6.0;
+      const SPACE_H = 6.0; // repo: PERPENDICULAR_SPACE_H — from origin, includes spot
+      const ROAD_CL = 8, INNER_OFF = 11;
+
+      let allStalls = [], innerBdyPoly = [], roadClPoly = [], spineSegs = [];
+
+      function w2s(x,y){const s=Math.min(W,H)*vpZoom/80;return{x:W/2+(x-vpCx)*s,y:H/2+(y-vpCy)*s};}
+      function s2w(x,y){const s=Math.min(W,H)*vpZoom/80;return{x:vpCx+(x-W/2)/s,y:vpCy+(y-H/2)/s};}
+      function resize(){const s=setupCanvas(canvas);W=s.w;H=s.h;ctx=s.ctx;compute();}
+
+      function pip(px,py,poly){
+        let r=false;
+        for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+          const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;
+          if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi))r=!r;
+        }
+        return r;
+      }
+      function pArea(p){let a=0;for(let i=0,j=p.length-1;i<p.length;j=i++)a+=p[i].x*p[j].y-p[j].x*p[i].y;return Math.abs(a)/2;}
+
+      function scalePoly(poly,s){
+        const cx=poly.reduce((a,p)=>a+p.x,0)/poly.length;
+        const cy=poly.reduce((a,p)=>a+p.y,0)/poly.length;
+        return poly.map(p=>({x:cx+(p.x-cx)*s,y:cy+(p.y-cy)*s}));
+      }
+
+      function segX(a1,a2,b1,b2){
+        const d1x=a2.x-a1.x,d1y=a2.y-a1.y,d2x=b2.x-b1.x,d2y=b2.y-b1.y;
+        const den=d1x*d2y-d1y*d2x;
+        if(Math.abs(den)<1e-10)return false;
+        const t=((b1.x-a1.x)*d2y-(b1.y-a1.y)*d2x)/den;
+        const u=((b1.x-a1.x)*d1y-(b1.y-a1.y)*d1x)/den;
+        return t>0.002&&t<0.998&&u>0.002&&u<0.998;
+      }
+
+      function polyOverlap(a,b){
+        for(const p of a)if(pip(p.x,p.y,b))return true;
+        for(const p of b)if(pip(p.x,p.y,a))return true;
+        for(let i=0;i<a.length;i++){
+          const a1=a[i],a2=a[(i+1)%a.length];
+          for(let j=0;j<b.length;j++){
+            if(segX(a1,a2,b[j],b[(j+1)%b.length]))return true;
+          }
+        }
+        return false;
+      }
+
+      // Repo-matching: spot = origin + xAxis*SW + yAxis*SD
+      function mkSpot(ox,oy,tx,ty,nx,ny){
+        return[{x:ox,y:oy},{x:ox+tx*SW,y:oy+ty*SW},
+               {x:ox+tx*SW+nx*SD,y:oy+ty*SW+ny*SD},{x:ox+nx*SD,y:oy+ny*SD}];
+      }
+      // Repo-matching: space = origin + xAxis*SW + yAxis*SPACE_H (6m from origin, includes spot)
+      function mkSpace(ox,oy,tx,ty,nx,ny){
+        return[{x:ox,y:oy},{x:ox+tx*SW,y:oy+ty*SW},
+               {x:ox+tx*SW+nx*SPACE_H,y:oy+ty*SW+ny*SPACE_H},{x:ox+nx*SPACE_H,y:oy+ny*SPACE_H}];
+      }
+
+      function offsetPoly(poly,dist){
+        const n=poly.length,cx=poly.reduce((s,v)=>s+v.x,0)/n,cy=poly.reduce((s,v)=>s+v.y,0)/n,r=[];
+        for(let i=0;i<n;i++){
+          const prev=poly[(i-1+n)%n],curr=poly[i],next=poly[(i+1)%n];
+          const e1x=curr.x-prev.x,e1y=curr.y-prev.y,e2x=next.x-curr.x,e2y=next.y-curr.y;
+          const l1=Math.hypot(e1x,e1y)||1,l2=Math.hypot(e2x,e2y)||1;
+          let n1x=-e1y/l1,n1y=e1x/l1,n2x=-e2y/l2,n2y=e2x/l2;
+          if(n1x*(cx-curr.x)+n1y*(cy-curr.y)<0){n1x=-n1x;n1y=-n1y;}
+          if(n2x*(cx-curr.x)+n2y*(cy-curr.y)<0){n2x=-n2x;n2y=-n2y;}
+          let bx=n1x+n2x,by=n1y+n2y;const bl=Math.hypot(bx,by)||1;bx/=bl;by/=bl;
+          const d=n1x*bx+n1y*by,m=d>0.1?Math.abs(dist)/d:Math.abs(dist);
+          const sg=dist<0?1:-1;
+          r.push({x:curr.x+bx*m*sg,y:curr.y+by*m*sg});
+        }
+        return r;
+      }
+
+      function edgeNormal(verts,i){
+        const n=verts.length,j=(i+1)%n,a=verts[i],b=verts[j];
+        const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
+        if(len<0.01)return null;
+        const tx=dx/len,ty=dy/len;
+        const cx=verts.reduce((s,v)=>s+v.x,0)/n,cy=verts.reduce((s,v)=>s+v.y,0)/n;
+        const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+        let nx=-ty,ny=tx;
+        if((mx+nx-cx)**2+(my+ny-cy)**2>(mx-nx-cx)**2+(my-ny-cy)**2){nx=-nx;ny=-ny;}
+        return{tx,ty,nx,ny,len};
+      }
+
+      // ── Spatial hash grid for O(n) broad-phase collision ──
+      const CELL_SZ = 6; // grid cell size (≈ spot diagonal)
+      function spatialHash(polys) {
+        const grid = new Map();
+        for (let i = 0; i < polys.length; i++) {
+          const p = polys[i];
+          let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+          for (const pt of p) { minX=Math.min(minX,pt.x);minY=Math.min(minY,pt.y);maxX=Math.max(maxX,pt.x);maxY=Math.max(maxY,pt.y); }
+          const x0=Math.floor(minX/CELL_SZ),x1=Math.floor(maxX/CELL_SZ);
+          const y0=Math.floor(minY/CELL_SZ),y1=Math.floor(maxY/CELL_SZ);
+          for (let cx=x0;cx<=x1;cx++) for (let cy=y0;cy<=y1;cy++) {
+            const k=cx+','+cy;
+            if (!grid.has(k)) grid.set(k,[]);
+            grid.get(k).push(i);
+          }
+        }
+        return grid;
+      }
+      function querySpatial(grid, poly) {
+        let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+        for (const pt of poly) { minX=Math.min(minX,pt.x);minY=Math.min(minY,pt.y);maxX=Math.max(maxX,pt.x);maxY=Math.max(maxY,pt.y); }
+        const x0=Math.floor(minX/CELL_SZ),x1=Math.floor(maxX/CELL_SZ);
+        const y0=Math.floor(minY/CELL_SZ),y1=Math.floor(maxY/CELL_SZ);
+        const hits = new Set();
+        for (let cx=x0;cx<=x1;cx++) for (let cy=y0;cy<=y1;cy++) {
+          const arr=grid.get(cx+','+cy);
+          if (arr) for (const idx of arr) hits.add(idx);
+        }
+        return hits;
+      }
+
+      // Greedy spot-spot collision (0.99 tolerance, spatial hash pre-filter)
+      function greedySpot(spots){
+        if(spots.length<2)return spots;
+        const sc=spots.map(s=>scalePoly(s.poly,0.99));
+        const grid=spatialHash(sc);
+        const pairs=[];
+        for(let i=0;i<spots.length;i++){
+          const candidates=querySpatial(grid,sc[i]);
+          for(const j of candidates){
+            if(j<=i)continue;
+            if(spots[i].edge!==undefined&&spots[j].edge!==undefined&&spots[i].edge===spots[j].edge)continue;
+            if(polyOverlap(sc[i],sc[j]))pairs.push([i,j]);
+          }
+        }
+        if(!pairs.length)return spots;
+        const rm=new Set();let act=[...pairs];
+        while(act.length){
+          act=act.filter(([i,j])=>!rm.has(i)&&!rm.has(j));if(!act.length)break;
+          const cnt=new Map();for(const[i,j]of act){cnt.set(i,(cnt.get(i)||0)+1);cnt.set(j,(cnt.get(j)||0)+1);}
+          let w=-1,wc=0;for(const[k,v]of cnt)if(v>wc){wc=v;w=k;}rm.add(w);
+        }
+        return spots.filter((_,i)=>!rm.has(i));
+      }
+
+      // Greedy space-spot collision (0.98 tolerance, spatial hash pre-filter)
+      function greedySpace(spots){
+        if(spots.length<2)return spots;
+        const sp98=spots.map(s=>scalePoly(s.poly,0.98));
+        const sc98=spots.map(s=>scalePoly(s.space,0.98));
+        const grid=spatialHash(sp98); // index spot polys
+        const pairs=[];
+        for(let i=0;i<spots.length;i++){
+          const candidates=querySpatial(grid,sc98[i]); // query with space
+          for(const j of candidates){
+            if(i===j)continue;
+            if(polyOverlap(sc98[i],sp98[j]))pairs.push([i,j]);
+          }
+        }
+        if(!pairs.length)return spots;
+        const rm=new Set();let act=[...pairs];
+        while(act.length){
+          act=act.filter(([i,j])=>!rm.has(i)&&!rm.has(j));if(!act.length)break;
+          const cnt=new Map();for(const[i]of act)cnt.set(i,(cnt.get(i)||0)+1);
+          let w=-1,wc=0;for(const[k,v]of cnt)if(v>wc){wc=v;w=k;}rm.add(w);
+        }
+        return spots.filter((_,i)=>!rm.has(i));
+      }
+
+      // Access lane box: from spot far edge, AW deep in normal direction
+      function mkLane(s){
+        const p=s.poly;
+        const dx=p[3].x-p[0].x,dy=p[3].y-p[0].y,len=Math.hypot(dx,dy)||1;
+        const nx=dx/len,ny=dy/len;
+        return[p[3],p[2],{x:p[2].x+nx*AW,y:p[2].y+ny*AW},{x:p[3].x+nx*AW,y:p[3].y+ny*AW}];
+      }
+
+      // Remove spots whose access lane overlaps another spot (iterative)
+      function cleanLanes(spots){
+        let d=true;
+        while(d){d=false;
+          for(let i=0;i<spots.length&&!d;i++){
+            const lane=mkLane(spots[i]);
+            for(let j=0;j<spots.length&&!d;j++){
+              if(i===j)continue;
+              if(spots[i].edge!==undefined&&spots[j].edge!==undefined&&spots[i].edge===spots[j].edge)continue;
+              if(polyOverlap(lane,spots[j].poly)){spots.splice(i,1);d=true;}
+            }
+          }
+        }
+        return spots;
+      }
+
+      function allInside(poly,boundary){return poly.every(p=>pip(p.x,p.y,boundary));}
+
+      function compute(){
+        allStalls=[];spineSegs=[];
+        roadClPoly=offsetPoly(bdy,-ROAD_CL);
+        innerBdyPoly=offsetPoly(bdy,-INNER_OFF);
+        const bdyBuf=offsetPoly(bdy,0.1);     // boundary +0.1m (repo pattern)
+        const innerBuf=offsetPoly(bdy,-(INNER_OFF-0.1)); // inner bdy +0.1m outward
+
+        // ══ 1. Edge parking ══
+        let edgeSpots=[];
+        for(let seg=0;seg<bdy.length;seg++){
+          const en=edgeNormal(bdy,seg);
+          if(!en||en.len<SW)continue;
+          const a=bdy[seg];
+
+          // Build shift offsets (repo buildOffsets: forward + reverse)
+          const offsets=new Set([0]);
+          for(let s=1;s<=10;s++){
+            offsets.add(s*0.25);
+            const rem=en.len%SW;
+            if(rem>0.01){
+              const rv=rem+s*0.25;if(rv<=SW&&rv>=0)offsets.add(rv);
+              const rv2=rem-s*0.25;if(rv2>=0)offsets.add(rv2);
+            }
+          }
+
+          let bestTrial=[];
+          for(const offset of offsets){
+            if(offset<0||offset>en.len)continue;
+            const nS=Math.floor((en.len-offset)/SW);
+            if(nS<1)continue;
+            const trial=[];
+            for(let i=0;i<nS;i++){
+              const d=offset+i*SW;
+              const ox=a.x+en.tx*d,oy=a.y+en.ty*d;
+              const poly=mkSpot(ox,oy,en.tx,en.ty,en.nx,en.ny);
+              const space=mkSpace(ox,oy,en.tx,en.ty,en.nx,en.ny);
+              // Repo validateSpot: spot inside buffered boundary AND space inside buffered boundary
+              if(!allInside(poly,bdyBuf))continue;
+              if(!allInside(space,bdyBuf))continue;
+              trial.push({poly,space,edge:seg,type:'edge'});
+            }
+            if(trial.length>bestTrial.length)bestTrial=trial;
+          }
+          edgeSpots.push(...bestTrial);
+        }
+
+        // 2. Greedy spot-spot → space-spot
+        edgeSpots=greedySpot(edgeSpots);
+        edgeSpots=greedySpace(edgeSpots);
+        edgeSpots=cleanLanes(edgeSpots);
+
+        // ══ 3. Spine: road centerline (closed loop) ══
+        if(roadClPoly.length>=3){
+          for(let i=0;i<roadClPoly.length;i++)
+            spineSegs.push([roadClPoly[i],roadClPoly[(i+1)%roadClPoly.length]]);
+        }
+
+        // ══ 4. Inner parking: ALL corners inside innerBuf, center inside innerBdyPoly ══
+        let innerSpots=[];
+        if(innerBdyPoly.length>=3&&pArea(innerBdyPoly)>60){
+          // Directions: from inner boundary edges (5° grouped) + base angles
+          const dirs=[],seen=new Set();
+          for(let i=0;i<innerBdyPoly.length;i++){
+            const j=(i+1)%innerBdyPoly.length;
+            const dx=innerBdyPoly[j].x-innerBdyPoly[i].x,dy=innerBdyPoly[j].y-innerBdyPoly[i].y;
+            const len=Math.hypot(dx,dy);if(len<2)continue;
+            const ang=Math.round(((Math.atan2(dy,dx)*180/Math.PI)%180+180)%180/5)*5;
+            if(!seen.has(ang)){seen.add(ang);dirs.push({tx:dx/len,ty:dy/len});}
+          }
+          for(const b of[0,45,90,135]){
+            if(!seen.has(b)){seen.add(b);const rad=b*Math.PI/180;dirs.push({tx:Math.cos(rad),ty:Math.sin(rad)});}
+          }
+
+          const rowSp=SD*2+AW;
+          let bestInner=[],bestAisles=[];
+
+          for(const dir of dirs){
+            const pd={x:-dir.ty,y:dir.tx};
+            // Project innerBdyPoly vertices
+            let minP=Infinity,maxP=-Infinity,minR=Infinity,maxR=-Infinity;
+            for(const v of innerBdyPoly){
+              const r=v.x*dir.tx+v.y*dir.ty,p=v.x*pd.x+v.y*pd.y;
+              minP=Math.min(minP,p);maxP=Math.max(maxP,p);
+              minR=Math.min(minR,r);maxR=Math.max(maxR,r);
+            }
+
+            for(let shift=0;shift<SD;shift+=0.5){
+              const ti=[],ta=[];
+              for(let p=minP+SD+shift;p+SD<maxP;p+=rowSp){
+                const acP=p+SD+AW/2;
+                ta.push({
+                  a:{x:dir.tx*minR+pd.x*acP,y:dir.ty*minR+pd.y*acP},
+                  b:{x:dir.tx*maxR+pd.x*acP,y:dir.ty*maxR+pd.y*acP}
+                });
+
+                for(let r=minR;r<maxR;r+=SW){
+                  // Row 1: facing +perp
+                  const o1x=dir.tx*r+pd.x*p,o1y=dir.ty*r+pd.y*p;
+                  const p1=mkSpot(o1x,o1y,dir.tx,dir.ty,pd.x,pd.y);
+                  // ALL 4 corners inside inner boundary buffer
+                  if(allInside(p1,innerBuf)){
+                    const s1=mkSpace(o1x,o1y,dir.tx,dir.ty,pd.x,pd.y);
+                    ti.push({poly:p1,space:s1,type:'inner'});
+                  }
+                  // Row 2: facing -perp (back-to-back)
+                  const o2x=dir.tx*r+pd.x*(p+SD+AW+SD),o2y=dir.ty*r+pd.y*(p+SD+AW+SD);
+                  const p2=mkSpot(o2x,o2y,dir.tx,dir.ty,-pd.x,-pd.y);
+                  if(allInside(p2,innerBuf)){
+                    const s2=mkSpace(o2x,o2y,dir.tx,dir.ty,-pd.x,-pd.y);
+                    ti.push({poly:p2,space:s2,type:'inner'});
+                  }
+                }
+              }
+              if(ti.length>bestInner.length){bestInner=ti;bestAisles=ta;}
+            }
+          }
+
+          // Combined greedy collision: edge + inner together
+          const combined=[...edgeSpots,...bestInner];
+          const after1=greedySpot(combined);
+          const after2=greedySpace(after1);
+          edgeSpots=after2.filter(s=>s.type==='edge');
+          innerSpots=after2.filter(s=>s.type==='inner');
+
+          // Inner aisle lines clipped to innerBdyPoly
+          for(const a of bestAisles){
+            // Clip line to innerBdyPoly
+            const dx=a.b.x-a.a.x,dy=a.b.y-a.a.y,ts=[];
+            for(let i=0;i<innerBdyPoly.length;i++){
+              const j=(i+1)%innerBdyPoly.length;
+              const ex=innerBdyPoly[j].x-innerBdyPoly[i].x,ey=innerBdyPoly[j].y-innerBdyPoly[i].y;
+              const den=dx*ey-dy*ex;
+              if(Math.abs(den)<1e-10)continue;
+              const t=((innerBdyPoly[i].x-a.a.x)*ey-(innerBdyPoly[i].y-a.a.y)*ex)/den;
+              const u=((innerBdyPoly[i].x-a.a.x)*dy-(innerBdyPoly[i].y-a.a.y)*dx)/den;
+              if(t>=0&&t<=1&&u>=0&&u<=1)ts.push(t);
+            }
+            if(ts.length>=2){
+              ts.sort((a,b)=>a-b);
+              spineSegs.push([{x:a.a.x+dx*ts[0],y:a.a.y+dy*ts[0]},{x:a.a.x+dx*ts[ts.length-1],y:a.a.y+dy*ts[ts.length-1]}]);
+            }
+          }
+        }
+
+        allStalls=[...edgeSpots,...innerSpots];
+      }
+
+      // Draw stall: access lane in front of spot + white rectangle
+      function drawStallU(stall){
+        const p=stall.poly;
+        // Access lane: from spot far edge (p[3]→p[2]) extending AW in normal direction
+        const dx=p[3].x-p[0].x,dy=p[3].y-p[0].y,len=Math.hypot(dx,dy)||1;
+        const nx=dx/len,ny=dy/len;
+        const al=[p[3],p[2],
+          {x:p[2].x+nx*AW,y:p[2].y+ny*AW},
+          {x:p[3].x+nx*AW,y:p[3].y+ny*AW}];
+        ctx.beginPath();
+        const a0=w2s(al[0].x,al[0].y);ctx.moveTo(a0.x,a0.y);
+        for(let k=1;k<4;k++){const ap=w2s(al[k].x,al[k].y);ctx.lineTo(ap.x,ap.y);}
+        ctx.closePath();
+        ctx.fillStyle='rgba(220,160,50,0.08)';ctx.fill();
+        ctx.strokeStyle='rgba(220,160,50,0.20)';ctx.lineWidth=0.5;ctx.stroke();
+        // Spot rectangle (white)
+        ctx.beginPath();
+        const p0=w2s(p[0].x,p[0].y);ctx.moveTo(p0.x,p0.y);
+        for(let k=1;k<4;k++){const pp=w2s(p[k].x,p[k].y);ctx.lineTo(pp.x,pp.y);}
+        ctx.closePath();
+        ctx.strokeStyle='rgba(255,255,255,0.85)';ctx.lineWidth=1;ctx.stroke();
+      }
+
+      function draw(){
+        if(!W)return;
+        ctx.clearRect(0,0,W,H);
+        ctx.font="500 9px 'IBM Plex Mono',monospace";ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fillText('PARKING LAYOUT',8,14);
+
+        // Grid
+        ctx.strokeStyle='rgba(255,255,255,0.03)';ctx.lineWidth=0.5;
+        for(let x=0;x<=80;x+=10){const p1=w2s(x,0),p2=w2s(x,80);ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();}
+        for(let y=0;y<=80;y+=10){const p1=w2s(0,y),p2=w2s(80,y);ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();}
+
+        // Circulation spine — orange dashed
+        ctx.save();ctx.setLineDash([6,4]);ctx.strokeStyle='rgba(220,160,50,0.65)';ctx.lineWidth=1.2;
+        for(const[a,b]of spineSegs){const p1=w2s(a.x,a.y),p2=w2s(b.x,b.y);ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();}
+        ctx.setLineDash([]);ctx.restore();
+
+        // Stalls
+        for(const s of allStalls)drawStallU(s);
+
+        // Boundary
+        ctx.beginPath();bdy.forEach((v,i)=>{const p=w2s(v.x,v.y);i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);});ctx.closePath();
+        ctx.fillStyle='rgba(255,255,255,0.015)';ctx.fill();
+        ctx.strokeStyle='rgba(140,140,140,0.45)';ctx.lineWidth=1;ctx.stroke();
+
+        // Dimensions
+        for(let i=0;i<bdy.length;i++){const j=(i+1)%bdy.length,a=w2s(bdy[i].x,bdy[i].y),b=w2s(bdy[j].x,bdy[j].y),len=Math.hypot(bdy[j].x-bdy[i].x,bdy[j].y-bdy[i].y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2,dx=b.x-a.x,dy=b.y-a.y,nl=Math.hypot(dx,dy)||1;ctx.font="400 8px 'IBM Plex Mono',monospace";ctx.fillStyle='rgba(255,255,255,0.30)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(len.toFixed(1)+'m',mx+(-dy/nl)*14,my+(dx/nl)*14);}
+
+        // Vertices
+        for(let i=0;i<bdy.length;i++){const p=w2s(bdy[i].x,bdy[i].y),isH=hovIdx===i,isD=dragIdx===i;ctx.beginPath();ctx.arc(p.x,p.y,isH||isD?7:5,0,Math.PI*2);ctx.fillStyle=isD?'#C4773C':isH?'#E8944A':'#fff';ctx.fill();}
+
+        const aM=pArea(bdy),eC=allStalls.filter(s=>s.type==='edge').length,iC=allStalls.length-eC;
+        metricsEl.textContent=`Edge: ${eC}  |  Inner: ${iC}  |  Total: ${allStalls.length}  |  Area: ${aM.toFixed(0)} m\u00B2  |  Eff: ${(aM>0?(allStalls.length*SW*SD/aM*100):0).toFixed(1)}%`;
+      }
+
+      // ── Interaction ──
+      function hit(mx,my){for(let i=0;i<bdy.length;i++){const p=w2s(bdy[i].x,bdy[i].y);if(Math.hypot(mx-p.x,my-p.y)<14)return i;}return-1;}
+      canvas.addEventListener('mousemove',e=>{const rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;if(dragIdx>=0){const w=s2w(mx,my);bdy[dragIdx].x=w.x;bdy[dragIdx].y=w.y;compute();return;}if(panning){const s=Math.min(W,H)*vpZoom/80;vpCx-=(e.clientX-panLX)/s;vpCy-=(e.clientY-panLY)/s;panLX=e.clientX;panLY=e.clientY;return;}hovIdx=hit(mx,my);canvas.style.cursor=hovIdx>=0?'pointer':'default';});
+      canvas.addEventListener('mousedown',e=>{const rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;dragIdx=hit(mx,my);if(dragIdx>=0){canvas.style.cursor='grabbing';e.preventDefault();}else{panning=true;panLX=e.clientX;panLY=e.clientY;canvas.style.cursor='move';e.preventDefault();}});
+      canvas.addEventListener('mouseup',()=>{dragIdx=-1;panning=false;canvas.style.cursor='default';});
+      canvas.addEventListener('mouseleave',()=>{dragIdx=-1;panning=false;hovIdx=-1;});
+      canvas.addEventListener('wheel',e=>{e.preventDefault();vpZoom*=e.deltaY>0?0.92:1.08;vpZoom=Math.max(0.3,Math.min(5,vpZoom));},{passive:false});
+      canvas.addEventListener('dblclick',e=>{const rect=canvas.getBoundingClientRect(),mx=e.clientX-rect.left,my=e.clientY-rect.top;const idx=hit(mx,my);if(idx>=0&&bdy.length>3){bdy.splice(idx,1);compute();return;}if(idx<0){const w=s2w(mx,my);let bD=Infinity,bE=0;for(let i=0;i<bdy.length;i++){const j=(i+1)%bdy.length,a=bdy[i],b=bdy[j],dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((w.x-a.x)*dx+(w.y-a.y)*dy)/(dx*dx+dy*dy))),d=Math.hypot(w.x-(a.x+t*dx),w.y-(a.y+t*dy));if(d<bD){bD=d;bE=i;}}bdy.splice(bE+1,0,w);compute();}});
+      canvas.addEventListener('touchstart',e=>{const t=e.touches[0],rect=canvas.getBoundingClientRect();dragIdx=hit(t.clientX-rect.left,t.clientY-rect.top);if(dragIdx>=0)e.preventDefault();},{passive:false});
+      canvas.addEventListener('touchmove',e=>{if(dragIdx<0)return;const t=e.touches[0],rect=canvas.getBoundingClientRect(),w=s2w(t.clientX-rect.left,t.clientY-rect.top);bdy[dragIdx].x=w.x;bdy[dragIdx].y=w.y;compute();e.preventDefault();},{passive:false});
+      canvas.addEventListener('touchend',()=>{dragIdx=-1;});
+
+      // ── Auto-drift: bold → 3s pause → repeat ──
+      // Throttled: only recompute parking at discrete moments, not every frame
+      const orig=bdy.map(v=>({x:v.x,y:v.y}));
+      const dt=bdy.map(()=>({dx:0,dy:0}));
+      function pickD(i){dt[i].dx=(Math.random()-0.5)*25;dt[i].dy=(Math.random()-0.5)*25;}
+      bdy.forEach((_,i)=>pickD(i));
+      let dState='moving',pTimer=0,driftFrames=0;
+      const RECOMPUTE_INTERVAL = 8; // recompute every N frames during drift (not every frame)
+
+      resize();window.addEventListener('resize',resize);
+      demos.push(()=>{
+        if(dragIdx<0&&!panning){
+          if(dState==='paused'){pTimer+=0.016;if(pTimer>=3){dState='moving';driftFrames=0;bdy.forEach((_,i)=>{if(i<orig.length)pickD(i);});compute();}}
+          else{
+            let allOk=true;
+            bdy.forEach((v,i)=>{if(i>=orig.length)return;const tx=Math.max(6,Math.min(74,orig[i].x+dt[i].dx)),ty=Math.max(6,Math.min(74,orig[i].y+dt[i].dy));v.x+=(tx-v.x)*0.04;v.y+=(ty-v.y)*0.04;if(Math.abs(v.x-tx)>0.5||Math.abs(v.y-ty)>0.5)allOk=false;});
+            driftFrames++;
+            if(driftFrames%RECOMPUTE_INTERVAL===0)compute();
+            if(allOk){dState='paused';pTimer=0;compute();}
+          }
+        }
+        draw();
+      });
+    })();
+
+  
+    })();
+    </script>
+  </section>
+
+  <!-- ▲▲▲ PLAYGROUND CONTENT INJECTED ABOVE ▲▲▲ -->
+
+  <footer class="pg-footer">
+    <div>&copy; 2026 AARO. All rights reserved.</div>
+    <div class="pg-footer__links">
+      <a href="index.html">Home</a>
+      <a href="publications.html">Publications</a>
+      <a href="index.html#s6">Contact</a>
+    </div>
+  </footer>
+
+</body>
+</html>
