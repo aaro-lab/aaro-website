@@ -87,6 +87,15 @@
       min-height: 100vh; scroll-snap-align: start;
       position: relative; overflow: hidden;
     }
+    /* Short viewports (landscape phone, compact windows): allow content to grow */
+    @media (max-height: 720px), (max-width: 768px) {
+      .sec { min-height: auto; }
+      .sec.s-cover,
+      .sec.s-manifesto,
+      .sec.s-agent,
+      .sec.s-cap,
+      .sec.s-contact { min-height: 100vh; }
+    }
 
     /* ── TYPOGRAPHY ── */
     .t-mega {
@@ -157,6 +166,52 @@
     }
     .s-cover__nav-links a:hover { color: var(--accent); }
     .s-cover__nav-links a:hover::after { width: 100%; }
+
+    /* ── MOBILE NAV (burger + overlay) ── */
+    .mnav-burger {
+      display: none;
+      width: 40px; height: 40px;
+      flex-direction: column; justify-content: center; align-items: center;
+      gap: 5px;
+      background: rgba(13,13,12,0.6); backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--ink-80); border-radius: 50%;
+      cursor: pointer;
+    }
+    .mnav-burger span {
+      display: block; width: 16px; height: 1.5px; background: var(--cream);
+      transition: transform 0.4s var(--ease), opacity 0.3s;
+    }
+    .mnav-burger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+    .mnav-burger.open span:nth-child(2) { opacity: 0; }
+    .mnav-burger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+    .mnav-overlay {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(13,13,12,0.96); backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      gap: 28px; padding: 40px;
+      opacity: 0; pointer-events: none;
+      transform: scale(1.02);
+      transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+    }
+    .mnav-overlay.open { opacity: 1; pointer-events: auto; transform: scale(1); }
+    .mnav-overlay a {
+      font-family: var(--sans); font-size: clamp(28px, 7vw, 44px); font-weight: 700;
+      letter-spacing: -0.02em; text-transform: lowercase; color: var(--cream);
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.5s var(--ease), transform 0.5s var(--ease), color 0.3s;
+    }
+    .mnav-overlay.open a { opacity: 1; transform: translateY(0); }
+    .mnav-overlay.open a:nth-child(1) { transition-delay: 0.08s; }
+    .mnav-overlay.open a:nth-child(2) { transition-delay: 0.14s; }
+    .mnav-overlay.open a:nth-child(3) { transition-delay: 0.20s; }
+    .mnav-overlay.open a:nth-child(4) { transition-delay: 0.26s; }
+    .mnav-overlay.open a:nth-child(5) { transition-delay: 0.32s; }
+    .mnav-overlay.open a:nth-child(6) { transition-delay: 0.38s; }
+    .mnav-overlay a:hover,
+    .mnav-overlay a:active { color: var(--accent); }
 
     .s-cover__title { margin-bottom: 20px; text-transform: lowercase; position: relative; z-index: 5; pointer-events: none; }
     .s-cover__title .line {
@@ -234,15 +289,18 @@
     }
     @media (max-width: 1024px) {
       .s-cover {
-        justify-content: center; align-items: center;
-        padding: 80px 24px 40px;
+        justify-content: flex-start; align-items: center;
+        padding: clamp(80px, 14vh, 120px) 24px clamp(20px, 4vh, 40px);
       }
       .s-cover__title { margin-bottom: 12px; text-align: center; }
       .cover-graph {
-        position: absolute; top: 0; right: 0; bottom: 0;
-        width: 100%; height: 100%;
+        position: absolute; top: auto; right: 0; bottom: 0; left: 0;
+        width: 100%; height: 55%;
         margin: 0;
         order: unset;
+        opacity: 0.55;
+        mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 100%);
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 100%);
       }
       .s-cover__sub { text-align: center; margin-top: 16px; }
     }
@@ -1034,6 +1092,7 @@
     @media (max-width: 768px) {
       html { scroll-snap-type: y proximity; }
       .s-cover__nav-links { display: none; }
+      .mnav-burger { display: flex; }
       .nums-grid { grid-template-columns: 1fr; }
       .nav-dots { display: none; }
       .cursor-glow { display: none; }
@@ -1052,11 +1111,18 @@
       .foot__mark { font-size: clamp(2.5rem, 8vw, 4rem); }
     }
     @media (max-width: 480px) {
-      .s-cover { padding: 70px 16px 32px; }
+      .s-cover {
+        padding: clamp(70px,12vh,100px) 16px clamp(20px,4vh,32px);
+        justify-content: flex-start;
+      }
       .s-cover__sub { font-size: 10px; letter-spacing: 0.08em; }
       .s-cover__scroll { display: none; }
       .t-mega { font-size: clamp(2.4rem, 10vw, 3.5rem); }
-      .cover-graph { width: 100%; height: 100%; }
+      .cover-graph {
+        width: 100%; height: 50%;
+        top: auto; bottom: 0;
+        opacity: 0.5;
+      }
       .s-mani__text { font-size: clamp(1.4rem, 5vw, 1.8rem); }
       .s-mani__l, .s-mani__r { padding: 32px 20px; }
       .s-mani__kr { font-size: 14px; }
@@ -1122,6 +1188,18 @@
         <a href="publications.html">Publications</a>
         <a href="#s6">Contact</a>
       </div>
+      <button class="mnav-burger" id="mnavBurger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+
+    <div class="mnav-overlay" id="mnavOverlay">
+      <a href="#s3">apps</a>
+      <a href="#s4">agents</a>
+      <a href="#s5">about</a>
+      <a href="playground.html">playground</a>
+      <a href="publications.html">publications</a>
+      <a href="#s6">contact</a>
     </div>
     <div class="s-cover__title" id="coverTitle">
       <span class="line"><span class="t-mega"><span class="aaro-letter">a</span>rchitectural</span></span>
@@ -1276,8 +1354,6 @@
           </div>
           <div class="foot__links">
             <a href="mailto:architecture.algorithm@gmail.com">Email</a>
-            <a href="https://www.linkedin.com/in/tzung-kuan-hsu/" target="_blank" rel="noopener">LinkedIn</a>
-            <a href="https://www.instagram.com/tzung_kuan_hsu/" target="_blank" rel="noopener">Instagram</a>
           </div>
           <div class="foot__copy">&copy; 2026 AARO. All rights reserved.</div>
         </div>
@@ -1585,6 +1661,28 @@
       if (e.isIntersecting) e.target.classList.add('vis');
     }), { threshold: .08 });
     document.querySelectorAll('.rv').forEach(el => rvObs.observe(el));
+
+    // ── Mobile burger menu ──
+    const mnavBurger = document.getElementById('mnavBurger');
+    const mnavOverlay = document.getElementById('mnavOverlay');
+    if (mnavBurger && mnavOverlay) {
+      const closeMnav = () => {
+        mnavBurger.classList.remove('open');
+        mnavOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+      };
+      mnavBurger.addEventListener('click', () => {
+        const isOpen = mnavBurger.classList.toggle('open');
+        mnavOverlay.classList.toggle('open', isOpen);
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+      });
+      mnavOverlay.querySelectorAll('a').forEach(a =>
+        a.addEventListener('click', closeMnav)
+      );
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && mnavOverlay.classList.contains('open')) closeMnav();
+      });
+    }
 
     // ── Nav dots ──
     const secs = document.querySelectorAll('.sec');
