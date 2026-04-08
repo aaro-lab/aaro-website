@@ -54,20 +54,14 @@
 
     /* ── CURSOR FOLLOWER ── */
     .cursor-glow {
-      position: fixed; left: 0; top: 0;
-      width: 400px; height: 400px; border-radius: 50%;
+      position: fixed; width: 400px; height: 400px; border-radius: 50%;
       pointer-events: none; z-index: 9997;
       background: radial-gradient(circle, rgba(196,119,60,0.06) 0%, transparent 70%);
-      transform: translate3d(-50%, -50%, 0);
+      transform: translate(-50%, -50%);
       transition: opacity 0.6s;
       opacity: 0;
-      will-change: transform;
     }
     body:hover .cursor-glow { opacity: 1; }
-    /* Disable on touch/coarse pointer — no hover cursor to follow */
-    @media (pointer: coarse), (hover: none) {
-      .cursor-glow { display: none; }
-    }
 
     /* ── PROGRESS ── */
     .progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--accent); z-index: 9999; width: 0; transition: width 0.15s linear; }
@@ -179,7 +173,8 @@
       width: 40px; height: 40px;
       flex-direction: column; justify-content: center; align-items: center;
       gap: 5px;
-      background: rgba(13,13,12,0.88);
+      background: rgba(13,13,12,0.6); backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border: 1px solid var(--ink-80); border-radius: 50%;
       cursor: pointer;
     }
@@ -1154,49 +1149,6 @@
       .foot__links { gap: 20px; flex-wrap: wrap; }
       .foot__links a { font-size: 11px; }
     }
-
-    /* ── PERF: marquee pauses by default; JS toggles .in-view when section is visible ── */
-    .marquee-row { animation-play-state: paused; }
-    .marquee-section.in-view .marquee-row { animation-play-state: running; }
-    .marquee-row.paused { animation-play-state: paused; }
-
-    /* ── PERF: low-perf mode (JS-detected lowEnd or prefers-reduced-motion) ── */
-    html.low-perf .cursor-glow { display: none; }
-    html.low-perf .s-mani__text em,
-    html.low-perf .s-mani__statement em {
-      animation: none !important;
-      background: linear-gradient(90deg, var(--accent) 0%, var(--accent-h) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    html.low-perf .aaro-letter { animation: none !important; color: var(--accent); }
-    html.low-perf .s-cover__title .line > span { animation: none !important; transform: none !important; }
-    html.low-perf .scroll-bar::after { animation: none !important; }
-    html.low-perf .marquee-row { animation: none !important; }
-    html.low-perf .m-tile:hover .m-tile__card {
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
-
-    /* ── ACCESSIBILITY: honor OS-level reduced motion preference ── */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.001ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.001ms !important;
-        scroll-behavior: auto !important;
-      }
-      html { scroll-behavior: auto !important; }
-      .cursor-glow { display: none !important; }
-      .s-mani__text em,
-      .s-mani__statement em {
-        background: linear-gradient(90deg, var(--accent) 0%, var(--accent-h) 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-      .marquee-row { animation: none !important; }
-    }
   </style>
 </head>
 <body>
@@ -1454,46 +1406,6 @@
   (function(){
     'use strict';
 
-    // ── PERF: capability detection ──
-    const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const COARSE_POINTER = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-    const HW = navigator.hardwareConcurrency || 4;
-    const MEM = navigator.deviceMemory || 4;
-    const LOW_END = REDUCED_MOTION || HW <= 4 || MEM <= 4;
-    if (LOW_END) document.documentElement.classList.add('low-perf');
-    // Expose for downstream modules
-    window.__AARO_PERF__ = { REDUCED_MOTION, COARSE_POINTER, LOW_END, HW, MEM };
-
-    // ── PERF: gated rAF helper — runs `tick` only while `target` intersects the viewport ──
-    function gatedRAF(target, tick, opts) {
-      opts = opts || {};
-      let rafId = null;
-      let visible = false;
-      function frame(ts) {
-        if (!visible || document.hidden) { rafId = null; return; }
-        tick(ts);
-        rafId = requestAnimationFrame(frame);
-      }
-      function start() {
-        if (rafId == null && !document.hidden) rafId = requestAnimationFrame(frame);
-      }
-      function stop() {
-        if (rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
-      }
-      const obs = new IntersectionObserver(([e]) => {
-        visible = e.isIntersecting;
-        if (visible) { if (opts.onEnter) opts.onEnter(); start(); }
-        else stop();
-      }, { threshold: opts.threshold != null ? opts.threshold : 0.01 });
-      obs.observe(target);
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) stop();
-        else if (visible) start();
-      });
-      return { start, stop, kick: () => { if (visible) start(); } };
-    }
-    window.__AARO_GATED_RAF__ = gatedRAF;
-
     // ── MICRO APP DATA (with SVG icon paths) ──
     const APPS = [
       { n: "Circle Packing", c: "Generation", u: "https://aaro-circle-packing.vercel.app/", p: "M20 6a14 14 0 1 0 0 28 14 14 0 0 0 0-28zm-6 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm12-2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm-6 8a5 5 0 1 1 0 10 5 5 0 0 1 0-10z" },
@@ -1724,14 +1636,6 @@
       rowEl.addEventListener('mouseleave', () => rowEl.classList.remove('paused'));
     }
 
-    // PERF: pause marquee rows unless the section is actually on screen
-    document.querySelectorAll('.marquee-section').forEach(sec => {
-      const mo = new IntersectionObserver(([e]) => {
-        sec.classList.toggle('in-view', e.isIntersecting);
-      }, { threshold: 0.01 });
-      mo.observe(sec);
-    });
-
 
     // ── Progress ──
     const pr = document.getElementById('progress');
@@ -1741,41 +1645,16 @@
 
     // ── Cursor glow ──
     const glow = document.getElementById('cursorGlow');
-    if (glow) {
-      const FINE_POINTER = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
-      if (!FINE_POINTER || REDUCED_MOTION || LOW_END) {
-        glow.remove();
-      } else {
-        let glowX = 0, glowY = 0, curX = 0, curY = 0;
-        let rafId = null;
-        let idleFrames = 0;
-        const IDLE_LIMIT = 30; // ~0.5s at 60fps
-        function animateGlow() {
-          const dx = curX - glowX, dy = curY - glowY;
-          if (Math.abs(dx) + Math.abs(dy) < 0.5) {
-            idleFrames++;
-            if (idleFrames > IDLE_LIMIT) { rafId = null; return; } // sleep
-          } else {
-            idleFrames = 0;
-          }
-          glowX += dx * 0.08;
-          glowY += dy * 0.08;
-          glow.style.transform = 'translate3d(' + (glowX - 200) + 'px,' + (glowY - 200) + 'px,0)';
-          rafId = requestAnimationFrame(animateGlow);
-        }
-        function wake() {
-          idleFrames = 0;
-          if (rafId == null) rafId = requestAnimationFrame(animateGlow);
-        }
-        document.addEventListener('mousemove', e => {
-          curX = e.clientX; curY = e.clientY;
-          wake();
-        }, { passive: true });
-        document.addEventListener('visibilitychange', () => {
-          if (document.hidden && rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
-        });
-      }
+    let glowX = 0, glowY = 0, curX = 0, curY = 0;
+    document.addEventListener('mousemove', e => { curX = e.clientX; curY = e.clientY; });
+    function animateGlow() {
+      glowX += (curX - glowX) * 0.08;
+      glowY += (curY - glowY) * 0.08;
+      glow.style.left = glowX + 'px';
+      glow.style.top = glowY + 'px';
+      requestAnimationFrame(animateGlow);
     }
+    animateGlow();
 
     // ── Reveal ──
     const rvObs = new IntersectionObserver(es => es.forEach(e => {
@@ -1883,9 +1762,7 @@
       const tooltip = document.getElementById('agentTooltip');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      // PERF: cap DPR to 1.5 (or 1 on low-end) — retina fill-rate was ×4-9
-      const DPR_CAP = LOW_END ? 1 : 1.5;
-      const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+      const dpr = window.devicePixelRatio || 1;
 
       // All apps + dummy nodes for visual density
       const ALL_NODES = [
@@ -1946,9 +1823,6 @@
 
       const nodes = [];
       let W, H, centerX, centerY;
-      // PERF: cached Path2D per node (built once in initNodes)
-      // PERF: cached radial gradient for World Agent glow (rebuilt only in draw when position changes meaningfully)
-      let cachedGlowGrad = null, cachedGlowKey = '';
 
       function resize() {
         const rect = canvas.parentElement.getBoundingClientRect();
@@ -1964,7 +1838,6 @@
         // Scale node radii
         const rScale = Math.max(scale, W < 768 ? 0.35 : 0.55);
         nodes.forEach((n, i) => { if (ALL_NODES[i]) n.r = ALL_NODES[i].r * rScale; });
-        cachedGlowGrad = null; // invalidate
       }
 
       // Header safe zone (top-left corner where text overlay lives)
@@ -1975,10 +1848,8 @@
       function initNodes() {
         nodes.length = 0;
         ALL_NODES.forEach((nd, i) => {
-          // PERF: cache Path2D once per node (was re-parsed every frame)
-          const path2d = nd.svgPath ? new Path2D(nd.svgPath) : null;
           if (i === 0) {
-            nodes.push({ ...nd, idx:i, x:centerX, y:centerY, vx:0, vy:0, fx:null, fy:null, path2d });
+            nodes.push({ ...nd, idx:i, x:centerX, y:centerY, vx:0, vy:0, fx:null, fy:null });
           } else {
             // Random scatter across full canvas, avoiding header zone
             let x, y, attempts = 0;
@@ -1992,7 +1863,7 @@
             nodes.push({
               ...nd, idx:i, x, y,
               vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2,
-              fx: null, fy: null, path2d
+              fx: null, fy: null
             });
           }
         });
@@ -2170,13 +2041,14 @@
           // Icon (SVG path or initials fallback) — monotone
           ctx.fillStyle = isHov ? '#fff' : 'rgba(255,255,255,0.45)';
           ctx.globalAlpha = 1;
-          if (n.path2d) {
+          if (n.svgPath) {
             const iconSize = Math.max(16, s * 0.5);
             const scale = iconSize / 40;
             ctx.save();
             ctx.translate(n.x - iconSize/2, n.y - iconSize/2);
             ctx.scale(scale, scale);
-            ctx.fill(n.path2d); // PERF: cached Path2D
+            const path = new Path2D(n.svgPath);
+            ctx.fill(path);
             ctx.restore();
           } else {
             ctx.font = `700 ${Math.max(10, s*0.32)}px 'DM Sans', sans-serif`;
@@ -2218,16 +2090,11 @@
         const wH = hoveredNode === w;
         const ws = w.r * 2;
         const wRad = ws * 0.3;
-        // Outer glow (square-ish) — PERF: cache gradient across frames
+        // Outer glow (square-ish)
         const glowS = ws + 160;
-        const glowKey = (w.x|0) + ',' + (w.y|0) + ',' + (ws|0);
-        if (!cachedGlowGrad || cachedGlowKey !== glowKey) {
-          cachedGlowGrad = ctx.createRadialGradient(w.x, w.y, ws/2, w.x, w.y, glowS/2);
-          cachedGlowGrad.addColorStop(0, 'rgba(196,119,60,0.08)');
-          cachedGlowGrad.addColorStop(1, 'transparent');
-          cachedGlowKey = glowKey;
-        }
-        const glowGrad = cachedGlowGrad;
+        const glowGrad = ctx.createRadialGradient(w.x, w.y, ws/2, w.x, w.y, glowS/2);
+        glowGrad.addColorStop(0, 'rgba(196,119,60,0.08)');
+        glowGrad.addColorStop(1, 'transparent');
         ctx.beginPath();
         ctx.moveTo(w.x-glowS/2+wRad*2, w.y-glowS/2);
         ctx.arcTo(w.x+glowS/2,w.y-glowS/2, w.x+glowS/2,w.y+glowS/2, wRad*2);
@@ -2352,56 +2219,22 @@
       });
 
       let lastPacket = 0;
-      let lastTs = 0;
-      let physicsAccum = 0;
-      // PERF: physics decoupled from render. On low-end machines run slower tick.
-      const PHYSICS_HZ = LOW_END ? 20 : 30;
-      const PHYSICS_STEP = 1000 / PHYSICS_HZ;
-      // PERF: packets disabled on LOW_END (extra alloc + draw work)
-      const PACKETS_ON = !LOW_END && !REDUCED_MOTION;
-
-      function loopTick(ts) {
-        const dt = lastTs ? Math.min(ts - lastTs, 100) : PHYSICS_STEP;
-        lastTs = ts;
-        physicsAccum += dt;
-        // Cap catch-up to avoid death spirals after tab sleep
-        let steps = 0;
-        while (physicsAccum >= PHYSICS_STEP && steps < 3) {
-          simulate();
-          physicsAccum -= PHYSICS_STEP;
-          steps++;
-        }
-        if (steps === 0 && physicsAccum > PHYSICS_STEP * 3) physicsAccum = 0;
-
-        if (PACKETS_ON) {
-          for (let i=packets.length-1;i>=0;i--) { packets[i].t+=dt; if(packets[i].t>packets[i].dur) packets.splice(i,1); }
-          if (ts-lastPacket > 500) { spawnPacket(); lastPacket=ts; }
-        }
+      function loop(ts) {
+        simulate();
+        for (let i=packets.length-1;i>=0;i--) { packets[i].t+=16; if(packets[i].t>packets[i].dur) packets.splice(i,1); }
+        if (ts-lastPacket > 500) { spawnPacket(); lastPacket=ts; }
         draw();
+        requestAnimationFrame(loop);
       }
 
-      const agentSec = document.getElementById('s4');
-      if (agentSec) {
-        let initialized = false;
-        if (REDUCED_MOTION) {
-          // Render one static frame when section first scrolls into view
-          const once = new IntersectionObserver(([e]) => {
-            if (e.isIntersecting && !initialized) {
-              initialized = true; resize(); initNodes(); simulate(); draw();
-              once.disconnect();
-            }
-          }, { threshold: 0.01 });
-          once.observe(agentSec);
-        } else {
-          gatedRAF(agentSec, loopTick, {
-            threshold: 0.01,
-            onEnter: () => {
-              if (!initialized) { initialized = true; resize(); initNodes(); }
-              lastTs = 0; physicsAccum = 0;
-            }
-          });
+      let graphStarted = false;
+      const graphObs = new IntersectionObserver(es => es.forEach(e => {
+        if (e.isIntersecting && !graphStarted) {
+          graphStarted = true; resize(); initNodes(); requestAnimationFrame(loop);
         }
-      }
+      }), {threshold:0.1});
+      const agentSec = document.getElementById('s4');
+      if (agentSec) graphObs.observe(agentSec);
 
       window.addEventListener('resize', () => {
         resize();
@@ -2426,8 +2259,7 @@
       const canvas = document.getElementById('coverCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      const DPR_CAP = LOW_END ? 1 : 1.5;
-      const dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+      const dpr = window.devicePixelRatio || 1;
 
       // 53 nodes total: 1 World Agent + 24 real APPS + 28 dummies
       const ALL_NODES = [
@@ -2486,7 +2318,6 @@
 
       const nodes = [];
       let W, H, centerX, centerY;
-      let cachedGlowGrad = null, cachedGlowKey = '';
 
       function resize() {
         const rect = canvas.parentElement.getBoundingClientRect();
@@ -2498,7 +2329,6 @@
         const scale = Math.min(W, H) / 900;
         const rScale = Math.max(scale, 0.55);
         nodes.forEach((n, i) => { n.r = ALL_NODES[i].r * rScale; });
-        cachedGlowGrad = null;
       }
 
       const INITIAL_COUNT = 35; // start with ~35 nodes
@@ -2512,9 +2342,8 @@
         const count = Math.min(INITIAL_COUNT, ALL_NODES.length);
         for (let i = 0; i < count; i++) {
           const nd = ALL_NODES[i];
-          const path2d = nd.svgPath ? new Path2D(nd.svgPath) : null;
           if (i === 0) {
-            nodes.push({ ...nd, idx:i, x:centerX, y:centerY, vx:0, vy:0, fx:null, fy:null, baseX:centerX, baseY:centerY, opacity:1, path2d });
+            nodes.push({ ...nd, idx:i, x:centerX, y:centerY, vx:0, vy:0, fx:null, fy:null, baseX:centerX, baseY:centerY, opacity:1 });
           } else {
             const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
             const dist = 80 + Math.random() * Math.min(W, H) * 0.35;
@@ -2523,7 +2352,7 @@
             nodes.push({
               ...nd, idx:i, x, y,
               vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5,
-              fx: null, fy: null, opacity: 1, path2d
+              fx: null, fy: null, opacity: 1
             });
           }
         }
@@ -2539,13 +2368,12 @@
         const dist = 30 + Math.random() * 20;
         const scale = Math.min(W, H) / 900;
         const rScale = Math.max(scale, W < 768 ? 0.35 : 0.55);
-        const path2d = nd.svgPath ? new Path2D(nd.svgPath) : null;
         nodes.push({
           ...nd, idx: nextSpawnIdx,
           x: w.x + Math.cos(angle) * dist,
           y: w.y + Math.sin(angle) * dist,
           vx: Math.cos(angle) * 3, vy: Math.sin(angle) * 3,
-          fx: null, fy: null, opacity: 0, r: nd.r * rScale, path2d
+          fx: null, fy: null, opacity: 0, r: nd.r * rScale
         });
         nextSpawnIdx++;
       }
@@ -2768,13 +2596,14 @@
           // Icon: SVG path for real APPS nodes, initials for dummies
           ctx.fillStyle = isHov ? '#fff' : 'rgba(255,255,255,0.45)';
           ctx.globalAlpha = 1;
-          if (n.path2d) {
+          if (n.svgPath) {
             const iconSize = Math.max(16, s * 0.5);
             const scale = iconSize / 40;
             ctx.save();
             ctx.translate(n.x - iconSize/2, n.y - iconSize/2);
             ctx.scale(scale, scale);
-            ctx.fill(n.path2d);
+            const path = new Path2D(n.svgPath);
+            ctx.fill(path);
             ctx.restore();
           } else {
             ctx.font = `700 ${Math.max(10, s*0.32)}px 'DM Sans', sans-serif`;
@@ -2814,14 +2643,9 @@
         const ws = w.r * 2;
         const wRad = ws * 0.3;
         const glowS = ws + 160;
-        const glowKey = (w.x|0) + ',' + (w.y|0) + ',' + (ws|0);
-        if (!cachedGlowGrad || cachedGlowKey !== glowKey) {
-          cachedGlowGrad = ctx.createRadialGradient(w.x, w.y, ws/2, w.x, w.y, glowS/2);
-          cachedGlowGrad.addColorStop(0, 'rgba(196,119,60,0.08)');
-          cachedGlowGrad.addColorStop(1, 'transparent');
-          cachedGlowKey = glowKey;
-        }
-        const glowGrad = cachedGlowGrad;
+        const glowGrad = ctx.createRadialGradient(w.x, w.y, ws/2, w.x, w.y, glowS/2);
+        glowGrad.addColorStop(0, 'rgba(196,119,60,0.08)');
+        glowGrad.addColorStop(1, 'transparent');
         ctx.beginPath();
         ctx.moveTo(w.x-glowS/2+wRad*2, w.y-glowS/2);
         ctx.arcTo(w.x+glowS/2,w.y-glowS/2, w.x+glowS/2,w.y+glowS/2, wRad*2);
@@ -2936,45 +2760,17 @@
       });
 
       let lastPacket = 0;
-      let lastTs = 0, physicsAccum = 0;
-      const PHYSICS_HZ = LOW_END ? 20 : 30;
-      const PHYSICS_STEP = 1000 / PHYSICS_HZ;
-      const PACKETS_ON = !LOW_END && !REDUCED_MOTION;
-
-      function loopTick(ts) {
-        const dt = lastTs ? Math.min(ts - lastTs, 100) : PHYSICS_STEP;
-        lastTs = ts;
-        physicsAccum += dt;
-        let steps = 0;
-        while (physicsAccum >= PHYSICS_STEP && steps < 3) {
-          simulate();
-          physicsAccum -= PHYSICS_STEP;
-          steps++;
-        }
-        if (steps === 0 && physicsAccum > PHYSICS_STEP * 3) physicsAccum = 0;
-        if (PACKETS_ON) {
-          for (let i=packets.length-1;i>=0;i--) { packets[i].t+=dt; if(packets[i].t>packets[i].dur) packets.splice(i,1); }
-          if (ts-lastPacket > 500) { spawnPacket(); lastPacket=ts; }
-        }
+      function loop(ts) {
+        simulate();
+        for (let i=packets.length-1;i>=0;i--) { packets[i].t+=16; if(packets[i].t>packets[i].dur) packets.splice(i,1); }
+        if (ts-lastPacket > 500) { spawnPacket(); lastPacket=ts; }
         draw();
+        requestAnimationFrame(loop);
       }
 
       resize();
       initNodes();
-
-      // PERF: gate rAF — cover graph sits in the hero; only run while hero is on screen
-      const coverSec = canvas.closest('.sec') || canvas.parentElement;
-      if (REDUCED_MOTION) {
-        // Single static frame
-        simulate(); draw();
-      } else if (coverSec) {
-        gatedRAF(coverSec, loopTick, {
-          threshold: 0.01,
-          onEnter: () => { lastTs = 0; physicsAccum = 0; }
-        });
-      } else {
-        requestAnimationFrame(loopTick);
-      }
+      requestAnimationFrame(loop);
 
       window.addEventListener('resize', () => {
         resize();
