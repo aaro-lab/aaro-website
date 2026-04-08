@@ -225,19 +225,8 @@
     <script>
     (function(){
 
-    // ── PERF: capability detection (mirror of index.html) ──
-    const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const COARSE_POINTER = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-    const HW = navigator.hardwareConcurrency || 4;
-    const MEM = navigator.deviceMemory || 4;
-    const LOW_END = REDUCED_MOTION || HW <= 4 || MEM <= 4;
-    const FINE_POINTER = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
-    if (LOW_END) document.documentElement.classList.add('low-perf');
-
     // ── Shared ──
-    // PERF: cap DPR (was unbounded at devicePixelRatio → ×4-9 fill rate on retina)
-    const DPR_CAP = LOW_END ? 1 : 1.5;
-    const DPR = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    const DPR = window.devicePixelRatio || 1;
 
     function setupCanvas(canvas) {
       const wrap = canvas.parentElement;
@@ -272,83 +261,17 @@
       return true;
     }
 
-    // ── Cursor glow (pointer:fine only, idle sleep, transform-only) ──
     const glow = document.getElementById('cursorGlow');
-    if (glow) {
-      if (!FINE_POINTER || REDUCED_MOTION || LOW_END) {
-        glow.remove();
-      } else {
-        let gx = 0, gy = 0, cx = 0, cy = 0, idle = 0, rafG = null;
-        function tickGlow() {
-          const dx = cx - gx, dy = cy - gy;
-          if (Math.abs(dx) + Math.abs(dy) < 0.5) {
-            idle++; if (idle > 30) { rafG = null; return; }
-          } else idle = 0;
-          gx += dx * 0.08; gy += dy * 0.08;
-          glow.style.transform = 'translate3d(' + (gx - 200) + 'px,' + (gy - 200) + 'px,0)';
-          rafG = requestAnimationFrame(tickGlow);
-        }
-        document.addEventListener('mousemove', e => {
-          cx = e.clientX; cy = e.clientY; idle = 0;
-          if (rafG == null) rafG = requestAnimationFrame(tickGlow);
-        }, { passive: true });
-        document.addEventListener('visibilitychange', () => {
-          if (document.hidden && rafG != null) { cancelAnimationFrame(rafG); rafG = null; }
-        });
-      }
-    }
+    document.addEventListener('mousemove', e => {
+      if (glow) { glow.style.left = e.clientX + 'px'; glow.style.top = e.clientY + 'px'; }
+    });
 
-    // ── PERF: demo registry + viewport gating ──
-    // Each demo tracks its own canvas visibility; off-screen demos don't run.
-    const demos = []; // { canvas, fn, visible }
-    const PHYSICS_HZ = LOW_END ? 20 : 60;
-    const FRAME_BUDGET = 1000 / PHYSICS_HZ;
-
-    // Backwards-compat: demos.push(fn) still works (always-on), but prefer addDemo(canvas, fn).
-    const origPush = demos.push.bind(demos);
-    demos.push = function (entry) {
-      if (typeof entry === 'function') {
-        // Legacy — caller supplied only a tick fn. Treat as always visible.
-        origPush({ canvas: null, fn: entry, visible: true });
-      } else {
-        origPush(entry);
-      }
-      return demos.length;
-    };
-
-    function addDemo(canvas, fn) {
-      const entry = { canvas, fn, visible: false };
-      origPush(entry);
-      const io = new IntersectionObserver(([e]) => { entry.visible = e.isIntersecting; }, { threshold: 0.01 });
-      io.observe(canvas);
-    }
-    // Export for demo IIFEs
-    window.__pgAddDemo = addDemo;
-
-    let lastMaster = 0;
-    function masterLoop(ts) {
-      if (document.hidden) { requestAnimationFrame(masterLoop); return; }
-      // Throttle on low-end
-      if (LOW_END && ts - lastMaster < FRAME_BUDGET - 1) {
-        requestAnimationFrame(masterLoop); return;
-      }
-      lastMaster = ts;
-      for (const d of demos) {
-        if (d.visible) d.fn();
-      }
+    const demos = [];
+    function masterLoop() {
+      for (const fn of demos) fn();
       requestAnimationFrame(masterLoop);
     }
-    if (REDUCED_MOTION) {
-      // Static mode: run each demo once when first visible
-      // (demo tick fns still draw; we just won't loop)
-      const once = () => {
-        for (const d of demos) if (d.visible) { d.fn(); d.visible = false; }
-        requestAnimationFrame(once);
-      };
-      requestAnimationFrame(once);
-    } else {
-      requestAnimationFrame(masterLoop);
-    }
+    requestAnimationFrame(masterLoop);
 
 
     // ══════════════════════════════════════════
@@ -598,7 +521,7 @@
       function pickTarget(i) { driftTargets[i].dx = (Math.random() - 0.5) * 0.2; driftTargets[i].dy = (Math.random() - 0.5) * 0.2; driftTargets[i].dfh = (Math.random() - 0.5) * 4; }
       verts.forEach((_, i) => pickTarget(i));
       resize(); window.addEventListener('resize', resize);
-      addDemo(canvas, () => {
+      demos.push(() => {
         if (dragIdx < 0) verts.forEach((v, i) => {
           const tx = origVerts[i].x + driftTargets[i].dx, ty = origVerts[i].y + driftTargets[i].dy, tfh = Math.max(0, origVerts[i].fh + driftTargets[i].dfh);
           v.x += (tx - v.x) * 0.012; v.y += (ty - v.y) * 0.012; v.fh += (tfh - v.fh) * 0.012;
@@ -738,7 +661,7 @@
       if (colSlider) colSlider.addEventListener('input', () => { COLS = parseInt(colSlider.value); buildGrid(); });
       if (rowSlider) rowSlider.addEventListener('input', () => { ROWS = parseInt(rowSlider.value); buildGrid(); });
       resize(); window.addEventListener('resize', resize);
-      addDemo(canvas, draw);
+      demos.push(draw);
 
       // Load default brick image
       const defImg = new Image();
@@ -1191,7 +1114,7 @@
       const RECOMPUTE_INTERVAL = 8; // recompute every N frames during drift (not every frame)
 
       resize();window.addEventListener('resize',resize);
-      addDemo(canvas,()=>{
+      demos.push(()=>{
         if(dragIdx<0&&!panning){
           if(dState==='paused'){pTimer+=0.016;if(pTimer>=3){dState='moving';driftFrames=0;bdy.forEach((_,i)=>{if(i<orig.length)pickD(i);});compute();}}
           else{
