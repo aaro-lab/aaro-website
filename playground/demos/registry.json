@@ -31,7 +31,7 @@
     "id": "road",
     "title": "Road Network",
     "titleKr": "도로 생성",
-    "hint": "드래그: 꼭지점 이동 (자동 애니메이션) | <kbd>D</kbd>: 폴리라인 추가 | 더블클릭/Enter: 완료 | <kbd>P</kbd>: 주차 ON/OFF | <span class=\"accent\">Intersection &rarr; Graph &rarr; Offset</span>",
+    "hint": "드래그: 꼭지점/교차점 이동 | <kbd>D</kbd>: 폴리라인 추가 | 더블클릭/Enter: 완료 | <kbd>P</kbd>: 주차 &harr; 사이드워크 | <span class=\"accent\">Split &rarr; Graph &rarr; Fillet &rarr; Union</span>",
     "script": "demos/road/index.js",
     "controls": []
   },
