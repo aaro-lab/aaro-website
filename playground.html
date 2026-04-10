@@ -232,11 +232,11 @@
         Wave Function Collapse | 드래그: 3D 회전
         <span class="pg-ctrl">
           <label>W</label>
-          <input type="range" id="wfcColSlider" min="3" max="15" value="6">
+          <input type="range" id="wfcColSlider" min="2" max="8" value="6">
         </span>
         <span class="pg-ctrl">
           <label>H</label>
-          <input type="range" id="wfcRowSlider" min="3" max="15" value="6">
+          <input type="range" id="wfcRowSlider" min="2" max="8" value="6">
         </span>
       </div>
     </article>
@@ -1198,7 +1198,7 @@
       let curCols = 6, curRows = 6, tgtCols = 6, tgtRows = 6;
       let wallDriftState = 'moving', wallPauseTimer = 0;
       const WALL_PAUSE_DUR = 3, WALL_LERP = 0.02;
-      const COL_MIN = 3, COL_MAX = 12, ROW_MIN = 3, ROW_MAX = 12;
+      const COL_MIN = 2, COL_MAX = 8, ROW_MIN = 2, ROW_MAX = 8;
       function pickWallSize() {
         tgtCols = COL_MIN + Math.random() * (COL_MAX - COL_MIN);
         tgtRows = ROW_MIN + Math.random() * (ROW_MAX - ROW_MIN);

@@ -21,7 +21,7 @@ export function init(cell) {
   let curCols = 6, curRows = 6, tgtCols = 6, tgtRows = 6;
   let wallDriftState = 'moving', wallPauseTimer = 0;
   const WALL_PAUSE_DUR = 3, WALL_LERP = 0.02;
-  const COL_MIN = 3, COL_MAX = 12, ROW_MIN = 3, ROW_MAX = 12;
+  const COL_MIN = 2, COL_MAX = 8, ROW_MIN = 2, ROW_MAX = 8;
   function pickWallSize() {
     tgtCols = COL_MIN + Math.random() * (COL_MAX - COL_MIN);
     tgtRows = ROW_MIN + Math.random() * (ROW_MAX - ROW_MIN);

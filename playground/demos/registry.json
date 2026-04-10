@@ -28,14 +28,22 @@
     "controls": []
   },
   {
+    "id": "road",
+    "title": "Road Network",
+    "titleKr": "도로 생성",
+    "hint": "드래그: 꼭지점/교차점 이동 | <kbd>D</kbd>: 폴리라인 추가 | 더블클릭/Enter: 완료 | <kbd>P</kbd>: 주차 &harr; 사이드워크 | <span class=\"accent\">Split &rarr; Graph &rarr; Fillet &rarr; Union</span>",
+    "script": "demos/road/index.js",
+    "controls": []
+  },
+  {
     "id": "wfc",
     "title": "WFC Pavilion",
     "titleKr": "파빌리온 생성",
     "hint": "Wave Function Collapse | 드래그: 3D 회전",
     "script": "demos/wfc/index.js",
     "controls": [
-      { "type": "range", "inputId": "wfcColSlider", "label": "W", "min": 3, "max": 15, "value": 6 },
-      { "type": "range", "inputId": "wfcRowSlider", "label": "H", "min": 3, "max": 15, "value": 6 }
+      { "type": "range", "inputId": "wfcColSlider", "label": "W", "min": 2, "max": 8, "value": 6 },
+      { "type": "range", "inputId": "wfcRowSlider", "label": "H", "min": 2, "max": 8, "value": 6 }
     ]
   }
 ]
