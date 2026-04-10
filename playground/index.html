@@ -30,33 +30,77 @@
       if (glow) { glow.style.left = e.clientX + 'px'; glow.style.top = e.clientY + 'px'; }
     });
 
-    // Build control HTML from registry entry
-    function buildControlsHTML(controls) {
-      if (!controls || !controls.length) return '';
-      return controls.map(ctrl => {
-        if (ctrl.type === 'file') {
-          return `<label class="pg-upload-btn"><input type="file" id="${ctrl.inputId}" accept="${ctrl.accept}" hidden>${ctrl.label}</label>`;
-        }
-        if (ctrl.type === 'range') {
-          return `<span class="pg-ctrl"><label>${ctrl.label}</label><input type="range" id="${ctrl.inputId}" min="${ctrl.min}" max="${ctrl.max}" value="${ctrl.value}"></span>`;
-        }
-        return '';
-      }).join('\n        ');
+    const VALID_ID = /^[a-z][a-z0-9-]*$/;
+
+    function escapeHTML(str) {
+      const el = document.createElement('span');
+      el.textContent = str;
+      return el.innerHTML;
     }
 
-    // Build a cell article element from a registry entry
+    // Build control elements from registry entry (DOM-based, no innerHTML)
+    function appendControls(container, controls) {
+      if (!controls || !controls.length) return;
+      for (const ctrl of controls) {
+        if (!VALID_ID.test(ctrl.inputId)) continue;
+        if (ctrl.type === 'file') {
+          const label = document.createElement('label');
+          label.className = 'pg-upload-btn';
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.id = ctrl.inputId;
+          input.accept = ctrl.accept || 'image/*';
+          input.hidden = true;
+          label.appendChild(input);
+          label.appendChild(document.createTextNode(ctrl.label || 'File'));
+          container.appendChild(label);
+        } else if (ctrl.type === 'range') {
+          const span = document.createElement('span');
+          span.className = 'pg-ctrl';
+          const lbl = document.createElement('label');
+          lbl.textContent = ctrl.label || '';
+          span.appendChild(lbl);
+          const input = document.createElement('input');
+          input.type = 'range';
+          input.id = ctrl.inputId;
+          input.min = ctrl.min; input.max = ctrl.max; input.value = ctrl.value;
+          span.appendChild(input);
+          container.appendChild(span);
+        }
+      }
+    }
+
+    // Build a cell article element from a registry entry (DOM-based)
     function buildCell(demo) {
       const article = document.createElement('article');
       article.className = 'pg-cell';
       article.id = `demo-${demo.id}`;
-      article.innerHTML = `
-      <div class="pg-cell__label">${demo.title} <span class="pg-cell__label-kr">${demo.titleKr}</span></div>
-      <div class="pg-cell__canvas-wrap"><canvas></canvas></div>
-      <div class="pg-cell__metrics"></div>
-      <div class="pg-cell__hint">
-        ${demo.hint}
-        ${buildControlsHTML(demo.controls)}
-      </div>`;
+
+      const label = document.createElement('div');
+      label.className = 'pg-cell__label';
+      label.textContent = demo.title + ' ';
+      const labelKr = document.createElement('span');
+      labelKr.className = 'pg-cell__label-kr';
+      labelKr.textContent = demo.titleKr;
+      label.appendChild(labelKr);
+      article.appendChild(label);
+
+      const canvasWrap = document.createElement('div');
+      canvasWrap.className = 'pg-cell__canvas-wrap';
+      canvasWrap.appendChild(document.createElement('canvas'));
+      article.appendChild(canvasWrap);
+
+      const metrics = document.createElement('div');
+      metrics.className = 'pg-cell__metrics';
+      article.appendChild(metrics);
+
+      const hint = document.createElement('div');
+      hint.className = 'pg-cell__hint';
+      // hint may contain intentional HTML (accent spans, &rarr;)
+      hint.innerHTML = demo.hint || '';
+      appendControls(hint, demo.controls);
+      article.appendChild(hint);
+
       return article;
     }
 
@@ -66,10 +110,14 @@
       const registry = await fetch('demos/registry.json').then(r => r.json());
 
       for (const demo of registry) {
+        // Validate demo ID and script path
+        if (!VALID_ID.test(demo.id)) continue;
+        const expectedScript = `demos/${demo.id}/index.js`;
+        if (demo.script !== expectedScript) continue;
+
         const cell = buildCell(demo);
         grid.appendChild(cell);
 
-        // Dynamic import — only loads JS when needed
         import(`./${demo.script}`).then(mod => {
           if (mod.init) mod.init(cell);
         }).catch(err => {

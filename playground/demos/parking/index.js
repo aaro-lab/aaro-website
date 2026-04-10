@@ -1,4 +1,4 @@
-import { setupCanvas, pointInPolygon, registerDemo } from '../shared.js';
+import { setupCanvas, pointInPolygon as pip, registerDemo } from '../shared.js';
 
 export function init(cell) {
   const canvas = cell.querySelector('canvas');
@@ -17,15 +17,6 @@ export function init(cell) {
   function w2s(x,y){const s=Math.min(W,H)*vpZoom/80;return{x:W/2+(x-vpCx)*s,y:H/2+(y-vpCy)*s};}
   function s2w(x,y){const s=Math.min(W,H)*vpZoom/80;return{x:vpCx+(x-W/2)/s,y:vpCy+(y-H/2)/s};}
   function resize(){const s=setupCanvas(canvas);W=s.w;H=s.h;ctx=s.ctx;compute();}
-
-  function pip(px,py,poly){
-    let r=false;
-    for(let i=0,j=poly.length-1;i<poly.length;j=i++){
-      const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;
-      if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi))r=!r;
-    }
-    return r;
-  }
   function pArea(p){let a=0;for(let i=0,j=p.length-1;i<p.length;j=i++)a+=p[i].x*p[j].y-p[j].x*p[i].y;return Math.abs(a)/2;}
 
   function scalePoly(poly,s){

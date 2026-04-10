@@ -3,16 +3,15 @@
  * Each demo imports what it needs via ES module imports.
  */
 
-export const DPR = window.devicePixelRatio || 1;
-
 export function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
   const wrap = canvas.parentElement;
   const rect = wrap.getBoundingClientRect();
   const w = rect.width, h = rect.height;
-  canvas.width = w * DPR; canvas.height = h * DPR;
+  canvas.width = w * dpr; canvas.height = h * dpr;
   canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
   const ctx = canvas.getContext('2d');
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   return { w, h, ctx };
 }
 
@@ -27,21 +26,13 @@ export function pointInPolygon(px, py, poly) {
   return inside;
 }
 
-export function rectInPolygon(cx, cy, hw, hh, angle, poly) {
-  const cos = Math.cos(angle), sin = Math.sin(angle);
-  const corners = [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]];
-  for (const [lx, ly] of corners) {
-    const wx = cx + lx * cos - ly * sin;
-    const wy = cy + lx * sin + ly * cos;
-    if (!pointInPolygon(wx, wy, poly)) return false;
-  }
-  return true;
-}
-
 /**
  * Demo lifecycle manager.
  * Registers draw callbacks and uses IntersectionObserver to only
  * run animations for demos visible in the viewport.
+ *
+ * Returns a cleanup function that disconnects the observer and
+ * removes the draw callback from the active set.
  */
 const activeDemos = new Set();
 let loopRunning = false;
@@ -75,7 +66,10 @@ export function registerDemo(cellElement, drawFn) {
   }, { threshold: 0.1 });
 
   observer.observe(cellElement);
-  // Start immediately if visible
-  activeDemos.add(drawFn);
-  ensureLoop();
+
+  // Return cleanup function for lifecycle management
+  return () => {
+    observer.disconnect();
+    activeDemos.delete(drawFn);
+  };
 }

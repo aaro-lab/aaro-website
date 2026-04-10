@@ -16,7 +16,6 @@ export function init(cell) {
   let bricks = [], currentAngles = [], targetAngles = [];
   let gridIdx = {};
   let hasImage = false, storedImgData = null, storedImgW = 0, storedImgH = 0;
-  let time = 0;
 
   // Wall size animation (move -> pause -> move)
   let curCols = 30, curRows = 70, tgtCols = 30, tgtRows = 70;
@@ -86,7 +85,6 @@ export function init(cell) {
     if (!W) return;
     ctx.clearRect(0, 0, W, H);
     ctx.font = "500 9px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillText('BRICK WALL', 8, 14);
-    time += 0.016;
 
     for (let i = 0; i < bricks.length; i++) currentAngles[i] += (targetAngles[i] - currentAngles[i]) * 0.06;
 
