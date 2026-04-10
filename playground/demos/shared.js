@@ -26,6 +26,17 @@ export function pointInPolygon(px, py, poly) {
   return inside;
 }
 
+/** Array-based [x,y] variant of pointInPolygon (ray casting). */
+export function pointInRingArray(p, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+    if (((yi > p[1]) !== (yj > p[1])) && (p[0] < (xj - xi) * (p[1] - yi) / (yj - yi) + xi))
+      inside = !inside;
+  }
+  return inside;
+}
+
 /**
  * Demo lifecycle manager.
  * Registers draw callbacks and uses IntersectionObserver to only
