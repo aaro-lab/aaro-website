@@ -53,13 +53,76 @@ AARO의 알고리즘 마이크로 앱 포트폴리오:
 
 ### Playground
 
-메인 페이지에 인라인으로 삽입된 인터랙티브 알고리즘 데모:
+`/playground` — registry 기반 모듈러 데모 시스템. 새 데모 추가는 아래 2단계만 수행.
 
 | Demo | Features |
 |------|----------|
 | Weighted Ground Level | 꼭지점 드래그, 높이(FH) 조정, 단면도 연동 |
 | Brick Generation | 이미지→벽돌 회전 패턴, 3D 궤도 회전, W/H 슬라이더 |
 | Parking Layout | 경계 편집, Edge/Inner 주차 배치, Access Lane 시각화, Circulation 동선 |
+| WFC Pavilion | Wave Function Collapse 3D 파빌리온, 궤도 회전, W/H 슬라이더 |
+
+#### 새 데모 추가 방법
+
+**Step 1.** `playground/demos/{id}/index.js` 생성
+
+```js
+import { setupCanvas, registerDemo } from '../shared.js';
+
+export function init(cell) {
+  const canvas = cell.querySelector('canvas');
+  const metricsEl = cell.querySelector('.pg-cell__metrics');
+  if (!canvas) return;
+  let ctx, W, H;
+
+  function resize() {
+    const s = setupCanvas(canvas);
+    W = s.w; H = s.h; ctx = s.ctx;
+  }
+
+  function draw() {
+    if (!W) return;
+    ctx.clearRect(0, 0, W, H);
+    // 렌더링 로직
+    metricsEl.textContent = 'metrics here';
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  registerDemo(cell, draw);
+}
+```
+
+**Step 2.** `playground/demos/registry.json`에 항목 추가
+
+```json
+{
+  "id": "my-demo",
+  "title": "My Demo",
+  "titleKr": "내 데모",
+  "hint": "조작법 설명 | <span class=\"accent\">강조 텍스트</span>",
+  "script": "demos/my-demo/index.js",
+  "controls": []
+}
+```
+
+> 끝. `index.html`은 수정할 필요 없음 — registry에서 자동으로 그리드 생성.
+
+#### 규칙
+
+- **`id`**: 소문자 + 하이픈만 허용 (`/^[a-z][a-z0-9-]*$/`)
+- **`script`**: 반드시 `demos/{id}/index.js` 형식 (보안 검증)
+- **`init(cell)`**: 모듈이 export하는 유일한 진입점. `cell`은 `.pg-cell` DOM 요소
+- **`registerDemo(cell, drawFn)`**: IntersectionObserver 기반 — 뷰포트에 보일 때만 애니메이션 실행
+- **컨트롤**: `controls` 배열에 `{ type: "range", inputId, label, min, max, value }` 또는 `{ type: "file", inputId, accept, label }` 추가
+
+#### shared.js 유틸리티
+
+| Export | Description |
+|--------|-------------|
+| `setupCanvas(canvas)` | HiDPI 대응 canvas 초기화. `{ w, h, ctx }` 반환 |
+| `pointInPolygon(px, py, poly)` | Ray-casting 기반 점-폴리곤 포함 판정 |
+| `registerDemo(cell, drawFn)` | 데모 등록 + lazy rendering. cleanup 함수 반환 |
 
 ### World Agent
 
@@ -102,8 +165,16 @@ AARO의 알고리즘 마이크로 앱 포트폴리오:
 ```
 ├── index.html              # Main single-page site
 ├── playground/
-│   ├── index.html           # Standalone playground page
-│   └── default-brick.png    # Default brick pattern image
+│   ├── index.html           # Playground shell (동적 그리드 생성)
+│   ├── style.css            # Playground 공통 스타일
+│   ├── default-brick.png    # Default brick pattern image
+│   └── demos/
+│       ├── shared.js        # Canvas 유틸 + IntersectionObserver 라이프사이클
+│       ├── registry.json    # 데모 목록 (여기에 추가하면 자동 반영)
+│       ├── wgl/index.js     # Weighted Ground Level
+│       ├── brick/index.js   # Brick Generation
+│       ├── parking/index.js # Parking Layout
+│       └── wfc/index.js     # WFC Pavilion
 ├── api/
 │   ├── chat.js              # AI chat serverless function
 │   └── contact.js           # Contact form handler

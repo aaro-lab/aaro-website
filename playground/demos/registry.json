@@ -1,0 +1,41 @@
+[
+  {
+    "id": "wgl",
+    "title": "Weighted Ground Level",
+    "titleKr": "가중평균 지표면",
+    "hint": "드래그: 꼭지점 이동 | 더블클릭: 높이(FH) 지정 <span class=\"accent\">WGL = h_min + (단면적 / 둘레)</span>",
+    "script": "demos/wgl/index.js",
+    "controls": []
+  },
+  {
+    "id": "brick",
+    "title": "Brick Generation",
+    "titleKr": "벽돌 생성",
+    "hint": "이미지 밝기 &rarr; 벽돌 회전 | 드래그: 3D 회전",
+    "script": "demos/brick/index.js",
+    "controls": [
+      { "type": "file", "inputId": "brickImgInput", "accept": "image/*", "label": "Image" },
+      { "type": "range", "inputId": "brickColSlider", "label": "W", "min": 8, "max": 100, "value": 30 },
+      { "type": "range", "inputId": "brickRowSlider", "label": "H", "min": 4, "max": 100, "value": 70 }
+    ]
+  },
+  {
+    "id": "parking",
+    "title": "Parking Layout",
+    "titleKr": "주차 배치",
+    "hint": "드래그: 경계점 이동 | 더블클릭: 꼭지점 추가/삭제 | <span class=\"accent\">Edge + Inner + Circulation</span>",
+    "script": "demos/parking/index.js",
+    "controls": []
+  },
+  {
+    "id": "wfc",
+    "title": "WFC Pavilion",
+    "titleKr": "파빌리온 생성",
+    "hint": "Wave Function Collapse | 드래그: 3D 회전",
+    "script": "demos/wfc/index.js",
+    "controls": [
+      { "type": "range", "inputId": "wfcColSlider", "label": "W", "min": 3, "max": 15, "value": 6 },
+      { "type": "range", "inputId": "wfcRowSlider", "label": "H", "min": 3, "max": 15, "value": 6 }
+    ]
+  }
+]
