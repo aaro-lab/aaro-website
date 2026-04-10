@@ -64,7 +64,7 @@ a { color: inherit; text-decoration: none; }
 
 .pg-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: clamp(10px, 1.2vw, 20px);
   padding: clamp(10px, 1.5vw, 24px);
   padding-top: 72px;
@@ -135,7 +135,7 @@ a { color: inherit; text-decoration: none; }
   background: var(--accent); cursor: pointer;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 860px) {
   .pg-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 600px) {
