@@ -5,7 +5,7 @@
 import {
   dist, sub, norm, segIntersect, closestOnSeg, chaikin,
   filletPolyline, filletConvex, filletReflex, offsetPolyline,
-  toRing, multiPolyToRings, disc, genArrows
+  toRing, ringArea, multiPolyToRings, disc, genArrows
 } from './geometry.js';
 
 /* ── Vertex key for graph (round to 0.1m) ─────────────────────── */
@@ -117,6 +117,44 @@ function traceChains(adj, posMap, nodeKeys, nodeKeyList) {
   return chains;
 }
 
+/* ── Extend short chains so fillets/offsets don't collapse ─────── */
+function extendShortChains(chains, nodes, halfW, turningRadius, cornerRadius) {
+  const minLen = Math.max(turningRadius, cornerRadius) * 2 + halfW * 1.5;
+  for (const chain of chains) {
+    let chainLen = 0;
+    for (let i = 0; i < chain.pts.length - 1; i++)
+      chainLen += dist(chain.pts[i], chain.pts[i + 1]);
+    if (chainLen >= minLen) continue;
+    const sni = chain.startNode >= 0 && chain.startNode < nodes.length ? nodes[chain.startNode] : null;
+    const eni = chain.endNode >= 0 && chain.endNode < nodes.length ? nodes[chain.endNode] : null;
+    const startLocked = sni?.type === 'junction';
+    const endLocked = eni?.type === 'junction';
+    if (startLocked && endLocked) continue;
+    const shortfall = minLen - chainLen;
+    const extensible = (startLocked ? 0 : 1) + (endLocked ? 0 : 1);
+    const ext = shortfall / extensible;
+    if (!startLocked && chain.pts.length >= 2) {
+      const a = chain.pts[0], b = chain.pts[1];
+      const dx = a[0] - b[0], dy = a[1] - b[1], L = Math.hypot(dx, dy);
+      if (L > 1e-6) {
+        const newA = [a[0] + (dx / L) * ext, a[1] + (dy / L) * ext];
+        chain.pts = [newA, ...chain.pts.slice(1)];
+        if (chain.startNode >= 0 && nodes[chain.startNode]) nodes[chain.startNode].position = newA;
+      }
+    }
+    if (!endLocked && chain.pts.length >= 2) {
+      const n = chain.pts.length;
+      const a = chain.pts[n - 1], b = chain.pts[n - 2];
+      const dx = a[0] - b[0], dy = a[1] - b[1], L = Math.hypot(dx, dy);
+      if (L > 1e-6) {
+        const newA = [a[0] + (dx / L) * ext, a[1] + (dy / L) * ext];
+        chain.pts = [...chain.pts.slice(0, n - 1), newA];
+        if (chain.endNode >= 0 && nodes[chain.endNode]) nodes[chain.endNode].position = newA;
+      }
+    }
+  }
+}
+
 /* ── Smooth + offset chains into road segments ────────────────── */
 function buildSegments(chains, nodes, halfW, turningRadius, chaikinIter) {
   const segments = [];
@@ -139,19 +177,26 @@ function buildSegments(chains, nodes, halfW, turningRadius, chaikinIter) {
   return segments;
 }
 
+/* ── Minimum area to accept a strip for union (filters degenerate geometry) ── */
+const MIN_STRIP_AREA = 0.5;
+
 /* ── Compute union outline + fillet ───────────────────────────── */
 function computeOutline(segments, junctionDiscs, cornerRadius, PC) {
   if (!PC) return { outline: null, filletOutline: null };
   try {
-    const allStrips = [...segments.map(s => s.strip), ...junctionDiscs];
+    const allStrips = [...segments.map(s => s.strip), ...junctionDiscs]
+      .filter(s => s.length >= 3 && Math.abs(ringArea(toRing(s))) > MIN_STRIP_AREA);
     if (!allStrips.length) return { outline: null, filletOutline: null };
     let result = [[toRing(allStrips[0])]];
     for (let i = 1; i < allStrips.length; i++) {
-      try { result = PC.union(result, [[toRing(allStrips[i])]]); } catch { /* skip */ }
+      try { result = PC.union(result, [[toRing(allStrips[i])]]); } catch { /* skip degenerate */ }
     }
     const outline = multiPolyToRings(result);
     const filletOutline = cornerRadius > 0
-      ? outline.map(r => filletReflex(r, cornerRadius)).map(r => filletConvex(r, cornerRadius))
+      ? outline.map(r => {
+          try { return filletConvex(filletReflex(r, cornerRadius), cornerRadius); }
+          catch { return r; }
+        })
       : outline;
     return { outline, filletOutline };
   } catch { return { outline: null, filletOutline: null }; }
@@ -167,12 +212,14 @@ function computeSidewalk(segments, nodes, halfW, sidewalkWidth, filletOutline, P
         return [...left, ...[...right].reverse()];
       }),
       ...nodes.filter(n => n.type === 'junction').map(n => disc(n.position, halfW + sidewalkWidth + 0.05))
-    ];
+    ].filter(s => s.length >= 3 && Math.abs(ringArea(toRing(s))) > MIN_STRIP_AREA);
+    if (!widerStrips.length) return null;
     let rowResult = [[toRing(widerStrips[0])]];
     for (let i = 1; i < widerStrips.length; i++) {
       try { rowResult = PC.union(rowResult, [[toRing(widerStrips[i])]]); } catch { /* skip */ }
     }
-    const roadGeom = filletOutline.map(r => [toRing(r)]);
+    const roadGeom = filletOutline.filter(r => r.length >= 3).map(r => [toRing(r)]);
+    if (!roadGeom.length) return null;
     const diff = PC.difference(rowResult, roadGeom);
     return multiPolyToRings(diff);
   } catch { return null; }
@@ -190,12 +237,22 @@ export function generateRoads(polylines, cfg) {
 
   const { adj, posMap, nodeKeys, nodes, nodeKeyList } = buildGraph(subSegs);
   const chains = traceChains(adj, posMap, nodeKeys, nodeKeyList);
+
+  // Extend short chains to prevent fillet/offset collapse
+  extendShortChains(chains, nodes, halfW, turningRadius, cornerRadius);
+
   const segments = buildSegments(chains, nodes, halfW, turningRadius, chaikinIter);
 
-  // Junction disc patches (fill micro-gaps at meeting points)
+  // Junction disc patches — larger for multi-arm junctions
   const junctionDiscs = nodes
     .filter(n => n.type === 'junction')
-    .map(n => disc(n.position, halfW + 0.05));
+    .map(n => {
+      // Count arms at this junction for sizing
+      const key = vk(n.position);
+      const armCount = adj.get(key)?.size || 3;
+      const r = halfW * (armCount >= 5 ? 1.3 : armCount >= 4 ? 1.15 : 1.0) + 0.1;
+      return disc(n.position, r);
+    });
 
   // Direction arrows
   let arrows = [];
