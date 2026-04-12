@@ -36,6 +36,14 @@
     "controls": []
   },
   {
+    "id": "northlight",
+    "title": "Northlight Regulation",
+    "titleKr": "정북 일조사선",
+    "hint": "드래그: 필지 꼭지점 이동 | 좌: 탑뷰 (필지+층별) | 우: 아이소 (3D 볼륨) | <span class=\"accent\">9m 불연속 해석</span>",
+    "script": "demos/northlight/index.js",
+    "controls": []
+  },
+  {
     "id": "wfc",
     "title": "WFC Pavilion",
     "titleKr": "파빌리온 생성",
