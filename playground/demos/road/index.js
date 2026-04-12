@@ -139,43 +139,33 @@ export function init(cell) {
     if (parkingOn) return;
     if (roadResult.sidewalkOutline) {
       drawRingSet(roadResult.sidewalkOutline, 'rgb(225,222,210)', 'rgba(110,100,80,0.55)', 1, 0.85);
-    } else if (roadResult.segments.length) {
-      ctx.save(); ctx.globalAlpha = 0.5;
-      for (const seg of roadResult.segments) {
-        const { left, right } = offsetPolyline(seg.centerline, ROAD_W / 2 + SIDEWALK_W);
-        const strip = [...left, ...[...right].reverse()];
-        ctx.beginPath(); drawPolyPath(strip); ctx.closePath();
-        ctx.fillStyle = 'rgb(225,222,210)'; ctx.fill();
-        ctx.strokeStyle = 'rgba(110,100,80,0.4)'; ctx.lineWidth = 1; ctx.stroke();
-      }
-      for (const node of roadResult.nodes) {
-        if (node.type !== 'junction') continue;
-        const [cx, cy] = w2s(node.position[0], node.position[1]);
-        ctx.beginPath(); ctx.arc(cx, cy, (ROAD_W / 2 + SIDEWALK_W) * camZoom, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgb(225,222,210)'; ctx.fill();
-      }
-      ctx.restore();
     }
+    // No fallback — sidewalk only renders when polygon-clipping produces
+    // a proper difference (row − road). The fallback wider-strip approach
+    // draws on top of the road surface, which is wrong.
   }
 
   function drawRoadSurface() {
     const roadOutline = roadResult.filletOutline || roadResult.outline;
-    if (roadOutline) {
+    if (roadOutline && roadOutline.length > 0) {
       drawRingSet(roadOutline, 'rgb(180,180,180)', 'rgba(100,100,100,0.35)', 1.5, 0.45);
-    } else {
-      for (const seg of roadResult.segments) {
-        if (seg.strip.length < 3) continue;
-        ctx.beginPath(); drawPolyPath(seg.strip); ctx.closePath();
-        ctx.fillStyle = 'rgba(180,180,180,0.35)'; ctx.fill();
-        ctx.strokeStyle = 'rgba(100,100,100,0.3)'; ctx.lineWidth = 1; ctx.stroke();
-      }
-      for (const node of roadResult.nodes) {
-        if (node.type !== 'junction') continue;
-        const [cx, cy] = w2s(node.position[0], node.position[1]);
-        ctx.beginPath(); ctx.arc(cx, cy, ROAD_W / 2 * camZoom, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(180,180,180,0.35)'; ctx.fill();
-      }
     }
+    // Always draw per-segment strips as base layer — ensures road is
+    // visible even when polygon-clipping union fails on degenerate geometry
+    ctx.save(); ctx.globalAlpha = roadOutline ? 0.08 : 0.35;
+    for (const seg of roadResult.segments) {
+      if (seg.strip.length < 3) continue;
+      ctx.beginPath(); drawPolyPath(seg.strip); ctx.closePath();
+      ctx.fillStyle = 'rgb(180,180,180)'; ctx.fill();
+    }
+    // Junction discs fill gaps between strips
+    for (const node of roadResult.nodes) {
+      if (node.type !== 'junction') continue;
+      const [cx, cy] = w2s(node.position[0], node.position[1]);
+      ctx.beginPath(); ctx.arc(cx, cy, ROAD_W / 2 * camZoom, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgb(180,180,180)'; ctx.fill();
+    }
+    ctx.restore();
   }
 
   function drawParkingSpots() {

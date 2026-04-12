@@ -117,6 +117,31 @@ function traceChains(adj, posMap, nodeKeys, nodeKeyList) {
   return chains;
 }
 
+/* ── Extend short chains to prevent fillet/offset collapse ─────── */
+function extendShortChains(chains, nodes, halfW, turningRadius, cornerRadius) {
+  const minLen = Math.max(turningRadius, cornerRadius) * 2 + halfW * 1.5;
+  for (const chain of chains) {
+    let chainLen = 0;
+    for (let i = 0; i < chain.pts.length - 1; i++) chainLen += dist(chain.pts[i], chain.pts[i + 1]);
+    if (chainLen >= minLen) continue;
+    const sni = chain.startNode >= 0 && chain.startNode < nodes.length ? nodes[chain.startNode] : null;
+    const eni = chain.endNode >= 0 && chain.endNode < nodes.length ? nodes[chain.endNode] : null;
+    const sLocked = sni?.type === 'junction', eLocked = eni?.type === 'junction';
+    if (sLocked && eLocked) continue;
+    const ext = (minLen - chainLen) / ((sLocked ? 0 : 1) + (eLocked ? 0 : 1));
+    if (!sLocked && chain.pts.length >= 2) {
+      const [a, b] = [chain.pts[0], chain.pts[1]];
+      const dx = a[0] - b[0], dy = a[1] - b[1], L = Math.hypot(dx, dy);
+      if (L > 1e-6) { chain.pts[0] = [a[0] + dx / L * ext, a[1] + dy / L * ext]; if (chain.startNode >= 0 && nodes[chain.startNode]) nodes[chain.startNode].position = chain.pts[0]; }
+    }
+    if (!eLocked && chain.pts.length >= 2) {
+      const n = chain.pts.length, a = chain.pts[n - 1], b = chain.pts[n - 2];
+      const dx = a[0] - b[0], dy = a[1] - b[1], L = Math.hypot(dx, dy);
+      if (L > 1e-6) { chain.pts[n - 1] = [a[0] + dx / L * ext, a[1] + dy / L * ext]; if (chain.endNode >= 0 && nodes[chain.endNode]) nodes[chain.endNode].position = chain.pts[n - 1]; }
+    }
+  }
+}
+
 /* ── Smooth + offset chains into road segments ────────────────── */
 function buildSegments(chains, nodes, halfW, turningRadius, chaikinIter) {
   const segments = [];
@@ -139,19 +164,47 @@ function buildSegments(chains, nodes, halfW, turningRadius, chaikinIter) {
   return segments;
 }
 
+/* ── Fix self-intersecting strips via union-with-self ──────────── */
+function sanitizeStrip(strip, PC) {
+  if (!PC || strip.length < 3) return strip;
+  try {
+    const ring = toRing(strip);
+    const fixed = PC.union([[ring]]);
+    if (fixed.length > 0 && fixed[0][0].length >= 4)
+      return fixed[0][0].slice(0, -1).map(p => [p[0], p[1]]);
+  } catch { /* use original */ }
+  return strip;
+}
+
+/* ── Safe incremental union (skip individual failures) ────────── */
+function safeUnion(strips, PC) {
+  if (!strips.length) return null;
+  let result = [[toRing(strips[0])]];
+  for (let i = 1; i < strips.length; i++) {
+    try { result = PC.union(result, [[toRing(strips[i])]]); }
+    catch { /* skip degenerate strip */ }
+  }
+  return result;
+}
+
 /* ── Compute union outline + fillet ───────────────────────────── */
 function computeOutline(segments, junctionDiscs, cornerRadius, PC) {
   if (!PC) return { outline: null, filletOutline: null };
   try {
-    const allStrips = [...segments.map(s => s.strip), ...junctionDiscs];
+    const allStrips = [
+      ...segments.map(s => sanitizeStrip(s.strip, PC)),
+      ...junctionDiscs,
+    ].filter(s => s.length >= 3);
     if (!allStrips.length) return { outline: null, filletOutline: null };
-    let result = [[toRing(allStrips[0])]];
-    for (let i = 1; i < allStrips.length; i++) {
-      try { result = PC.union(result, [[toRing(allStrips[i])]]); } catch { /* skip */ }
-    }
+    const result = safeUnion(allStrips, PC);
+    if (!result) return { outline: null, filletOutline: null };
     const outline = multiPolyToRings(result);
+    if (!outline.length) return { outline: null, filletOutline: null };
     const filletOutline = cornerRadius > 0
-      ? outline.map(r => filletReflex(r, cornerRadius)).map(r => filletConvex(r, cornerRadius))
+      ? outline.map(r => {
+          try { return filletConvex(filletReflex(r, cornerRadius), cornerRadius); }
+          catch { return r; }
+        })
       : outline;
     return { outline, filletOutline };
   } catch { return { outline: null, filletOutline: null }; }
@@ -159,20 +212,20 @@ function computeOutline(segments, junctionDiscs, cornerRadius, PC) {
 
 /* ── Compute sidewalk band (row − road) ───────────────────────── */
 function computeSidewalk(segments, nodes, halfW, sidewalkWidth, filletOutline, PC) {
-  if (!PC || sidewalkWidth <= 0 || !filletOutline) return null;
+  if (!PC || sidewalkWidth <= 0 || !filletOutline || !filletOutline.length) return null;
   try {
     const widerStrips = [
       ...segments.map(seg => {
         const { left, right } = offsetPolyline(seg.centerline, halfW + sidewalkWidth);
-        return [...left, ...[...right].reverse()];
+        return sanitizeStrip([...left, ...[...right].reverse()], PC);
       }),
       ...nodes.filter(n => n.type === 'junction').map(n => disc(n.position, halfW + sidewalkWidth + 0.05))
-    ];
-    let rowResult = [[toRing(widerStrips[0])]];
-    for (let i = 1; i < widerStrips.length; i++) {
-      try { rowResult = PC.union(rowResult, [[toRing(widerStrips[i])]]); } catch { /* skip */ }
-    }
-    const roadGeom = filletOutline.map(r => [toRing(r)]);
+    ].filter(s => s.length >= 3);
+    if (!widerStrips.length) return null;
+    const rowResult = safeUnion(widerStrips, PC);
+    if (!rowResult) return null;
+    const roadGeom = filletOutline.filter(r => r.length >= 3).map(r => [toRing(r)]);
+    if (!roadGeom.length) return null;
     const diff = PC.difference(rowResult, roadGeom);
     return multiPolyToRings(diff);
   } catch { return null; }
@@ -190,12 +243,17 @@ export function generateRoads(polylines, cfg) {
 
   const { adj, posMap, nodeKeys, nodes, nodeKeyList } = buildGraph(subSegs);
   const chains = traceChains(adj, posMap, nodeKeys, nodeKeyList);
+  extendShortChains(chains, nodes, halfW, turningRadius, cornerRadius);
   const segments = buildSegments(chains, nodes, halfW, turningRadius, chaikinIter);
 
-  // Junction disc patches (fill micro-gaps at meeting points)
+  // Junction disc patches — larger for multi-arm junctions
   const junctionDiscs = nodes
     .filter(n => n.type === 'junction')
-    .map(n => disc(n.position, halfW + 0.05));
+    .map(n => {
+      const key = vk(n.position);
+      const arms = adj.get(key)?.size || 3;
+      return disc(n.position, halfW * (arms >= 5 ? 1.3 : arms >= 4 ? 1.15 : 1.0) + 0.1);
+    });
 
   // Direction arrows
   let arrows = [];
