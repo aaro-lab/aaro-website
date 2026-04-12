@@ -209,38 +209,13 @@ export function offsetPolyline(pts, d) {
   const left = [], right = [];
   for (let i = 0; i < pts.length; i++) {
     let n;
-    if (i === 0) {
-      const e = sub(pts[1], pts[0]);
-      n = len(e) > 1e-9 ? perp(norm(e)) : [0, 1];
-    } else if (i === pts.length - 1) {
-      const e = sub(pts[i], pts[i - 1]);
-      n = len(e) > 1e-9 ? perp(norm(e)) : [0, 1];
-    } else {
-      const e1 = sub(pts[i], pts[i - 1]), e2 = sub(pts[i + 1], pts[i]);
-      const l1 = len(e1), l2 = len(e2);
-      if (l1 < 1e-9 || l2 < 1e-9) {
-        // Degenerate edge — use whichever neighbour edge is valid
-        const e = l1 >= 1e-9 ? e1 : l2 >= 1e-9 ? e2 : [1, 0];
-        n = perp(norm(e));
-      } else {
-        const n1 = perp(norm(e1)), n2 = perp(norm(e2));
-        const avg = add(n1, n2);
-        const avgL = len(avg);
-        if (avgL < 1e-6) {
-          // Near-hairpin: normals cancel out → use incoming edge normal (bevel)
-          n = n1;
-        } else {
-          n = scale(avg, 1 / avgL);          // normalised bisector
-          const c = dot(n, n1);              // cos(half-angle)
-          if (c > 0.15) {
-            n = scale(n, Math.min(1 / c, 2.5));  // miter, capped
-          } else {
-            // Very sharp turn: bisector is valid but miter would explode →
-            // fall back to incoming edge normal for a clean bevel-like join
-            n = n1;
-          }
-        }
-      }
+    if (i === 0) n = perp(norm(sub(pts[1], pts[0])));
+    else if (i === pts.length - 1) n = perp(norm(sub(pts[i], pts[i - 1])));
+    else {
+      const n1 = perp(norm(sub(pts[i], pts[i - 1]))), n2 = perp(norm(sub(pts[i + 1], pts[i])));
+      n = norm(add(n1, n2));
+      const c = dot(n, n1);
+      if (Math.abs(c) > 0.15) n = scale(norm(n), Math.min(1 / c, 2.5));
     }
     left.push(add(pts[i], scale(n, d)));
     right.push(add(pts[i], scale(n, -d)));
@@ -284,12 +259,12 @@ export function multiPolyToRings(mp) {
     rings.push(simplifyRing(polygon[0].map(p => [p[0], p[1]])));
     for (let h = 1; h < polygon.length; h++) {
       const hole = polygon[h]; if (hole.length < 3) continue;
-      const ha = Math.abs(ringArea(hole)); if (ha < 0.5) continue;
+      const ha = Math.abs(ringArea(hole)); if (ha < 1) continue;
       const oa = Math.abs(ringArea(polygon[0]));
-      if (oa > 0 && ha / oa < 0.02) continue;
+      if (oa > 0 && ha / oa < 0.04) continue;
       let perim = 0;
       for (let i = 0; i < hole.length - 1; i++) perim += Math.hypot(hole[i + 1][0] - hole[i][0], hole[i + 1][1] - hole[i][1]);
-      if (perim * perim / ha >= 40) continue;
+      if (perim * perim / ha >= 30) continue;
       rings.push(simplifyRing(hole.map(p => [p[0], p[1]])));
     }
   }
