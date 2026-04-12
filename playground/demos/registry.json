@@ -36,6 +36,14 @@
     "controls": []
   },
   {
+    "id": "northlight",
+    "title": "Northlight Regulation",
+    "titleKr": "정북 일조사선",
+    "hint": "드래그: 꼭지점 이동 | 더블클릭 엣지: 노드 추가 | 더블클릭 노드: 삭제 | <span class=\"accent\">좌 탑뷰 &harr; 우 아이소</span>",
+    "script": "demos/northlight/index.js",
+    "controls": []
+  },
+  {
     "id": "wfc",
     "title": "WFC Pavilion",
     "titleKr": "파빌리온 생성",
