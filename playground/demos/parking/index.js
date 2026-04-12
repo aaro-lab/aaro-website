@@ -5,7 +5,7 @@ export function init(cell) {
   const metricsEl = cell.querySelector('.pg-cell__metrics');
   if (!canvas) return;
   let ctx, W, H, dragIdx = -1, hovIdx = -1;
-  let vpCx = 40, vpCy = 40, vpZoom = 1.2, panning = false, panLX = 0, panLY = 0;
+  let vpCx = 40, vpCy = 40, vpZoom = 0.85, panning = false, panLX = 0, panLY = 0;
 
   const bdy = [{x:8,y:6},{x:6,y:52},{x:24,y:70},{x:56,y:68},{x:72,y:44},{x:66,y:10}];
   const SW = 2.5, SD = 5.0, AW = 6.0;
