@@ -63,6 +63,30 @@ export function init(cell) {
   let isoZoom = 4, isoCx = 0, isoCy = 0;
   let isoRotating = false, isoLX = 0, isoLY = 0;
 
+  /* ── Self-intersection check ────────────────────────────────── */
+  function crossSign(a, b, c) {
+    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+  }
+  function segsCross(a, b, c, d) {
+    const d1 = crossSign(c, d, a), d2 = crossSign(c, d, b);
+    const d3 = crossSign(a, b, c), d4 = crossSign(a, b, d);
+    return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+           ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+  }
+  function isSimplePolygon(pts) {
+    const n = pts.length;
+    if (n < 3) return false;
+    for (let i = 0; i < n; i++) {
+      const i2 = (i + 1) % n;
+      for (let j = i + 2; j < n; j++) {
+        if (i === 0 && j === n - 1) continue;
+        const j2 = (j + 1) % n;
+        if (segsCross(pts[i], pts[i2], pts[j], pts[j2])) return false;
+      }
+    }
+    return true;
+  }
+
   /* ── Coordinate transforms ─────────────────────────────────── */
   function w2sTop(wx, wy) {
     return [W / 4 + (wx - vpCx) * vpZoom, H / 2 - (wy - vpCy) * vpZoom];
@@ -85,13 +109,23 @@ export function init(cell) {
     volume = generateVolume(vertices, DEFAULT_PARAMS, PC);
   }
 
+  function updateIsoCenter() {
+    const cent = polygonCentroid(vertices);
+    const midH = (volume?.metadata?.maxHeight || 15) / 2;
+    const cosAx = Math.cos(isoAx), sinAx = Math.sin(isoAx);
+    const cosAy = Math.cos(isoAy), sinAy = Math.sin(isoAy);
+    const cz = -cent[1];
+    isoCx = cent[0] * cosAy + cz * sinAy;
+    const rz = -cent[0] * sinAy + cz * cosAy;
+    isoCy = midH * cosAx - rz * sinAx;
+  }
+
   function centerViewports() {
     const cent = polygonCentroid(vertices);
     vpCx = cent[0]; vpCy = cent[1];
     vpZoom = Math.min(W / 2, H) / 50;
     isoZoom = Math.min(W / 2, H) / 60;
-    isoCx = 0;
-    isoCy = (volume?.metadata?.maxHeight || 15) / 3;
+    updateIsoCenter();
   }
 
   function resize() {
@@ -346,9 +380,18 @@ export function init(cell) {
     if (isoRotating) {
       isoAy -= (e.clientX - isoLX) * 0.008;
       isoAx = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, isoAx + (e.clientY - isoLY) * 0.008));
-      isoLX = e.clientX; isoLY = e.clientY; return;
+      isoLX = e.clientX; isoLY = e.clientY;
+      updateIsoCenter();
+      return;
     }
-    if (dragIdx >= 0) { const [wx, wy] = s2wTop(sx, sy); vertices[dragIdx] = [wx, wy]; recompute(); return; }
+    if (dragIdx >= 0) {
+      const [wx, wy] = s2wTop(sx, sy);
+      const prev = [...vertices[dragIdx]];
+      vertices[dragIdx] = [wx, wy];
+      if (!isSimplePolygon(vertices)) { vertices[dragIdx] = prev; }
+      else { recompute(); updateIsoCenter(); }
+      return;
+    }
     if (panning) { vpCx -= (e.clientX - panLX) / vpZoom; vpCy += (e.clientY - panLY) / vpZoom; panLX = e.clientX; panLY = e.clientY; return; }
     const hit = hitVertex(sx, sy);
     if (hit >= 0) { hovIdx = hit; canvas.style.cursor = 'pointer'; }
@@ -357,20 +400,34 @@ export function init(cell) {
 
   canvas.addEventListener('mouseup', () => { dragIdx = -1; panning = false; isoRotating = false; canvas.style.cursor = 'default'; });
   canvas.addEventListener('mouseleave', () => { dragIdx = -1; panning = false; isoRotating = false; hovIdx = -1; });
+
+  // Independent zoom: left half = top view only, right half = iso only
   canvas.addEventListener('wheel', e => {
     e.preventDefault();
+    const { sx } = getXY(e);
     const f = e.deltaY > 0 ? 0.9 : 1.1;
-    vpZoom = Math.max(1, Math.min(30, vpZoom * f));
-    isoZoom = Math.max(1, Math.min(20, isoZoom * f));
+    if (sx <= W / 2) {
+      vpZoom = Math.max(1, Math.min(30, vpZoom * f));
+    } else {
+      isoZoom = Math.max(1, Math.min(20, isoZoom * f));
+    }
   }, { passive: false });
 
   // Double-click: add/remove vertex
   canvas.addEventListener('dblclick', e => {
     const { sx, sy } = getXY(e);
     const hitV = hitVertex(sx, sy);
-    if (hitV >= 0 && vertices.length > 3) { vertices.splice(hitV, 1); recompute(); initDrift(); return; }
+    if (hitV >= 0 && vertices.length > 3) { vertices.splice(hitV, 1); recompute(); updateIsoCenter(); initDrift(); return; }
     const hitE = hitEdge(sx, sy);
-    if (hitE >= 0) { const [wx, wy] = s2wTop(sx, sy); vertices.splice(hitE + 1, 0, [wx, wy]); recompute(); initDrift(); }
+    if (hitE >= 0) {
+      const [wx, wy] = s2wTop(sx, sy);
+      const candidate = vertices.slice();
+      candidate.splice(hitE + 1, 0, [wx, wy]);
+      if (isSimplePolygon(candidate)) {
+        vertices.splice(hitE + 1, 0, [wx, wy]);
+        recompute(); updateIsoCenter(); initDrift();
+      }
+    }
   });
 
   // Touch
@@ -383,14 +440,18 @@ export function init(cell) {
     if (dragIdx < 0) return;
     const t = e.touches[0], r = canvas.getBoundingClientRect();
     const [wx, wy] = s2wTop(t.clientX - r.left, t.clientY - r.top);
-    vertices[dragIdx] = [wx, wy]; recompute(); e.preventDefault();
+    const prev = [...vertices[dragIdx]];
+    vertices[dragIdx] = [wx, wy];
+    if (!isSimplePolygon(vertices)) { vertices[dragIdx] = prev; }
+    else { recompute(); updateIsoCenter(); }
+    e.preventDefault();
   }, { passive: false });
   canvas.addEventListener('touchend', () => { dragIdx = -1; });
 
   /* ── Drift animation with auto vertex add/remove ───────────── */
   let origPts = [], driftTargets = [];
   let driftState = 'moving', pauseTimer = 0, driftFrames = 0;
-  let driftCycle = 0; // track cycles for add/remove
+  let driftCycle = 0;
 
   function initDrift() {
     origPts = vertices.map(p => [...p]);
@@ -399,19 +460,26 @@ export function init(cell) {
   }
 
   function autoAddVertex() {
-    // Pick a random edge and insert a midpoint with small random offset
+    if (vertices.length >= 12) return;
     const i = Math.floor(Math.random() * vertices.length);
     const j = (i + 1) % vertices.length;
     const mx = (vertices[i][0] + vertices[j][0]) / 2 + (Math.random() - 0.5) * 2;
     const my = (vertices[i][1] + vertices[j][1]) / 2 + (Math.random() - 0.5) * 2;
-    vertices.splice(i + 1, 0, [mx, my]);
+    const candidate = vertices.slice();
+    candidate.splice(i + 1, 0, [mx, my]);
+    if (isSimplePolygon(candidate)) {
+      vertices.splice(i + 1, 0, [mx, my]);
+    }
   }
 
   function autoRemoveVertex() {
-    if (vertices.length <= 4) return; // keep minimum shape
-    // Remove the most recently added (last vertex that isn't original)
+    if (vertices.length <= 4) return;
     const removeIdx = Math.floor(Math.random() * vertices.length);
-    vertices.splice(removeIdx, 1);
+    const candidate = vertices.slice();
+    candidate.splice(removeIdx, 1);
+    if (isSimplePolygon(candidate)) {
+      vertices.splice(removeIdx, 1);
+    }
   }
 
   function tickDrift() {
@@ -421,15 +489,17 @@ export function init(cell) {
       if (pauseTimer >= PAUSE_SECS) {
         driftState = 'moving'; driftFrames = 0;
         driftCycle++;
-        // Every 3rd cycle: add a vertex; every 4th: remove one
         if (driftCycle % 4 === 1) { autoAddVertex(); }
         else if (driftCycle % 4 === 3 && vertices.length > 5) { autoRemoveVertex(); }
         origPts = vertices.map(p => [...p]);
         driftTargets = vertices.map(() => [(Math.random() - 0.5) * DRIFT_RANGE, (Math.random() - 0.5) * DRIFT_RANGE]);
-        recompute();
+        recompute(); updateIsoCenter();
       }
       return;
     }
+
+    // Save state before drift step
+    const backup = vertices.map(p => [...p]);
     let allDone = true;
     for (let i = 0; i < vertices.length && i < origPts.length; i++) {
       if (!driftTargets[i]) continue;
@@ -438,9 +508,19 @@ export function init(cell) {
       vertices[i][1] += (ty - vertices[i][1]) * DRIFT_SPEED;
       if (Math.abs(vertices[i][0] - tx) > 0.15 || Math.abs(vertices[i][1] - ty) > 0.15) allDone = false;
     }
+
+    // Revert if polygon became self-intersecting
+    if (!isSimplePolygon(vertices)) {
+      for (let i = 0; i < vertices.length; i++) vertices[i] = backup[i];
+      origPts = vertices.map(p => [...p]);
+      driftTargets = vertices.map(() => [(Math.random() - 0.5) * DRIFT_RANGE * 0.3, (Math.random() - 0.5) * DRIFT_RANGE * 0.3]);
+      driftFrames = 0;
+      return;
+    }
+
     driftFrames++;
-    if (driftFrames % RECOMP_EVERY === 0) recompute();
-    if (allDone) { driftState = 'paused'; pauseTimer = 0; recompute(); }
+    if (driftFrames % RECOMP_EVERY === 0) { recompute(); updateIsoCenter(); }
+    if (allDone) { driftState = 'paused'; pauseTimer = 0; recompute(); updateIsoCenter(); }
   }
 
   /* ── Boot ──────────────────────────────────────────────────── */
