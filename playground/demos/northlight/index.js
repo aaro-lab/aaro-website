@@ -41,7 +41,7 @@ const DEFAULT_LOT = [
 export function init(cell) {
   let PC = null;
   import('https://esm.sh/polygon-clipping@0.15.7')
-    .then(mod => { PC = mod.default; recompute(); })
+    .then(mod => { PC = mod.default; recompute(); updateIsoCenter(); })
     .catch(() => {});
 
   const canvas = cell.querySelector('canvas');
@@ -67,11 +67,21 @@ export function init(cell) {
   function crossSign(a, b, c) {
     return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
   }
+  function onSegment(p, q, r) {
+    return q[0] <= Math.max(p[0], r[0]) && q[0] >= Math.min(p[0], r[0]) &&
+           q[1] <= Math.max(p[1], r[1]) && q[1] >= Math.min(p[1], r[1]);
+  }
   function segsCross(a, b, c, d) {
     const d1 = crossSign(c, d, a), d2 = crossSign(c, d, b);
     const d3 = crossSign(a, b, c), d4 = crossSign(a, b, d);
-    return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
-           ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+    if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+        ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
+    // Collinear overlap cases
+    if (d1 === 0 && onSegment(c, a, d)) return true;
+    if (d2 === 0 && onSegment(c, b, d)) return true;
+    if (d3 === 0 && onSegment(a, c, b)) return true;
+    if (d4 === 0 && onSegment(a, d, b)) return true;
+    return false;
   }
   function isSimplePolygon(pts) {
     const n = pts.length;
@@ -417,9 +427,16 @@ export function init(cell) {
   canvas.addEventListener('dblclick', e => {
     const { sx, sy } = getXY(e);
     const hitV = hitVertex(sx, sy);
-    if (hitV >= 0 && vertices.length > 3) { vertices.splice(hitV, 1); recompute(); updateIsoCenter(); initDrift(); return; }
+    if (hitV >= 0 && vertices.length > 3) {
+      const candidate = vertices.slice();
+      candidate.splice(hitV, 1);
+      if (isSimplePolygon(candidate)) {
+        vertices.splice(hitV, 1); recompute(); updateIsoCenter(); initDrift();
+      }
+      return;
+    }
     const hitE = hitEdge(sx, sy);
-    if (hitE >= 0) {
+    if (hitE >= 0 && vertices.length < 12) {
       const [wx, wy] = s2wTop(sx, sy);
       const candidate = vertices.slice();
       candidate.splice(hitE + 1, 0, [wx, wy]);
@@ -451,12 +468,12 @@ export function init(cell) {
   /* ── Drift animation with auto vertex add/remove ───────────── */
   let origPts = [], driftTargets = [];
   let driftState = 'moving', pauseTimer = 0, driftFrames = 0;
-  let driftCycle = 0;
+  let driftCycle = 0, driftReverts = 0;
 
   function initDrift() {
     origPts = vertices.map(p => [...p]);
     driftTargets = vertices.map(() => [(Math.random() - 0.5) * DRIFT_RANGE, (Math.random() - 0.5) * DRIFT_RANGE]);
-    driftState = 'moving'; driftFrames = 0;
+    driftState = 'moving'; driftFrames = 0; driftReverts = 0;
   }
 
   function autoAddVertex() {
@@ -512,11 +529,14 @@ export function init(cell) {
     // Revert if polygon became self-intersecting
     if (!isSimplePolygon(vertices)) {
       for (let i = 0; i < vertices.length; i++) vertices[i] = backup[i];
+      driftReverts++;
+      if (driftReverts > 10) { driftState = 'paused'; pauseTimer = 0; driftReverts = 0; recompute(); updateIsoCenter(); return; }
       origPts = vertices.map(p => [...p]);
       driftTargets = vertices.map(() => [(Math.random() - 0.5) * DRIFT_RANGE * 0.3, (Math.random() - 0.5) * DRIFT_RANGE * 0.3]);
       driftFrames = 0;
       return;
     }
+    driftReverts = 0;
 
     driftFrames++;
     if (driftFrames % RECOMP_EVERY === 0) { recompute(); updateIsoCenter(); }
