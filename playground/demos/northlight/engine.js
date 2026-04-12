@@ -149,6 +149,7 @@ export function computeEdgeProfiles(vertices, params) {
  * Non-north-facing edges always return 0.
  */
 function setbackAtHeight(h, p) {
+  if (!p.northEnabled) return 0;
   const { baseHeight, belowBaseSetback, aboveBaseRatio, interpretationMode } = p;
   if (h <= baseHeight) return belowBaseSetback;
   if (interpretationMode === 'discontinuous') return h * aboveBaseRatio;
@@ -244,7 +245,7 @@ function connectFloors(polyA, hA, polyB, hB) {
     }
     usedB.add(bestIdx);
     const b = polyB[bestIdx];
-    lines.push([[a[0], hA, -a[1]], [b[0], hB, -b[1]]]);
+    lines.push([a[0], hA, -a[1], b[0], hB, -b[1]]);
   }
 
   // Connect unused polyB vertices back to their nearest polyA vertex
@@ -257,7 +258,7 @@ function connectFloors(polyA, hA, polyB, hB) {
       if (d < bestDist) { bestDist = d; bestIdx = i; }
     }
     const a = polyA[bestIdx];
-    lines.push([[a[0], hA, -a[1]], [b[0], hB, -b[1]]]);
+    lines.push([a[0], hA, -a[1], b[0], hB, -b[1]]);
   }
   return lines;
 }
@@ -295,33 +296,37 @@ export function generateVolume(vertices, params, PC) {
   for (let f = 0; f <= numFloors; f++) {
     const h = f * floorHeight;
 
-    // In discontinuous mode, insert a step slice just above base height
-    if (f === baseFloor && interpretationMode === 'discontinuous' && f > 0) {
-      const stepSetback = baseHeight * aboveBaseRatio;
-      const translated = ccwVerts.map(v => [v[0], v[1] - stepSetback]);
-      const stepPoly = intersectPolygons(translated, ccwVerts, PC);
-      if (stepPoly) {
-        const area = polygonArea(stepPoly);
-        if (area >= 0.5) floorSlices.push({ height: baseHeight + 0.001, polygon: stepPoly, area });
-      }
-    }
-
     const poly = buildablePolygonAtHeight(ccwVerts, h, profiles, p, PC);
     if (!poly) break;
     const area = polygonArea(poly);
     if (area < 0.5) break;
-    floorSlices.push({ height: h, polygon: poly, area });
+    floorSlices.push({ height: h, floor: f, polygon: poly, area, setback: setbackAtHeight(h, p) });
+
+    // In discontinuous mode, insert a step slice at base height
+    if (f === baseFloor && interpretationMode === 'discontinuous' && f > 0) {
+      const stepSetback = baseHeight * aboveBaseRatio;
+      if (stepSetback > p.belowBaseSetback + 0.01) {
+        const translated = ccwVerts.map(v => [v[0], v[1] - stepSetback]);
+        const stepPoly = intersectPolygons(translated, ccwVerts, PC);
+        if (stepPoly) {
+          const sArea = polygonArea(stepPoly);
+          if (sArea >= 0.5) floorSlices.push({ height: h, floor: -1, polygon: stepPoly, area: sArea, setback: stepSetback, isStep: true });
+        }
+      }
+    }
   }
 
   // Sort by height ascending
   floorSlices.sort((a, b) => a.height - b.height);
 
-  // ── Horizontal rings ─────────────────────────────────────────────
-  const horizontalRings = floorSlices.map(({ height, polygon }) => {
-    const ring = polygon.map(v => [v[0], height, -v[1]]);
-    // Close the ring
-    if (ring.length > 0) ring.push([...ring[0]]);
-    return ring;
+  // ── Horizontal rings (flat [x,h,-y, x,h,-y, ...] with metadata) ──
+  const horizontalRings = floorSlices.map(slice => {
+    const pts = [];
+    for (let i = 0; i <= slice.polygon.length; i++) {
+      const [x, y] = slice.polygon[i % slice.polygon.length];
+      pts.push(x, slice.height, -y);
+    }
+    return { floor: slice.floor, points: pts, isStep: slice.isStep };
   });
 
   // ── Vertical lines between adjacent floors ───────────────────────
@@ -332,10 +337,13 @@ export function generateVolume(vertices, params, PC) {
     verticalLines.push(...connections);
   }
 
-  // ── Site boundary at ground level ────────────────────────────────
-  const groundH = 0.02; // slight offset above ground to avoid z-fighting
-  const siteBoundary = ccwVerts.map(v => [v[0], groundH, -v[1]]);
-  if (siteBoundary.length > 0) siteBoundary.push([...siteBoundary[0]]);
+  // ── Site boundary at ground level (flat [x,h,-y, ...]) ──────────
+  const groundH = 0.02;
+  const siteBoundary = [];
+  for (let i = 0; i <= ccwVerts.length; i++) {
+    const [x, y] = ccwVerts[i % ccwVerts.length];
+    siteBoundary.push(x, groundH, -y);
+  }
 
   // ── Metadata ─────────────────────────────────────────────────────
   const buildableFloors = floorSlices.length;
@@ -354,7 +362,7 @@ export function generateVolume(vertices, params, PC) {
     floorSlices,
     horizontalRings,
     verticalLines,
-    siteBoundary: [siteBoundary],
+    siteBoundary,
     metadata: { maxHeight: peakHeight, volume, floorArea, buildableFloors },
     edgeProfiles: profiles,
   };
