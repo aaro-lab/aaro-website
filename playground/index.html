@@ -105,10 +105,16 @@
       return article;
     }
 
+    // Resolve a relative path against <base href>, working around
+    // Safari where dynamic import() ignores the <base> tag.
+    function resolveURL(rel) {
+      return new URL(rel, document.baseURI).href;
+    }
+
     // Load registry and init demos
     async function boot() {
       const grid = document.getElementById('pgGrid');
-      const registry = await fetch('demos/registry.json').then(r => r.json());
+      const registry = await fetch(resolveURL('demos/registry.json')).then(r => r.json());
 
       for (const demo of registry) {
         // Validate demo ID and script path
@@ -119,7 +125,7 @@
         const cell = buildCell(demo);
         grid.appendChild(cell);
 
-        import(`./${demo.script}`).then(mod => {
+        import(resolveURL(demo.script)).then(mod => {
           if (mod.init) mod.init(cell);
         }).catch(err => {
           console.error(`Failed to load demo "${demo.id}":`, err);
