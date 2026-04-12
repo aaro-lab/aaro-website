@@ -388,8 +388,8 @@ export function init(cell) {
   canvas.addEventListener('mousemove', e => {
     const { sx, sy } = getXY(e);
     if (isoRotating) {
-      isoAy -= (e.clientX - isoLX) * 0.008;
-      isoAx = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, isoAx + (e.clientY - isoLY) * 0.008));
+      isoAy += (e.clientX - isoLX) * 0.008;
+      isoAx = Math.max(0.05, Math.min(Math.PI / 2 - 0.05, isoAx - (e.clientY - isoLY) * 0.008));
       isoLX = e.clientX; isoLY = e.clientY;
       updateIsoCenter();
       return;
