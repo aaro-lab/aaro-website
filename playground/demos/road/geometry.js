@@ -75,16 +75,21 @@ export function openRing(ring) {
 }
 
 /* ── Signed area (shoelace) ───────────────────────────────────── */
-export function ringArea(ring) {
+export function ringSignedArea(ring) {
   let a = 0; const n = ring.length;
   for (let i = 0; i < n; i++) { const j = (i + 1) % n; a += ring[i][0] * ring[j][1] - ring[j][0] * ring[i][1]; }
   return a / 2;
 }
 
+// Alias: ringArea returns the signed area (same as ringSignedArea)
+export const ringArea = ringSignedArea;
+
 /* ── Fillet interior vertices of an open polyline ─────────────── */
 export function filletPolyline(pts, radius) {
   if (radius <= 0 || pts.length < 3) return pts.map(p => [...p]);
-  const n = pts.length, out = [[pts[0][0], pts[0][1]]];
+  const n = pts.length;
+  const out = [[pts[0][0], pts[0][1]]];
+
   for (let i = 1; i < n - 1; i++) {
     const prev = pts[i - 1], curr = pts[i], next = pts[i + 1];
     const v1x = curr[0] - prev[0], v1y = curr[1] - prev[1];
@@ -93,21 +98,31 @@ export function filletPolyline(pts, radius) {
     if (l1 < 1e-6 || l2 < 1e-6) { out.push([curr[0], curr[1]]); continue; }
     const d1x = v1x / l1, d1y = v1y / l1, d2x = v2x / l2, d2y = v2y / l2;
     const c = d1x * d2y - d1y * d2x, dt = d1x * d2x + d1y * d2y;
-    const turn = Math.atan2(Math.abs(c), dt);
-    if (turn < COLLINEAR_TOL || turn > Math.PI - COLLINEAR_TOL) { out.push([curr[0], curr[1]]); continue; }
-    const half = turn / 2;
-    const tanLen = Math.min(radius * Math.tan(half), Math.min(l1, l2) * 0.5);
-    const R = tanLen / Math.tan(half);
+    const turnAngle = Math.atan2(Math.abs(c), dt);
+    if (turnAngle < 0.02 || turnAngle > Math.PI - 0.02) { out.push([curr[0], curr[1]]); continue; }
+    const halfTurn = turnAngle / 2;
+    const desiredTan = radius * Math.tan(halfTurn);
+    const maxTan = Math.min(l1, l2) * 0.5;
+    const tanLen = Math.min(desiredTan, maxTan);
+    const actualRadius = tanLen / Math.tan(halfTurn);
     const tA = [curr[0] - d1x * tanLen, curr[1] - d1y * tanLen];
     const tB = [curr[0] + d2x * tanLen, curr[1] + d2y * tanLen];
     const bx = -d1x + d2x, by = -d1y + d2y, bl = Math.hypot(bx, by);
     if (bl < 1e-9) { out.push([curr[0], curr[1]]); continue; }
-    const bisLen = R / Math.cos(half);
+    const bisLen = actualRadius / Math.cos(halfTurn);
     const center = [curr[0] + (bx / bl) * bisLen, curr[1] + (by / bl) * bisLen];
-    const sa = Math.atan2(tA[1] - center[1], tA[0] - center[0]);
-    const ea = Math.atan2(tB[1] - center[1], tB[0] - center[0]);
+    const startAngle = Math.atan2(tA[1] - center[1], tA[0] - center[0]);
+    const endAngle = Math.atan2(tB[1] - center[1], tB[0] - center[0]);
+    let sweep = endAngle - startAngle;
+    while (sweep > Math.PI) sweep -= 2 * Math.PI;
+    while (sweep < -Math.PI) sweep += 2 * Math.PI;
+    const steps = Math.max(4, Math.ceil(Math.abs(sweep) / (Math.PI / 24)));
     out.push(tA);
-    out.push(...generateArc(center, R, sa, ea, 4));
+    for (let s = 1; s < steps; s++) {
+      const t = s / steps;
+      const a = startAngle + sweep * t;
+      out.push([center[0] + actualRadius * Math.cos(a), center[1] + actualRadius * Math.sin(a)]);
+    }
     out.push(tB);
   }
   out.push([pts[n - 1][0], pts[n - 1][1]]);
@@ -115,43 +130,95 @@ export function filletPolyline(pts, radius) {
 }
 
 /* ── Fillet convex corners of a closed polygon ring ───────────── */
-export function filletConvex(ring, radius) {
+export function filletPolygon(ring, radius, angleThresholdDeg = 150) {
   if (radius <= 0 || ring.length < 3) return ring;
   const pts = openRing(ring);
   const n = pts.length; if (n < 3) return ring;
-  const ccw = ringArea(pts) > 0;
-  const result = [];
 
-  const edgeLen = new Array(n), turnA = new Array(n), cvx = new Array(n);
+  // Determine winding direction (sign of signed area)
+  const ccw = ringSignedArea(pts) > 0;
+
+  const result = [];
+  const threshRad = (angleThresholdDeg * Math.PI) / 180;
+
+  // Pre-compute turn angle, convexity, and edge length for every vertex so
+  // the "dead-end cap" detector below can look ahead / behind without
+  // re-running the normalize/cross math.
+  const turnAngles = new Array(n).fill(0);
+  const convexArr = new Array(n).fill(false);
+  const edgeLenArr = new Array(n).fill(0); // edgeLenArr[i] = dist(pts[i], pts[(i+1)%n])
   for (let i = 0; i < n; i++) {
     const prev = pts[(i - 1 + n) % n], curr = pts[i], next = pts[(i + 1) % n];
-    edgeLen[i] = dist(curr, next);
     const d1 = norm(sub(curr, prev)), d2 = norm(sub(next, curr));
-    const cr = d1[0] * d2[1] - d1[1] * d2[0];
-    turnA[i] = Math.atan2(Math.abs(cr), dot(d1, d2));
-    cvx[i] = ccw ? cr > 1e-9 : cr < -1e-9;
+    const crossV = d1[0] * d2[1] - d1[1] * d2[0];
+    turnAngles[i] = Math.atan2(Math.abs(crossV), dot(d1, d2));
+    // For a CCW polygon (signedArea > 0), a CONVEX exterior corner is a LEFT turn → cross > 0.
+    // For a CW polygon, convex corners are RIGHT turns → cross < 0.
+    convexArr[i] = ccw ? crossV > 1e-9 : crossV < -1e-9;
+    edgeLenArr[i] = dist(curr, next);
   }
-  const is90 = i => cvx[i] && Math.abs(turnA[i] - Math.PI / 2) < 0.25;
-  const isCap = i => { if (!is90(i)) return false; return is90((i + 1) % n) || is90((i - 1 + n) % n); };
+
+  /**
+   * A dead-end "cap" in the road-union outline looks like:
+   *   long edge  →  ~90° convex corner  →  cap edge (~roadWidth)
+   *              →  ~90° convex corner  →  long edge
+   * We detect a cap corner as one that is ~90° convex AND whose adjacent
+   * edge is terminated at the OTHER end by another ~90° convex corner.
+   * The cap edge can be as wide as the road itself (potentially much larger
+   * than the fillet radius), so we deliberately do NOT use a length
+   * threshold relative to `radius`. As a conservative safety net we still
+   * skip impossibly long candidates (> 100× radius).
+   */
+  const is90 = idx => convexArr[idx] && Math.abs(turnAngles[idx] - Math.PI / 2) < 0.25;
+  const isCapCorner = i => {
+    if (!is90(i)) return false;
+    const hardMax = Math.max(radius * 100, 1000);
+    if (edgeLenArr[i] < hardMax && is90((i + 1) % n)) return true;
+    if (edgeLenArr[(i - 1 + n) % n] < hardMax && is90((i - 1 + n) % n)) return true;
+    return false;
+  };
 
   for (let i = 0; i < n; i++) {
-    const curr = pts[i];
-    // Skip: non-convex, nearly-straight (turn < 0.54 rad), or dead-end cap corners
-    if (!cvx[i] || turnA[i] < 0.54 || turnA[i] < 0.01 || isCap(i)) { result.push(curr); continue; }
-    const d1 = norm(sub(curr, pts[(i - 1 + n) % n])), d2 = norm(sub(pts[(i + 1) % n], curr));
-    const half = turnA[i] / 2;
-    let tanLen = radius * Math.tan(half);
-    tanLen = Math.min(tanLen, Math.min(edgeLen[(i - 1 + n) % n], edgeLen[i]) * FILLET_EDGE_MAX);
-    const R = tanLen / Math.tan(half);
+    const prev = pts[(i - 1 + n) % n], curr = pts[i], next = pts[(i + 1) % n];
+    const d1 = norm(sub(curr, prev)), d2 = norm(sub(next, curr));
+    const turnAngle = turnAngles[i];
+    const interiorAngle = Math.PI - turnAngle;
+    const isConvex = convexArr[i];
+    const lenPrev = edgeLenArr[(i - 1 + n) % n];
+    const lenNext = edgeLenArr[i];
+
+    if (!isConvex || interiorAngle > threshRad || turnAngle < 0.01 || isCapCorner(i)) {
+      result.push(curr); continue;
+    }
+
+    const halfTurn = turnAngle / 2;
+    let tanLen = radius * Math.tan(halfTurn);
+    const maxTan = Math.min(lenPrev, lenNext) * FILLET_EDGE_MAX;
+    if (tanLen > maxTan) tanLen = maxTan;
+    const actualRadius = tanLen / Math.tan(halfTurn);
+
     const tA = [curr[0] - d1[0] * tanLen, curr[1] - d1[1] * tanLen];
     const tB = [curr[0] + d2[0] * tanLen, curr[1] + d2[1] * tanLen];
-    const bis = norm(add(scale(d1, -1), d2)), bisL = R / Math.cos(half);
-    const cDir = ccw ? scale(bis, -1) : bis;
-    const center = [curr[0] + cDir[0] * bisL, curr[1] + cDir[1] * bisL];
-    const sa = Math.atan2(tA[1] - center[1], tA[0] - center[0]);
-    const ea = Math.atan2(tB[1] - center[1], tB[0] - center[0]);
+
+    const bisector = norm(add(scale(d1, -1), d2));
+    const bisLen = actualRadius / Math.cos(halfTurn);
+    // Center is on the interior side
+    const centerDir = ccw ? scale(bisector, -1) : bisector;
+    const center = [curr[0] + centerDir[0] * bisLen, curr[1] + centerDir[1] * bisLen];
+
+    const startAngle = Math.atan2(tA[1] - center[1], tA[0] - center[0]);
+    const endAngle = Math.atan2(tB[1] - center[1], tB[0] - center[0]);
+    let sweep = endAngle - startAngle;
+    while (sweep > Math.PI) sweep -= 2 * Math.PI;
+    while (sweep < -Math.PI) sweep += 2 * Math.PI;
+
+    const arcSteps = Math.max(4, Math.round(Math.abs(sweep) / (Math.PI / 12)));
     result.push(tA);
-    result.push(...generateArc(center, R, sa, ea, 4));
+    for (let s = 1; s < arcSteps; s++) {
+      const t = s / arcSteps;
+      const a = startAngle + sweep * t;
+      result.push([center[0] + actualRadius * Math.cos(a), center[1] + actualRadius * Math.sin(a)]);
+    }
     result.push(tB);
   }
   if (result.length > 0) result.push([...result[0]]);
@@ -159,50 +226,107 @@ export function filletConvex(ring, radius) {
 }
 
 /* ── Fillet reflex (concave) corners — curb return at junctions ── */
-export function filletReflex(ring, radius) {
+export function filletReflexCorners(ring, radius) {
   if (radius <= 0 || ring.length < 3) return ring;
   const pts = openRing(ring);
   const n = pts.length; if (n < 3) return ring;
-  const ccw = ringArea(pts) > 0;
 
-  const reflexIdx = [], cornerTurn = new Array(n), isReflex = new Array(n);
+  // Winding direction
+  const ccw = ringSignedArea(pts) > 0;
+
+  // Pre-compute reflex indices so each reflex corner can find its nearest
+  // neighboring reflex corner to limit its fillet radius. Multi-arm
+  // junctions place multiple reflex corners close together near the polygon
+  // "hub"; if each one applies its full requested radius their arcs bulge
+  // into the interior and cross each other (the "biohazard" artifact).
+  const reflexIdxs = [];
+  const cornerTurn = new Array(n).fill(0);
+  const cornerIsReflex = new Array(n).fill(false);
   for (let i = 0; i < n; i++) {
-    const d1 = norm(sub(pts[i], pts[(i - 1 + n) % n])), d2 = norm(sub(pts[(i + 1) % n], pts[i]));
-    const cr = d1[0] * d2[1] - d1[1] * d2[0];
-    cornerTurn[i] = Math.atan2(Math.abs(cr), dot(d1, d2));
-    isReflex[i] = ccw ? cr < -1e-9 : cr > 1e-9;
-    if (isReflex[i] && cornerTurn[i] >= 0.05) reflexIdx.push(i);
+    const prev = pts[(i - 1 + n) % n], curr = pts[i], next = pts[(i + 1) % n];
+    const d1 = norm(sub(curr, prev)), d2 = norm(sub(next, curr));
+    const crossV = d1[0] * d2[1] - d1[1] * d2[0];
+    cornerTurn[i] = Math.atan2(Math.abs(crossV), dot(d1, d2));
+    const refl = ccw ? crossV < -1e-9 : crossV > 1e-9;
+    cornerIsReflex[i] = refl;
+    if (refl && cornerTurn[i] >= 0.05) reflexIdxs.push(i);
   }
-  const nearDist = new Map();
-  for (const i of reflexIdx) { let best = Infinity; for (const j of reflexIdx) if (i !== j) best = Math.min(best, dist(pts[i], pts[j])); nearDist.set(i, best); }
+
+  // Nearest reflex-to-reflex straight-line distance per reflex corner.
+  // We use this to bound the arc center offset so the arc stays within its
+  // local "Voronoi half-cell" between the two nearest reflex neighbours.
+  const nearestReflexDist = new Map();
+  for (const i of reflexIdxs) {
+    let best = Infinity;
+    for (const j of reflexIdxs) {
+      if (i !== j) { const d = dist(pts[i], pts[j]); if (d < best) best = d; }
+    }
+    nearestReflexDist.set(i, best);
+  }
 
   const result = [];
   for (let i = 0; i < n; i++) {
-    if (!isReflex[i] || cornerTurn[i] < 0.05) { result.push(pts[i]); continue; }
     const prev = pts[(i - 1 + n) % n], curr = pts[i], next = pts[(i + 1) % n];
     const d1 = norm(sub(curr, prev)), d2 = norm(sub(next, curr));
-    const half = cornerTurn[i] / 2;
-    let tanLen = radius * Math.tan(half);
-    const lP = dist(prev, curr), lN = dist(curr, next);
-    if (lP < radius * SHORT_EDGE_MULT && lN < radius * SHORT_EDGE_MULT) { result.push(curr); continue; }
-    tanLen = Math.min(tanLen, Math.min(lP, lN) * FILLET_EDGE_MAX);
-    const nb = nearDist.get(i) ?? Infinity;
-    if (isFinite(nb)) tanLen = Math.min(tanLen, nb * FILLET_EDGE_MAX * Math.sin(half));
+
+    if (!cornerIsReflex[i] || cornerTurn[i] < 0.05) { result.push(curr); continue; }
+    const turnAngle = cornerTurn[i];
+    const halfTurn = turnAngle / 2;
+    let tanLen = radius * Math.tan(halfTurn);
+    const lenPrev = dist(prev, curr), lenNext = dist(curr, next);
+    // Skip reflex corners between two short edges — these come from
+    // corner-extension stubs or micro-segments at multi-junction clusters.
+    if (lenPrev < radius * SHORT_EDGE_MULT && lenNext < radius * SHORT_EDGE_MULT) { result.push(curr); continue; }
+    const maxTanEdge = Math.min(lenPrev, lenNext) * FILLET_EDGE_MAX;
+    if (tanLen > maxTanEdge) tanLen = maxTanEdge;
+
+    // Neighbor-reflex clamp: in a multi-reflex polygon (star junctions with
+    // 3+ arms), cap the effective radius so the arc center distance along
+    // the bisector stays under half the distance to the nearest OTHER
+    // reflex corner. Without this clamp, 5/6-arm junctions produce arcs
+    // that pass through each other near the hub.
+    // bisLen = R/cos(halfTurn); we want bisLen ≤ neighbour * 0.45, so
+    // tanLen = R * tan(halfTurn) ≤ neighbour * 0.45 * sin(halfTurn).
+    const neighbour = nearestReflexDist.get(i) ?? Infinity;
+    if (isFinite(neighbour)) {
+      const maxTanNeigh = neighbour * 0.45 * Math.sin(halfTurn);
+      if (tanLen > maxTanNeigh) tanLen = maxTanNeigh;
+    }
+
     if (tanLen < 1e-6) { result.push(curr); continue; }
-    const R = tanLen / Math.tan(half);
+    const actualRadius = tanLen / Math.tan(halfTurn);
+
     const tA = [curr[0] - d1[0] * tanLen, curr[1] - d1[1] * tanLen];
     const tB = [curr[0] + d2[0] * tanLen, curr[1] + d2[1] * tanLen];
-    const bis = norm(add(scale(d1, -1), d2)), bisL = R / Math.cos(half);
-    const center = [curr[0] + bis[0] * bisL, curr[1] + bis[1] * bisL];
-    const sa = Math.atan2(tA[1] - center[1], tA[0] - center[0]);
-    const ea = Math.atan2(tB[1] - center[1], tB[0] - center[0]);
+
+    // For a REFLEX corner, the arc center sits on the polygon EXTERIOR side
+    // — the natural direction of the bisector of (-d1, d2). No flip needed.
+    const bisector = norm(add(scale(d1, -1), d2));
+    const bisLen = actualRadius / Math.cos(halfTurn);
+    const center = [curr[0] + bisector[0] * bisLen, curr[1] + bisector[1] * bisLen];
+
+    const startAngle = Math.atan2(tA[1] - center[1], tA[0] - center[0]);
+    const endAngle = Math.atan2(tB[1] - center[1], tB[0] - center[0]);
+    let sweep = endAngle - startAngle;
+    while (sweep > Math.PI) sweep -= 2 * Math.PI;
+    while (sweep < -Math.PI) sweep += 2 * Math.PI;
+
+    const arcSteps = Math.max(8, Math.ceil(Math.abs(sweep) / (Math.PI / 24)));
     result.push(tA);
-    result.push(...generateArc(center, R, sa, ea, 8));
+    for (let s = 1; s < arcSteps; s++) {
+      const t = s / arcSteps;
+      const a = startAngle + sweep * t;
+      result.push([center[0] + actualRadius * Math.cos(a), center[1] + actualRadius * Math.sin(a)]);
+    }
     result.push(tB);
   }
   if (result.length > 0) result.push([...result[0]]);
   return result;
 }
+
+// Backward-compat aliases
+export const filletConvex = filletPolygon;
+export const filletReflex = filletReflexCorners;
 
 /* ── Offset polyline (left/right edges) ───────────────────────── */
 export function offsetPolyline(pts, d) {
@@ -256,16 +380,22 @@ export function multiPolyToRings(mp) {
   const rings = [];
   for (const polygon of mp) {
     if (!polygon.length || polygon[0].length < 3) continue;
-    rings.push(simplifyRing(polygon[0].map(p => [p[0], p[1]])));
+    // Outer ring: normalize to CCW (positive signed area)
+    let outer = simplifyRing(polygon[0].map(p => [p[0], p[1]]));
+    if (ringSignedArea(outer) < 0) outer = outer.slice().reverse();
+    rings.push(outer);
     for (let h = 1; h < polygon.length; h++) {
       const hole = polygon[h]; if (hole.length < 3) continue;
-      const ha = Math.abs(ringArea(hole)); if (ha < 1) continue;
-      const oa = Math.abs(ringArea(polygon[0]));
+      const ha = Math.abs(ringSignedArea(hole)); if (ha < 1) continue;
+      const oa = Math.abs(ringSignedArea(polygon[0]));
       if (oa > 0 && ha / oa < 0.04) continue;
       let perim = 0;
       for (let i = 0; i < hole.length - 1; i++) perim += Math.hypot(hole[i + 1][0] - hole[i][0], hole[i + 1][1] - hole[i][1]);
       if (perim * perim / ha >= 30) continue;
-      rings.push(simplifyRing(hole.map(p => [p[0], p[1]])));
+      // Hole ring: normalize to CW (negative signed area)
+      let hring = simplifyRing(hole.map(p => [p[0], p[1]]));
+      if (ringSignedArea(hring) > 0) hring = hring.slice().reverse();
+      rings.push(hring);
     }
   }
   return rings;
@@ -286,6 +416,32 @@ export function pointInRing(p, ring) {
     if (((yi > p[1]) !== (yj > p[1])) && (p[0] < (xj - xi) * (p[1] - yi) / (yj - yi) + xi)) inside = !inside;
   }
   return inside;
+}
+
+/* ── Re-associate CW holes with their containing CCW outer ring ── */
+export function ringsToGeom(rings) {
+  // Separate outer rings (CCW, positive area) from holes (CW, negative area)
+  const outers = [], holes = [];
+  for (const ring of rings) {
+    if (ringSignedArea(ring) >= 0) outers.push(ring);
+    else holes.push(ring);
+  }
+  // Build polygons: each outer ring is one polygon; holes are assigned to the
+  // smallest outer ring that contains them (by area, i.e. the tightest fit).
+  const polygons = outers.map(outer => [outer]);
+  for (const hole of holes) {
+    // Use the first non-closing vertex as the test point
+    const testPt = hole[0];
+    let bestIdx = -1, bestArea = Infinity;
+    for (let o = 0; o < outers.length; o++) {
+      const a = Math.abs(ringSignedArea(outers[o]));
+      if (a < bestArea && pointInRing(testPt, outers[o])) {
+        bestArea = a; bestIdx = o;
+      }
+    }
+    if (bestIdx >= 0) polygons[bestIdx].push(hole);
+  }
+  return polygons;
 }
 
 /* ── Direction arrows (7-point polygon per arrow) ─────────────── */
