@@ -15,6 +15,57 @@
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
+
+/* ── LIGHT THEME ── */
+[data-theme="light"] {
+  --ink:     #F8F6F1;
+  --ink-90:  #EFEDE8;
+  --ink-80:  #D8D3CB;
+  --ink-60:  #BFBDB5;
+  --ink-40:  #5A5A52;
+  --ink-20:  #2E2E2A;
+  --ink-10:  #1A1A18;
+  --cream:   #0D0D0C;
+  --white:   #FFFFFF;
+}
+[data-theme="light"] .grain { opacity: 0.015; }
+[data-theme="light"] .cursor-glow {
+  background: radial-gradient(circle, rgba(196,119,60,0.08) 0%, transparent 70%);
+}
+[data-theme="light"] .pg-header {
+  background: linear-gradient(to bottom, var(--ink) 60%, transparent);
+}
+[data-theme="light"] .pg-cell {
+  background: rgba(0,0,0,0.02);
+  border-color: rgba(0,0,0,0.07);
+}
+[data-theme="light"] .pg-cell:hover { border-color: rgba(196,119,60,0.2); }
+[data-theme="light"] .pg-ctrl input[type="range"] {
+  background: rgba(0,0,0,0.12);
+}
+[data-theme="light"] ::selection { background: var(--accent); color: #fff; }
+
+/* ── THEME TOGGLE ── */
+.theme-toggle {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer; transition: all 0.4s var(--ease);
+}
+.theme-toggle:hover { background: rgba(255,255,255,0.12); }
+.theme-toggle svg { width: 16px; height: 16px; fill: var(--cream); transition: fill 0.3s, transform 0.4s var(--ease); }
+.theme-toggle:hover svg { transform: rotate(30deg); }
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle .icon-moon { display: block; }
+[data-theme="light"] .theme-toggle {
+  background: rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.1);
+}
+[data-theme="light"] .theme-toggle:hover { background: rgba(0,0,0,0.1); }
+[data-theme="light"] .theme-toggle .icon-sun { display: block; }
+[data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 body {
