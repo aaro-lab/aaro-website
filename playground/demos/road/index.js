@@ -3,9 +3,8 @@
  * Interactive road generation with fillet, sidewalk, parking, direction arrows.
  */
 import { setupCanvas, registerDemo } from '../shared.js';
-import { dist, offsetPolyline } from './geometry.js';
+import { dist } from './geometry.js';
 import { generateRoads } from './roads.js';
-import { generateParking, resolveParkingCollisions } from './parking.js';
 
 /* ── Config constants ─────────────────────────────────────────── */
 const ROAD_W = 6, SIDEWALK_W = 1.5, TURNING_R = 5, CORNER_R = 3;
@@ -35,8 +34,7 @@ export function init(cell) {
   let panning = false, panLX = 0, panLY = 0;
   let parkingOn = false;
   let polylines = [];
-  let roadResult = { segments: [], nodes: [], outline: null, filletOutline: null, sidewalkOutline: null, arrows: [] };
-  let parkingSpots = [];
+  let roadResult = { segments: [], nodes: [], outline: null, filletOutline: null, sidewalkOutline: null, arrows: [], parkingSpots: [] };
   let drawing = false, drawPts = [];
   let dragGroup = [], hovPl = -1, hovVi = -1;
 
@@ -54,14 +52,12 @@ export function init(cell) {
   }
 
   function recompute() {
-    const showSidewalk = !parkingOn && SIDEWALK_W > 0;
     roadResult = generateRoads(polylines, {
       roadWidth: ROAD_W, chaikinIter: 2, turningRadius: TURNING_R,
-      cornerRadius: CORNER_R, sidewalkWidth: showSidewalk ? SIDEWALK_W : 0, PC,
+      cornerRadius: CORNER_R, sidewalkWidth: parkingOn ? 0 : SIDEWALK_W, PC,
+      edgeParking: parkingOn, parkingFillPct: FILL_PCT,
+      spotWidth: SPOT_W, spotDepth: SPOT_D, junctionSetback: JUNCTION_SB,
     });
-    parkingSpots = parkingOn
-      ? resolveParkingCollisions(generateParking(roadResult.segments, SPOT_W, SPOT_D, FILL_PCT, JUNCTION_SB), roadResult.filletOutline || roadResult.outline)
-      : [];
   }
 
   function resize() {
@@ -169,9 +165,9 @@ export function init(cell) {
   }
 
   function drawParkingSpots() {
-    if (!parkingOn || !parkingSpots.length) return;
+    if (!parkingOn || !roadResult.parkingSpots.length) return;
     ctx.save(); ctx.fillStyle = 'rgba(70,130,180,0.35)'; ctx.strokeStyle = 'rgba(70,130,180,0.6)'; ctx.lineWidth = 1;
-    for (const spot of parkingSpots) {
+    for (const spot of roadResult.parkingSpots) {
       ctx.beginPath(); drawPolyPath(spot.corners); ctx.closePath(); ctx.fill(); ctx.stroke();
     }
     ctx.restore();
@@ -234,7 +230,7 @@ export function init(cell) {
     const nSeg = roadResult.segments.length;
     const nJ = roadResult.nodes.filter(n => n.type === 'junction').length;
     const nE = roadResult.nodes.filter(n => n.type === 'entry').length;
-    metricsEl.textContent = `Seg: ${nSeg}  |  J: ${nJ}  E: ${nE}  |  Lines: ${polylines.length}  |  P: ${parkingOn ? parkingSpots.length : 'off'}`;
+    metricsEl.textContent = `Seg: ${nSeg}  |  J: ${nJ}  E: ${nE}  |  Lines: ${polylines.length}  |  P: ${parkingOn ? roadResult.parkingSpots.length : 'off'}`;
   }
 
   function draw() {
