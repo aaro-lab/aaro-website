@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,200;9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>(function(){var t=localStorage.getItem('aaro-theme');if(t)document.documentElement.setAttribute('data-theme',t);})()</script>
   <style>
     :root {
       --ink:     #0D0D0C;
@@ -26,6 +27,55 @@
       --mono: 'IBM Plex Mono', monospace;
       --ease: cubic-bezier(0.16, 1, 0.3, 1);
     }
+
+    /* ── LIGHT THEME ── */
+    [data-theme="light"] {
+      --ink:     #F8F6F1;
+      --ink-90:  #EFEDE8;
+      --ink-80:  #D8D3CB;
+      --ink-60:  #BFBDB5;
+      --ink-40:  #5A5A52;
+      --ink-20:  #2E2E2A;
+      --ink-10:  #1A1A18;
+      --cream:   #0D0D0C;
+      --white:   #FFFFFF;
+    }
+    [data-theme="light"] .grain { opacity: 0.015; }
+    [data-theme="light"] .pub-header {
+      background: rgba(248,246,241,0.85);
+      border-bottom-color: rgba(0,0,0,0.08);
+    }
+    [data-theme="light"] .pub-filter__btn {
+      border-color: rgba(0,0,0,0.12);
+    }
+    [data-theme="light"] .pub-filter__btn.active {
+      background: var(--cream); color: var(--ink); border-color: var(--cream);
+    }
+    [data-theme="light"] .pub-item { border-bottom-color: rgba(0,0,0,0.08); }
+    [data-theme="light"] .pub-item:first-child { border-top-color: var(--cream); }
+    [data-theme="light"] .pub-footer { border-top-color: rgba(0,0,0,0.08); }
+    [data-theme="light"] ::selection { background: var(--accent); color: #fff; }
+
+    /* ── THEME TOGGLE ── */
+    .theme-toggle {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer; transition: all 0.4s var(--ease);
+    }
+    .theme-toggle:hover { background: rgba(255,255,255,0.12); }
+    .theme-toggle svg { width: 16px; height: 16px; fill: var(--cream); transition: fill 0.3s, transform 0.4s var(--ease); }
+    .theme-toggle:hover svg { transform: rotate(30deg); }
+    .theme-toggle .icon-sun { display: none; }
+    .theme-toggle .icon-moon { display: block; }
+    [data-theme="light"] .theme-toggle {
+      background: rgba(0,0,0,0.05);
+      border-color: rgba(0,0,0,0.1);
+    }
+    [data-theme="light"] .theme-toggle:hover { background: rgba(0,0,0,0.1); }
+    [data-theme="light"] .theme-toggle .icon-sun { display: block; }
+    [data-theme="light"] .theme-toggle .icon-moon { display: none; }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -214,6 +264,10 @@
 
   <header class="pub-header">
     <a href="index.html" class="pub-header__logo">aaro</a>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24"><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></svg>
+    </button>
     <a href="index.html" class="pub-header__back">
       <svg viewBox="0 0 24 24"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
       Back to home
@@ -254,6 +308,15 @@
   </footer>
 
   <script>
+    // ── Theme toggle ──
+    document.getElementById('themeToggle')?.addEventListener('click', () => {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      if (next === 'dark') html.removeAttribute('data-theme');
+      else html.setAttribute('data-theme', next);
+      localStorage.setItem('aaro-theme', next);
+    });
+
     // ── Reveal ──
     const rvObs = new IntersectionObserver(es => es.forEach(e => {
       if (e.isIntersecting) e.target.classList.add('vis');
