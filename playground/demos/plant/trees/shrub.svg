@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.6">
+  <!-- Shrub (azalea, rhododendron) - compact rounded bush, high contrast -->
+  <!-- Outer bushy outline — thick stroke -->
+  <path d="M50,12 C62,12 72,18 76,26 C84,26 90,36 88,46 C92,54 88,66 80,70 C78,80 68,86 58,84 C52,90 44,90 38,84 C28,86 18,82 14,72 C6,68 6,56 12,48 C8,40 14,30 22,26 C28,18 38,12 50,12 Z" opacity="0.9" stroke-width="2.0"/>
+  <!-- Bushy interior texture (many circles) — bolder opacity -->
+  <g opacity="0.7" stroke-width="1.2">
+    <circle cx="34" cy="30" r="4"/>
+    <circle cx="50" cy="22" r="4.5"/>
+    <circle cx="66" cy="30" r="4"/>
+    <circle cx="26" cy="44" r="4"/>
+    <circle cx="42" cy="40" r="4.5"/>
+    <circle cx="58" cy="40" r="4.5"/>
+    <circle cx="74" cy="44" r="4"/>
+    <circle cx="34" cy="56" r="4"/>
+    <circle cx="50" cy="50" r="4.5"/>
+    <circle cx="66" cy="56" r="4"/>
+    <circle cx="42" cy="68" r="4"/>
+    <circle cx="58" cy="68" r="4"/>
+    <circle cx="30" cy="70" r="3.5"/>
+    <circle cx="70" cy="70" r="3.5"/>
+    <circle cx="50" cy="76" r="4"/>
+  </g>
+  <!-- Small flower dots — visible accent -->
+  <g fill="currentColor" stroke="none" opacity="0.75">
+    <circle cx="42" cy="34" r="1.5"/>
+    <circle cx="58" cy="34" r="1.5"/>
+    <circle cx="50" cy="44" r="1.5"/>
+    <circle cx="38" cy="54" r="1.5"/>
+    <circle cx="62" cy="54" r="1.5"/>
+    <circle cx="50" cy="64" r="1.5"/>
+  </g>
+</svg>

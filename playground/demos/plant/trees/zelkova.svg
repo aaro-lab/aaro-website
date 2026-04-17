@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.6">
+  <!-- Zelkova - broad organic deciduous canopy with natural irregular lobes -->
+  <path d="M50,8 C62,8 72,14 78,22 C86,24 92,32 92,42 C94,50 90,60 84,66 C84,76 76,84 66,86 C60,92 50,94 40,90 C30,92 20,86 16,78 C8,76 4,66 6,56 C4,48 8,36 16,30 C18,20 28,12 40,10 C42,8 46,8 50,8 Z" stroke-width="2.0"/>
+  <!-- Inner texture rings — bolder -->
+  <path d="M50,20 C60,22 68,28 72,36 C76,44 76,54 72,62 C66,70 58,74 50,74 C40,74 32,70 28,62 C22,54 24,44 28,36 C32,28 40,22 50,20 Z" opacity="0.55"/>
+  <path d="M50,32 C58,34 64,40 64,50 C64,58 58,64 50,64 C42,64 36,58 36,50 C36,40 42,34 50,32 Z" opacity="0.35"/>
+  <!-- Trunk marker -->
+  <circle cx="50" cy="50" r="3" fill="currentColor" stroke="none"/>
+  <!-- Radial twig lines — more visible -->
+  <line x1="50" y1="50" x2="50" y2="14" opacity="0.35" stroke-width="1.2"/>
+  <line x1="50" y1="50" x2="86" y2="50" opacity="0.35" stroke-width="1.2"/>
+  <line x1="50" y1="50" x2="50" y2="86" opacity="0.35" stroke-width="1.2"/>
+  <line x1="50" y1="50" x2="14" y2="50" opacity="0.35" stroke-width="1.2"/>
+  <line x1="50" y1="50" x2="76" y2="24" opacity="0.28" stroke-width="1.0"/>
+  <line x1="50" y1="50" x2="76" y2="76" opacity="0.28" stroke-width="1.0"/>
+  <line x1="50" y1="50" x2="24" y2="76" opacity="0.28" stroke-width="1.0"/>
+  <line x1="50" y1="50" x2="24" y2="24" opacity="0.28" stroke-width="1.0"/>
+</svg>

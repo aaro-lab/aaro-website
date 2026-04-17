@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.2">
+  <!-- Pine - evergreen conifer with bold radial starburst (needle rays) -->
+  <!-- Outer boundary circle — clearly visible -->
+  <circle cx="50" cy="50" r="44" stroke-dasharray="2 2" opacity="0.5" stroke-width="1.4"/>
+  <!-- Starburst needle rays - 8 primary, thick and bold -->
+  <g stroke-linecap="round" stroke-width="1.8">
+    <line x1="50" y1="50" x2="50" y2="8"/>
+    <line x1="50" y1="50" x2="50" y2="92"/>
+    <line x1="50" y1="50" x2="8" y2="50"/>
+    <line x1="50" y1="50" x2="92" y2="50"/>
+    <line x1="50" y1="50" x2="80" y2="20"/>
+    <line x1="50" y1="50" x2="80" y2="80"/>
+    <line x1="50" y1="50" x2="20" y2="80"/>
+    <line x1="50" y1="50" x2="20" y2="20"/>
+  </g>
+  <!-- Secondary rays — 8 more, medium weight -->
+  <g stroke-linecap="round" stroke-width="1.2" opacity="0.7">
+    <line x1="50" y1="50" x2="68" y2="12"/>
+    <line x1="50" y1="50" x2="88" y2="32"/>
+    <line x1="50" y1="50" x2="88" y2="68"/>
+    <line x1="50" y1="50" x2="68" y2="88"/>
+    <line x1="50" y1="50" x2="32" y2="88"/>
+    <line x1="50" y1="50" x2="12" y2="68"/>
+    <line x1="50" y1="50" x2="12" y2="32"/>
+    <line x1="50" y1="50" x2="32" y2="12"/>
+  </g>
+  <!-- Inner ring — clearly visible -->
+  <circle cx="50" cy="50" r="16" opacity="0.55" stroke-width="1.4"/>
+  <!-- Trunk marker (filled, larger) -->
+  <circle cx="50" cy="50" r="4" fill="currentColor" stroke="none"/>
+</svg>
