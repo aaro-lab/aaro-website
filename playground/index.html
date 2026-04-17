@@ -69,6 +69,12 @@
           label.appendChild(input);
           label.appendChild(document.createTextNode(ctrl.label || 'File'));
           container.appendChild(label);
+        } else if (ctrl.type === 'button') {
+          const btn = document.createElement('button');
+          btn.className = 'pg-action-btn';
+          btn.id = ctrl.inputId;
+          btn.textContent = ctrl.label || 'Run';
+          container.appendChild(btn);
         } else if (ctrl.type === 'range') {
           const span = document.createElement('span');
           span.className = 'pg-ctrl';

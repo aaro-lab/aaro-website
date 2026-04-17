@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.4">
+  <!-- Maple - palmate 5-lobed leaf pattern (Acer), bolder and more distinctive -->
+  <!-- 5 palmate lobes radiating from center — increased opacity and stroke -->
+  <g stroke-width="1.4">
+    <!-- Top lobe -->
+    <path d="M50,50 Q42,28 38,10 Q46,14 50,12 Q54,14 62,10 Q58,28 50,50 Z" opacity="0.85"/>
+    <!-- Upper right lobe -->
+    <path d="M50,50 Q70,34 88,30 Q86,38 88,44 Q80,50 50,50 Z" opacity="0.85"/>
+    <!-- Lower right lobe -->
+    <path d="M50,50 Q74,64 86,80 Q80,82 76,88 Q62,76 50,50 Z" opacity="0.85"/>
+    <!-- Lower left lobe -->
+    <path d="M50,50 Q38,76 24,88 Q20,82 14,80 Q26,64 50,50 Z" opacity="0.85"/>
+    <!-- Upper left lobe -->
+    <path d="M50,50 Q20,50 12,44 Q14,38 12,30 Q30,34 50,50 Z" opacity="0.85"/>
+  </g>
+  <!-- Veins / midribs — clearly visible -->
+  <g opacity="0.5" stroke-width="0.9">
+    <line x1="50" y1="50" x2="50" y2="14"/>
+    <line x1="50" y1="50" x2="82" y2="34"/>
+    <line x1="50" y1="50" x2="82" y2="82"/>
+    <line x1="50" y1="50" x2="18" y2="82"/>
+    <line x1="50" y1="50" x2="18" y2="34"/>
+  </g>
+  <!-- Trunk marker — larger -->
+  <circle cx="50" cy="50" r="3.5" fill="currentColor" stroke="none"/>
+</svg>

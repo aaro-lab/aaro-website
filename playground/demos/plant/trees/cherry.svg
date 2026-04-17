@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.4">
+  <!-- Cherry blossom - cloud-like canopy with flower cluster dots, bolder contrast -->
+  <!-- Cloud bumpy outline — thicker stroke for visibility -->
+  <path d="M30,20 C25,14 15,15 12,22 C5,24 4,34 10,38 C6,45 10,54 18,54 C18,64 28,68 34,62 C38,70 50,72 56,66 C62,72 74,68 76,60 C84,60 90,52 86,44 C92,40 92,28 84,24 C84,16 74,12 68,18 C62,10 50,10 44,16 C38,12 32,14 30,20 Z" opacity="0.85" stroke-width="1.8"/>
+  <!-- Flower cluster dots — more opaque, larger -->
+  <g fill="currentColor" stroke="none">
+    <circle cx="30" cy="30" r="2.8"/>
+    <circle cx="44" cy="24" r="2.4"/>
+    <circle cx="60" cy="26" r="2.8"/>
+    <circle cx="72" cy="36" r="2.4"/>
+    <circle cx="22" cy="44" r="2.4"/>
+    <circle cx="38" cy="42" r="3.0"/>
+    <circle cx="56" cy="44" r="2.6"/>
+    <circle cx="70" cy="50" r="2.6"/>
+    <circle cx="80" cy="42" r="2.2"/>
+    <circle cx="28" cy="58" r="2.4"/>
+    <circle cx="46" cy="58" r="2.6"/>
+    <circle cx="62" cy="60" r="2.8"/>
+    <circle cx="36" cy="68" r="2.2"/>
+    <circle cx="54" cy="68" r="2.4"/>
+  </g>
+  <!-- Small flower highlights (hollow circles) — more visible -->
+  <g opacity="0.65">
+    <circle cx="34" cy="36" r="1.6" stroke-width="1.0"/>
+    <circle cx="52" cy="32" r="1.4" stroke-width="1.0"/>
+    <circle cx="66" cy="44" r="1.6" stroke-width="1.0"/>
+    <circle cx="40" cy="52" r="1.4" stroke-width="1.0"/>
+    <circle cx="58" cy="52" r="1.6" stroke-width="1.0"/>
+  </g>
+  <!-- Trunk marker -->
+  <circle cx="50" cy="50" r="3" fill="currentColor" stroke="none"/>
+</svg>
