@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AARO Logo System</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0D0D0C;
+      --ink-90: #1A1A18;
+      --ink-80: #2E2E2A;
+      --cream: #EDE8E0;
+      --white: #F8F6F1;
+      --accent: #C4773C;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--ink);
+      color: var(--cream);
+      padding: 60px 40px;
+      min-height: 100vh;
+    }
+    h1 {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.03em;
+    }
+    .subtitle {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #5A5A52;
+      margin-bottom: 60px;
+    }
+    .section {
+      margin-bottom: 80px;
+    }
+    .section h2 {
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 24px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+    }
+    .card {
+      border: 1px solid var(--ink-80);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card-preview {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      min-height: 200px;
+    }
+    .card-preview.dark { background: var(--ink); }
+    .card-preview.light { background: var(--cream); }
+    .card-preview.checker {
+      background-image: linear-gradient(45deg, #1a1a18 25%, transparent 25%),
+        linear-gradient(-45deg, #1a1a18 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1a1a18 75%),
+        linear-gradient(-45deg, transparent 75%, #1a1a18 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      background-color: #2E2E2A;
+    }
+    .card-preview img {
+      max-width: 100%;
+      max-height: 160px;
+    }
+    .card-preview.full img {
+      max-height: 80px;
+    }
+    .card-info {
+      padding: 16px 20px;
+      border-top: 1px solid var(--ink-80);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-info .name {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .card-info .meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: #5A5A52;
+    }
+    .colors {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .color-chip {
+      width: 80px;
+      text-align: center;
+    }
+    .color-chip .swatch {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      border: 1px solid var(--ink-80);
+      margin-bottom: 8px;
+    }
+    .color-chip .label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: #8A8A82;
+    }
+    .color-chip .hex {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h1>AARO Logo System</h1>
+  <p class="subtitle">Architectural Algorithm Research Office &mdash; Brand Identity</p>
+
+  <!-- Icon Marks -->
+  <div class="section">
+    <h2>01 &mdash; Icon Mark</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="card-preview dark">
+          <img src="aaro-icon-dark.svg" alt="Icon Dark">
+        </div>
+        <div class="card-info">
+          <span class="name">Dark Background</span>
+          <span class="meta">512 &times; 512</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-preview light">
+          <img src="aaro-icon-light.svg" alt="Icon Light">
+        </div>
+        <div class="card-info">
+          <span class="name">Light Background</span>
+          <span class="meta">512 &times; 512</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-preview checker">
+          <img src="aaro-icon-transparent.svg" alt="Icon Transparent">
+        </div>
+        <div class="card-info">
+          <span class="name">Transparent</span>
+          <span class="meta">512 &times; 512</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wordmarks -->
+  <div class="section">
+    <h2>02 &mdash; Wordmark</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="card-preview dark full">
+          <img src="aaro-wordmark-dark.svg" alt="Wordmark Dark">
+        </div>
+        <div class="card-info">
+          <span class="name">Dark Background</span>
+          <span class="meta">480 &times; 240</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-preview light full">
+          <img src="aaro-wordmark-light.svg" alt="Wordmark Light">
+        </div>
+        <div class="card-info">
+          <span class="name">Light Background</span>
+          <span class="meta">480 &times; 240</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full Logo -->
+  <div class="section">
+    <h2>03 &mdash; Full Logo</h2>
+    <div class="grid">
+      <div class="card" style="grid-column: span 2">
+        <div class="card-preview dark" style="min-height: 240px;">
+          <img src="aaro-full-dark.svg" alt="Full Logo" style="max-height: 140px; max-width: 90%;">
+        </div>
+        <div class="card-info">
+          <span class="name">Icon + Wordmark + Tagline</span>
+          <span class="meta">800 &times; 200</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Favicon -->
+  <div class="section">
+    <h2>04 &mdash; Favicon</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="card-preview dark" style="min-height: 160px;">
+          <img src="aaro-favicon.svg" alt="Favicon" style="max-height: 64px;">
+        </div>
+        <div class="card-info">
+          <span class="name">Favicon</span>
+          <span class="meta">64 &times; 64</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-preview dark" style="min-height: 160px;">
+          <img src="aaro-favicon.svg" alt="Favicon 32" style="max-height: 32px;">
+        </div>
+        <div class="card-info">
+          <span class="name">Favicon @32px</span>
+          <span class="meta">Actual size</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-preview dark" style="min-height: 160px;">
+          <img src="aaro-favicon.svg" alt="Favicon 16" style="max-height: 16px;">
+        </div>
+        <div class="card-info">
+          <span class="name">Favicon @16px</span>
+          <span class="meta">Actual size</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Brand Colors -->
+  <div class="section">
+    <h2>05 &mdash; Brand Colors</h2>
+    <div class="colors">
+      <div class="color-chip">
+        <div class="swatch" style="background: #0D0D0C;"></div>
+        <div class="label">Ink</div>
+        <div class="hex">#0D0D0C</div>
+      </div>
+      <div class="color-chip">
+        <div class="swatch" style="background: #1A1A18;"></div>
+        <div class="label">Ink 90</div>
+        <div class="hex">#1A1A18</div>
+      </div>
+      <div class="color-chip">
+        <div class="swatch" style="background: #2E2E2A;"></div>
+        <div class="label">Ink 80</div>
+        <div class="hex">#2E2E2A</div>
+      </div>
+      <div class="color-chip">
+        <div class="swatch" style="background: #EDE8E0;"></div>
+        <div class="label">Cream</div>
+        <div class="hex">#EDE8E0</div>
+      </div>
+      <div class="color-chip">
+        <div class="swatch" style="background: #F8F6F1;"></div>
+        <div class="label">White</div>
+        <div class="hex">#F8F6F1</div>
+      </div>
+      <div class="color-chip">
+        <div class="swatch" style="background: #C4773C;"></div>
+        <div class="label">Accent</div>
+        <div class="hex">#C4773C</div>
+      </div>
+      <div class="color-chip">
+        <div class="swatch" style="background: #E8944A;"></div>
+        <div class="label">Accent Hover</div>
+        <div class="hex">#E8944A</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

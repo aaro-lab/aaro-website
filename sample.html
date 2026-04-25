@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>DD3 Lab — Interactive Design Playbook</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.1/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.1/examples/jsm/"}}</script>
+<style>
+:root{
+--text-primary:#333;--text-secondary:#555;--text-muted:#888;--text-section:#666;
+--bg-canvas:#FAFAFA;--bg-sidebar:#F5F5F5;--bg-surface:#FFF;
+--border-default:#DDD;--border-section:#E0E0E0;--border-hover:#999;
+--btn-primary-bg:#333;--btn-primary-text:#FFF;--btn-default-bg:#FFF;--btn-default-border:#BBB;
+--badge-bg:#E8E8E8;--info-bg:#F0F0F0;
+--shell:960px;
+--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg-canvas);color:var(--text-primary);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+canvas{display:block;max-width:100%}
+button,input{font:inherit;cursor:pointer}
+.shell{width:min(calc(100% - 48px),var(--shell));margin:0 auto}
+h1{font-size:15px;font-weight:700;letter-spacing:-0.3px;margin:0}
+h2{font-size:14px;font-weight:600;margin:0 0 8px}
+h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-section);margin:0}
+p{color:var(--text-secondary);line-height:1.7;margin:0}
+strong{color:var(--text-primary);font-weight:600}
+.eyebrow{font-size:11px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-muted);margin:0 0 8px}
+.hero{background:var(--btn-primary-bg);padding:36px 0 28px}
+.hero h1{color:#FFF;font-size:15px;margin-bottom:10px}
+.hero p{color:#AAA;font-size:12px}
+.hero .eyebrow{color:#999}
+.hero__inner{display:grid;grid-template-columns:1.6fr 0.8fr;gap:24px;align-items:start}
+.hero__copy{display:flex;flex-direction:column;gap:12px}
+.hero__actions{display:flex;flex-wrap:wrap;gap:6px}
+.hero__chips{display:flex;flex-wrap:wrap;gap:4px}
+.hero__metrics{display:grid;gap:1px;background:#444;border:1px solid #444}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 8px;font-size:10px;font-weight:500;letter-spacing:0.5px;text-transform:uppercase;background:#444;color:#999;border:1px solid #555}
+.metric-card{background:#444;padding:14px 16px}
+.metric-card__label{display:block;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:#999;margin-bottom:4px}
+.metric-card strong{display:block;font-size:18px;font-weight:600;color:#FFF}
+.btn{padding:8px 12px;border:1px solid var(--btn-default-border);border-radius:6px;font-size:13px;font-weight:500;background:var(--btn-default-bg);color:var(--text-primary);transition:background .15s,border-color .15s}
+.btn:hover{background:#e8e8e8;border-color:var(--border-hover)}
+.btn-primary{background:var(--btn-primary-bg);color:var(--btn-primary-text);border-color:#222}
+.btn-primary:hover{background:#222}
+.btn-hero{color:#FFF;border-color:#666;background:transparent}
+.btn-hero:hover{background:#444}
+.btn-hero-solid{color:#333;background:#FFF;border-color:#FFF}
+.btn-hero-solid:hover{background:#EEE}
+.content-flow{display:flex;flex-direction:column}
+.section{padding:28px 0;border-bottom:1px solid var(--border-section);background:var(--bg-canvas)}
+.section:last-child{border-bottom:none}
+.section-heading{margin-bottom:20px}
+.section-heading h2{margin-bottom:6px;font-size:14px;font-weight:600;color:var(--text-primary);text-transform:none;letter-spacing:0}
+.section-heading--compact{margin-top:20px;margin-bottom:12px}
+.panel-grid{display:grid;gap:1px;background:var(--border-default)}
+.panel-grid--2{grid-template-columns:1fr 1fr}
+.panel-grid--packing{grid-template-columns:1.6fr 0.85fr}
+.panel-card{background:var(--bg-surface);padding:16px;display:flex;flex-direction:column;gap:12px;border:1px solid var(--border-default);border-radius:4px}
+.panel-card>h3{padding-bottom:8px;border-bottom:1px solid var(--border-section);margin-bottom:0}
+.slider-row{margin-bottom:8px}
+.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.slider-label{font-size:12px;color:var(--text-secondary)}
+.slider-value{font-size:11px;font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums}
+input[type='range']{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;cursor:pointer}
+input[type='range']::-webkit-slider-track{height:2px;background:#ddd;border-radius:1px}
+input[type='range']::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--btn-primary-bg);border:none;margin-top:-5px;transition:transform .1s}
+input[type='range']::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}
+.stat-item{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px}
+.stat-label{color:var(--text-muted)}
+.stat-val{font-weight:600;color:var(--text-primary)}
+.status-box{padding:6px 8px;background:var(--info-bg);border-radius:4px;font-size:12px;color:#444;text-align:center;margin-bottom:8px}
+.canvas-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--border-section)}
+.action-row{display:flex;flex-wrap:wrap;gap:6px}
+.packing-canvas{width:100%;height:auto;display:block;background:var(--bg-surface);border:1px solid var(--border-default);border-radius:4px;margin-top:4px}
+.note-box{position:relative;background:var(--info-bg);padding:10px 10px 10px 14px;border-radius:4px;border-left:3px solid #666}
+.note-box strong{display:block;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-section);margin-bottom:4px}
+.note-box p{font-size:11px;color:var(--text-muted);line-height:1.6}
+.step-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-default);margin-bottom:12px;border-radius:4px;overflow:hidden}
+.step-nav__button{background:var(--bg-surface);border:none;border-bottom:2px solid transparent;padding:10px 12px;text-align:left;font-family:var(--font);transition:all .1s;display:flex;flex-direction:column;gap:2px}
+.step-nav__button span{font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-muted)}
+.step-nav__button strong{font-size:11px;font-weight:600;color:var(--text-secondary)}
+.step-nav__button:hover{background:var(--bg-canvas)}
+.step-nav__button.is-active{border-bottom-color:var(--btn-primary-bg);background:var(--bg-canvas)}
+.step-nav__button.is-active strong{color:var(--text-primary)}
+.story-steps{display:grid;gap:1px;background:var(--border-default);margin-bottom:12px;border-radius:4px;overflow:hidden}
+.story-step{background:var(--bg-surface);padding:14px 16px;border-left:3px solid transparent;transition:all .1s}
+.story-step.is-active{border-left-color:var(--btn-primary-bg);background:var(--bg-canvas)}
+.story-step__index{display:inline-block;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px}
+.story-step h3{font-size:12px;margin-bottom:4px;text-transform:none;letter-spacing:0;color:var(--text-primary)}
+.story-step p{font-size:11px}
+.metric-list{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border-default);border-radius:4px;overflow:hidden}
+.metric-list>div{background:var(--bg-surface);padding:8px 10px}
+.metric-list dt{font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px}
+.metric-list dd{font-size:14px;font-weight:600;color:var(--text-primary);margin:0}
+.formula-box{background:var(--bg-surface);color:var(--text-secondary);font-family:monospace;font-size:11px;line-height:1.8;padding:12px 14px;border:1px solid var(--border-default);border-radius:4px;white-space:pre;overflow-x:auto}
+.chart{min-height:240px}
+.chart-card{gap:8px}
+.results-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border-default);border-radius:4px;overflow:hidden}
+.result-card{background:var(--bg-surface);padding:12px;cursor:pointer;border-top:3px solid transparent;transition:all .1s}
+.result-card:hover{background:var(--bg-canvas)}
+.result-card.is-selected{border-top-color:var(--btn-primary-bg);background:var(--bg-canvas)}
+.result-card__header{display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-bottom:6px}
+.result-card__badge{font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-muted)}
+.result-card__score{font-size:15px;font-weight:600;color:var(--text-primary)}
+.result-card__preview{display:block;width:100%;margin-bottom:4px}
+.result-card dl{display:grid;grid-template-columns:1fr 1fr;gap:4px 6px}
+.result-card dt{font-size:9px;color:var(--text-muted);letter-spacing:0.3px}
+.result-card dd{font-size:11px;font-weight:600;color:var(--text-primary);margin:0}
+.prompt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border-default);margin-bottom:12px;border-radius:4px;overflow:hidden}
+.prompt-card{background:var(--bg-surface);padding:16px;display:flex;flex-direction:column;gap:8px}
+.ordered-list{padding-left:16px;color:var(--text-secondary);font-size:11px;line-height:2;display:flex;flex-direction:column;gap:0}
+.ordered-list li strong{font-weight:600;color:var(--text-primary)}
+.viewer-section{background:var(--bg-surface);border:1px solid var(--border-default);border-radius:4px;margin-top:12px;overflow:hidden}
+.viewer-toolbar{background:var(--bg-canvas);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border-default)}
+.viewer-toolbar__title{font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:1px}
+.viewer-toolbar__caption{font-size:10px;color:var(--text-muted)}
+.viewer-canvas{width:100%;height:420px;background:#F0F0F0;overflow:hidden}
+.viewer-readout{background:var(--border-default);display:grid;grid-template-columns:repeat(3,1fr);gap:1px}
+.viewer-readout>div{background:var(--bg-surface);padding:8px 10px;display:flex;flex-direction:column;gap:1px}
+.viewer-readout span{font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-muted)}
+.viewer-readout strong{font-size:13px;font-weight:600;color:var(--text-primary)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--btn-primary-bg);color:#FFF;padding:8px 18px;font-size:11px;border-radius:6px;z-index:9999;animation:toastFade 1.4s ease-out forwards}
+@keyframes toastFade{0%{opacity:0;transform:translateX(-50%) translateY(8px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}75%{opacity:1}100%{opacity:0}}
+.footer{background:var(--btn-primary-bg);color:#AAA;padding:24px 0;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.footer strong{display:block;font-size:11px;color:#FFF;margin-bottom:2px}
+.footer p{font-size:10px;color:#888}
+.flowchart{background:var(--bg-sidebar);border:1px solid var(--border-default);padding:14px;margin-top:12px;border-radius:4px;overflow-x:auto}
+.flowchart svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.flowchart__caption{font-size:10px;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-muted);text-align:center;margin-top:6px}
+.form-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.form-label{font-size:12px;color:var(--text-secondary);min-width:80px;flex-shrink:0}
+.form-input{flex:1;padding:4px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px;background:var(--bg-surface);color:var(--text-primary);outline:none;max-width:80px;text-align:center}
+.form-input:focus{border-color:var(--border-hover)}
+@media(max-width:900px){.hero__inner{grid-template-columns:1fr}.panel-grid--2,.panel-grid--packing{grid-template-columns:1fr}.step-nav{grid-template-columns:repeat(2,1fr)}.results-grid{grid-template-columns:repeat(2,1fr)}.prompt-grid{grid-template-columns:1fr}.viewer-canvas{height:320px}}
+@media(max-width:600px){.shell{width:calc(100% - 24px)}.results-grid{grid-template-columns:1fr}.viewer-canvas{height:260px}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="shell hero__inner">
+<div class="hero__copy">
+<p class="eyebrow">DD3 LAB / AARO DESIGN SYSTEM / GITHUB PAGES</p>
+<h1>설계 과정을 읽고, 조정하고, 최적화하는 단일 웹페이지</h1>
+<p>2D circle packing, 3D massing, 다목적 유전 알고리즘 최적화, 프롬프트 스튜디오를 한 페이지에서 경험합니다.</p>
+<div class="hero__actions">
+<a href="#packing" class="btn btn-hero-solid">01 2D 실험</a>
+<a href="#massing" class="btn btn-hero">02 3D 매싱</a>
+<a href="#optimization" class="btn btn-hero">03 최적화</a>
+<a href="#prompt-studio" class="btn btn-hero">04 프롬프트</a>
+</div>
+<div class="hero__chips"><span class="tag">2D Canvas</span><span class="tag">Three.js</span><span class="tag">Plotly</span><span class="tag">GA Multi-Obj</span></div>
+</div>
+<div class="hero__metrics">
+<div class="metric-card"><span class="metric-card__label">Current Score</span><strong id="heroScore">0.00</strong></div>
+<div class="metric-card"><span class="metric-card__label">Proxy GFA</span><strong id="heroArea">0 &#13217;</strong></div>
+<div class="metric-card"><span class="metric-card__label">Selected</span><strong id="heroVariant">Manual</strong></div>
+<div class="metric-card"><span class="metric-card__label">Packing Density</span><strong id="heroDensity">0.00</strong></div>
+</div>
+</div></header>
+
+<main class="shell content-flow">
+
+<section class="section" id="frame"><div class="section-heading"><p class="eyebrow">00 Course Frame</p><h2>이 페이지가 보여주는 것</h2><p>DD3 Lab의 핵심은 <strong>입력 · 규칙 · 평가 · 선택</strong>의 구조를 설명하는 데 있습니다.</p></div>
+<div class="flowchart"><svg viewBox="0 0 820 90" xmlns="http://www.w3.org/2000/svg"><defs><marker id="a0" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#888"/></marker></defs><rect x="10" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="75" y="50" text-anchor="middle" fill="#333" font-size="11" font-family="system-ui">01 Analysis</text><line x1="140" y1="45" x2="170" y2="45" stroke="#888" marker-end="url(#a0)"/><rect x="170" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="235" y="50" text-anchor="middle" fill="#333" font-size="11" font-family="system-ui">02 Proxy</text><line x1="300" y1="45" x2="330" y2="45" stroke="#888" marker-end="url(#a0)"/><rect x="330" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="395" y="50" text-anchor="middle" fill="#333" font-size="11" font-family="system-ui">03 Optimize</text><line x1="460" y1="45" x2="490" y2="45" stroke="#888" marker-end="url(#a0)"/><rect x="490" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="555" y="50" text-anchor="middle" fill="#333" font-size="11" font-family="system-ui">04 Select</text><line x1="620" y1="45" x2="650" y2="45" stroke="#888" marker-end="url(#a0)"/><rect x="650" y="25" width="150" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="725" y="50" text-anchor="middle" fill="#333" font-size="11" font-family="system-ui">05 Document</text></svg><p class="flowchart__caption">Flowchart 00 — Master Pipeline</p></div>
+<div class="panel-grid panel-grid--2" style="margin-top:12px">
+<div class="panel-card"><h3>4개 엔진</h3><ol class="ordered-list"><li><strong>2D Circle Packing</strong> — 관계와 밀도, 충돌 분석</li><li><strong>3D Massing</strong> — 파라미터를 형태로 변환</li><li><strong>GA Optimization</strong> — 다목적 탐색 엔진</li><li><strong>Prompt Studio</strong> — AI 지시 문장 구조</li></ol></div>
+<div class="panel-card"><h3>사용 순서</h3><ol class="ordered-list"><li>2D에서 bubble 관계와 밀도 확인</li><li>3D에서 층수·층고 파라미터 조정</li><li>GA로 목표 면적 + 최대 층수 최적화</li><li>Top 10 카드 클릭 → 3D 반영</li><li>Prompt 복사 → AI에 기능 추가 요청</li></ol></div>
+</div></section>
+
+<section class="section" id="packing"><div class="section-heading"><p class="eyebrow">01 2D Circle Packing</p><h2>분석 모델: 2D 물리 시뮬레이션으로 관계를 읽기</h2><p>원들이 겹치지 않도록 분리력을 적용하고, 중심 중력과 감쇠로 밀도와 수렴을 관찰합니다.</p></div>
+<div class="flowchart"><svg viewBox="0 0 820 90" xmlns="http://www.w3.org/2000/svg"><defs><marker id="a1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#888"/></marker></defs><rect x="10" y="25" width="120" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="70" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Generate</text><line x1="130" y1="45" x2="160" y2="45" stroke="#888" marker-end="url(#a1)"/><rect x="160" y="25" width="120" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="220" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Collision</text><line x1="280" y1="45" x2="310" y2="45" stroke="#888" marker-end="url(#a1)"/><rect x="310" y="25" width="120" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="370" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Gravity</text><line x1="430" y1="45" x2="460" y2="45" stroke="#888" marker-end="url(#a1)"/><polygon points="530,25 600,45 530,65 460,45" fill="none" stroke="#888" stroke-width="1.2"/><text x="530" y="50" text-anchor="middle" fill="#888" font-size="10" font-family="system-ui">Converge?</text><line x1="600" y1="45" x2="640" y2="45" stroke="#888" marker-end="url(#a1)"/><rect x="640" y="25" width="100" height="40" rx="16" fill="#F5F5F5" stroke="#999"/><text x="690" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Done</text><path d="M530,65 L530,82 L220,82 L220,65" fill="none" stroke="#888" stroke-dasharray="4 3" marker-end="url(#a1)"/><text x="375" y="80" text-anchor="middle" fill="#888" font-size="9" font-family="system-ui">No</text></svg><p class="flowchart__caption">Flowchart 01 — Circle Packing Loop</p></div>
+<div class="panel-grid panel-grid--packing" style="margin-top:12px">
+<div class="panel-card">
+<div class="canvas-toolbar"><div class="action-row"><button class="btn btn-primary" id="packingRunButton">Run / Pause</button><button class="btn" id="packingScatterButton">Scatter</button><button class="btn" id="packingResetButton">Reset</button><button class="btn" id="syncPackingTo3dButton">Sync → 3D</button></div><div style="font-size:11px;color:var(--text-muted)">Status: <strong id="packingStatus" style="color:var(--text-primary)">Paused</strong></div></div>
+<canvas id="packingCanvas" class="packing-canvas" width="880" height="520"></canvas>
+</div>
+<div class="panel-card">
+<h3>Parameters</h3>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Count</span><span class="slider-value" id="packingCountValue">34</span></div><input type="range" min="10" max="72" step="1" value="34" id="packingCountRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">rMin</span><span class="slider-value" id="packingRMinValue">9</span></div><input type="range" min="3" max="28" step="1" value="9" id="packingRMinRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">rMax</span><span class="slider-value" id="packingRMaxValue">28</span></div><input type="range" min="10" max="64" step="1" value="28" id="packingRMaxRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Separation</span><span class="slider-value" id="packingSeparationValue">0.15</span></div><input type="range" min="0.01" max="0.40" step="0.01" value="0.15" id="packingSeparationRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Gravity</span><span class="slider-value" id="packingGravityValue">0.008</span></div><input type="range" min="0" max="0.05" step="0.001" value="0.008" id="packingGravityRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Damping</span><span class="slider-value" id="packingDampingValue">0.92</span></div><input type="range" min="0.50" max="0.99" step="0.01" value="0.92" id="packingDampingRange"/></div>
+<h3 style="margin-top:12px">Statistics</h3>
+<div class="stat-grid">
+<div class="stat-item"><span class="stat-label">Circles</span><span class="stat-val" id="packingStatCount">0</span></div>
+<div class="stat-item"><span class="stat-label">Overlap</span><span class="stat-val" id="packingStatOverlap">0</span></div>
+<div class="stat-item"><span class="stat-label">Density</span><span class="stat-val" id="packingStatDensity">0.00</span></div>
+<div class="stat-item"><span class="stat-label">Iterations</span><span class="stat-val" id="packingStatIterations">0</span></div>
+<div class="stat-item"><span class="stat-label">Max Vel</span><span class="stat-val" id="packingStatVelocity">0.00</span></div>
+<div class="stat-item"><span class="stat-label">Center Bias</span><span class="stat-val" id="packingStatCenterBias">0.00</span></div>
+</div>
+<div class="note-box" style="margin-top:12px"><strong>실무 해석</strong><p>프로그램 bubble, 동선 클러스터, 점유 밀도 분석의 프록시입니다.</p></div>
+</div>
+</div></section>
+
+<section class="section" id="massing"><div class="section-heading"><p class="eyebrow">02 3D Massing</p><h2>변형 모델: 층수와 층고로 건물 형태 조작하기</h2><p>Step 버튼으로 단계를 전환하고, 슬라이더로 Width, Depth, 층수, 층고를 실시간 조정합니다.</p></div>
+<div class="flowchart"><svg viewBox="0 0 820 90" xmlns="http://www.w3.org/2000/svg"><defs><marker id="a2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#888"/></marker></defs><rect x="10" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="75" y="44" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Params</text><text x="75" y="56" text-anchor="middle" fill="#888" font-size="8" font-family="system-ui">W,D,FL,FH</text><line x1="140" y1="45" x2="170" y2="45" stroke="#888" marker-end="url(#a2)"/><rect x="170" y="25" width="140" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="240" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Ring Massing</text><line x1="310" y1="45" x2="340" y2="45" stroke="#888" marker-end="url(#a2)"/><rect x="340" y="25" width="140" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="410" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Metrics</text><line x1="480" y1="45" x2="510" y2="45" stroke="#888" marker-end="url(#a2)"/><rect x="510" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="575" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">3D Render</text><line x1="640" y1="45" x2="670" y2="45" stroke="#888" marker-end="url(#a2)"/><rect x="670" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="735" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">UI Update</text></svg><p class="flowchart__caption">Flowchart 02 — 3D Massing Pipeline</p></div>
+<div class="step-nav" id="stepNav"></div>
+<div class="story-steps">
+<article class="story-step" data-step-index="0" id="step-0"><span class="story-step__index">Step 1</span><h3>Base Mass</h3><p>폭, 깊이, 층수로 1차 박스 비례를 설정합니다.</p></article>
+<article class="story-step" data-step-index="1" id="step-1"><span class="story-step__index">Step 2</span><h3>Courtyard + Daylight</h3><p>중정으로 내부 채광과 환기를 확보합니다.</p></article>
+<article class="story-step" data-step-index="2" id="step-2"><span class="story-step__index">Step 3</span><h3>Twist + Openness</h3><p>비틀기와 개구율로 형태적 성격을 더합니다.</p></article>
+<article class="story-step" data-step-index="3" id="step-3"><span class="story-step__index">Step 4</span><h3>Selected Candidate</h3><p>최적화 후보를 선택해 적용합니다.</p></article>
+</div>
+<div class="viewer-section">
+<div class="viewer-toolbar"><div><p class="viewer-toolbar__title">3D Viewer</p><p class="viewer-toolbar__caption">Drag: orbit / Wheel: zoom / Right: pan</p></div><div class="action-row"><button class="btn" id="resetCameraButton">Reset Camera</button><button class="btn" id="fitModelButton">Fit Model</button></div></div>
+<div id="viewerCanvas" class="viewer-canvas"></div>
+<div class="viewer-readout">
+<div><span>Width</span><strong id="readoutWidth">48</strong></div>
+<div><span>Depth</span><strong id="readoutDepth">36</strong></div>
+<div><span>Floors</span><strong id="readoutFloors">10</strong></div>
+<div><span>Floor H</span><strong id="readoutFloorHeight">3.5</strong></div>
+<div><span>Twist</span><strong id="readoutTwist">8°</strong></div>
+<div><span>Open</span><strong id="readoutOpenness">0.42</strong></div>
+</div></div>
+<div class="panel-grid panel-grid--2" style="margin-top:12px">
+<div class="panel-card"><h3>Parameters</h3>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Width (X)</span><span class="slider-value" id="widthValue">48</span></div><input type="range" min="24" max="96" step="1" value="48" id="widthRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Depth (Y)</span><span class="slider-value" id="depthValue">36</span></div><input type="range" min="24" max="84" step="1" value="36" id="depthRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Floors (층수)</span><span class="slider-value" id="floorsValue">10</span></div><input type="range" min="1" max="30" step="1" value="10" id="floorsRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Floor H (층고)</span><span class="slider-value" id="floorHeightValue">3.5</span></div><input type="range" min="2.8" max="5.0" step="0.1" value="3.5" id="floorHeightRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Courtyard</span><span class="slider-value" id="courtyardValue">0.28</span></div><input type="range" min="0.10" max="0.55" step="0.01" value="0.28" id="courtyardRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Twist</span><span class="slider-value" id="twistValue">8°</span></div><input type="range" min="-30" max="30" step="1" value="8" id="twistRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Openness</span><span class="slider-value" id="opennessValue">0.42</span></div><input type="range" min="0.10" max="0.90" step="0.01" value="0.42" id="opennessRange"/></div>
+</div>
+<div class="panel-card"><h3>Metrics</h3>
+<dl class="metric-list">
+<div><dt>Floors</dt><dd id="metricFloors">0</dd></div>
+<div><dt>Area Match</dt><dd id="metricAreaMatch">0.00</dd></div>
+<div><dt>Compactness</dt><dd id="metricCompactness">0.00</dd></div>
+<div><dt>Daylight</dt><dd id="metricDaylight">0.00</dd></div>
+<div><dt>Openness</dt><dd id="metricOpenness">0.00</dd></div>
+<div><dt>Penalty</dt><dd id="metricPenalty">0.00</dd></div>
+</dl>
+<div class="note-box" style="margin-top:12px"><strong>설명</strong><p>높이 = 층수 × 층고. 브라우저 프로토타입은 핵심 파라미터만 재현합니다.</p></div>
+</div></div></section>
+
+<section class="section" id="optimization"><div class="section-heading"><p class="eyebrow">03 Multi-Objective Optimization</p><h2>다목적 유전 알고리즘: 면적 + 층수 제약 최적화</h2><p>목표 연면적과 최대 층수를 지정해 최적 박스를 탐색합니다.</p></div>
+<div class="flowchart"><svg viewBox="0 0 820 100" xmlns="http://www.w3.org/2000/svg"><defs><marker id="a3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#888"/></marker></defs><rect x="10" y="28" width="100" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="60" y="52" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Init Pop</text><line x1="110" y1="48" x2="135" y2="48" stroke="#888" marker-end="url(#a3)"/><rect x="135" y="28" width="100" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="185" y="52" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Evaluate</text><line x1="235" y1="48" x2="260" y2="48" stroke="#888" marker-end="url(#a3)"/><rect x="260" y="28" width="100" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="310" y="52" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Elite</text><line x1="360" y1="48" x2="385" y2="48" stroke="#888" marker-end="url(#a3)"/><rect x="385" y="28" width="120" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="445" y="52" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Cross+Mutate</text><line x1="505" y1="48" x2="530" y2="48" stroke="#888" marker-end="url(#a3)"/><polygon points="590,28 650,48 590,68 530,48" fill="none" stroke="#888" stroke-width="1.2"/><text x="590" y="52" text-anchor="middle" fill="#888" font-size="10" font-family="system-ui">Done?</text><line x1="650" y1="48" x2="690" y2="48" stroke="#888" marker-end="url(#a3)"/><rect x="690" y="28" width="110" height="40" rx="16" fill="#F5F5F5" stroke="#999"/><text x="745" y="52" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">Top 10</text><path d="M590,68 L590,88 L185,88 L185,68" fill="none" stroke="#888" stroke-dasharray="4 3" marker-end="url(#a3)"/><text x="390" y="86" text-anchor="middle" fill="#888" font-size="9" font-family="system-ui">No</text></svg><p class="flowchart__caption">Flowchart 03 — GA Multi-Objective Loop</p></div>
+<div class="panel-grid panel-grid--2" style="margin-top:12px">
+<div class="panel-card"><h3>GA Parameters</h3>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Population</span><span class="slider-value" id="gaPopulationValue">40</span></div><input type="range" min="10" max="120" step="1" value="40" id="gaPopulationRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Generations</span><span class="slider-value" id="gaGenerationsValue">60</span></div><input type="range" min="10" max="140" step="1" value="60" id="gaGenerationsRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Mutation</span><span class="slider-value" id="gaMutationValue">0.15</span></div><input type="range" min="0.01" max="0.40" step="0.01" value="0.15" id="gaMutationRange"/></div>
+<div class="slider-row"><div class="slider-header"><span class="slider-label">Elite</span><span class="slider-value" id="gaEliteValue">3</span></div><input type="range" min="1" max="10" step="1" value="3" id="gaEliteRange"/></div>
+<h3 style="margin-top:12px">Objectives</h3>
+<div class="form-row"><span class="form-label">Target GFA (㎡)</span><input type="number" class="form-input" id="targetGFAInput" value="4500" min="1000" max="20000" step="100"/></div>
+<div class="form-row"><span class="form-label">Max Floors</span><input type="number" class="form-input" id="maxFloorsInput" value="20" min="1" max="30" step="1"/></div>
+<div class="action-row" style="margin-top:8px"><button class="btn btn-primary" id="runOptimizationButton">Run GA</button><button class="btn" id="useCurrentAsSeedButton">Use Current as Seed</button><button class="btn" id="stopOptimizationButton">Stop</button></div>
+<div class="stat-grid" style="margin-top:8px">
+<div class="stat-item"><span class="stat-label">Progress</span><span class="stat-val" id="optimizationProgress">0%</span></div>
+<div class="stat-item"><span class="stat-label">Best</span><span class="stat-val" id="optimizationBest">0.00</span></div>
+<div class="stat-item"><span class="stat-label">Avg</span><span class="stat-val" id="optimizationAverage">0.00</span></div>
+<div class="stat-item"><span class="stat-label">Status</span><span class="stat-val" id="optimizationStatus">Idle</span></div>
+</div></div>
+<div class="panel-card"><h3>Fitness Function</h3>
+<pre class="formula-box">Score =
+  areaMatch × 42
++ compactness × 26
++ daylight × 24
++ openness × 10
+− penalty
+
+Height = floors × floorHeight
+Penalty includes:
+  twist > 0, courtyard > 0.42,
+  floors > maxFloors
+
+Params: W, D, floors, floorH,
+  courtyard, twist, openness</pre>
+<p style="font-size:11px;color:var(--text-muted);margin-top:8px">교육용 다목적 최적화 모델입니다.</p>
+</div></div>
+<div class="panel-grid panel-grid--2" style="margin-top:12px">
+<div class="panel-card chart-card"><h3>Convergence</h3><div id="optimizationChart" class="chart"></div></div>
+<div class="panel-card chart-card"><h3>Scatter</h3><div id="optimizationScatter" class="chart"></div></div>
+</div>
+<div class="section-heading section-heading--compact"><p class="eyebrow">Top 10 Results</p><h3 style="text-transform:none;letter-spacing:0;color:var(--text-primary)">카드를 클릭하면 3D 뷰어에 즉시 반영됩니다</h3></div>
+<div class="results-grid" id="topResults"></div>
+</section>
+
+<section class="section" id="prompt-studio"><div class="section-heading"><p class="eyebrow">04 Prompt Studio</p><h2>좋은 바이브코딩은 좋은 문장 구조에서 시작합니다</h2><p>"문제 정의 → 조건 → 기술 → 출력 → 수정"의 구조를 따릅니다.</p></div>
+<div class="flowchart"><svg viewBox="0 0 820 90" xmlns="http://www.w3.org/2000/svg"><defs><marker id="a4" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#888"/></marker></defs><rect x="10" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="75" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">1 Define</text><line x1="140" y1="45" x2="170" y2="45" stroke="#888" marker-end="url(#a4)"/><rect x="170" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="235" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">2 Conditions</text><line x1="300" y1="45" x2="330" y2="45" stroke="#888" marker-end="url(#a4)"/><rect x="330" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="395" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">3 Tech</text><line x1="460" y1="45" x2="490" y2="45" stroke="#888" marker-end="url(#a4)"/><rect x="490" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="555" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">4 Output</text><line x1="620" y1="45" x2="650" y2="45" stroke="#888" marker-end="url(#a4)"/><rect x="650" y="25" width="130" height="40" rx="4" fill="#FFF" stroke="#DDD"/><text x="715" y="50" text-anchor="middle" fill="#333" font-size="10" font-family="system-ui">5 Revise</text></svg><p class="flowchart__caption">Flowchart 04 — Prompt Structure</p></div>
+<div class="prompt-grid" id="promptGrid"></div>
+</section>
+
+</main>
+<footer class="shell footer"><div><strong>DD3 Lab Playbook</strong><p>AARO Design System 기반 정적 단일 페이지</p></div><a href="#frame" class="btn btn-hero" style="flex-shrink:0">맨 위로</a></footer>
+
+<script id="workerCode" type="text/js-worker">
+const PL={width:[24,96],depth:[24,84],floors:[1,30],floorHeight:[2.8,5.0],courtyard:[0.1,0.55],twist:[-30,30],openness:[0.1,0.9]};
+function cl(v,a,b){return Math.min(Math.max(v,a),b)}
+function rn(a,b){return a+Math.random()*(b-a)}
+function ri(){const r={};for(const k of Object.keys(PL)){r[k]=k==='floors'?Math.round(rn(...PL[k])):rn(...PL[k])}return r}
+function cm(p,tg){const h=p.floors*p.floorHeight,fl=p.floors,cs=Math.min(p.width,p.depth)*p.courtyard,ca=cs*cs,fp=p.width*p.depth,ra=Math.max(fp-ca,1),gfa=ra*fl,t=tg&&tg.targetGFA||4500,mf=tg&&tg.maxFloors||20,am=1-Math.min(Math.abs(gfa-t)/t,1),env=((p.width+p.depth)*2*h)*(1+p.openness*0.08+Math.abs(p.twist)*0.008),cp=cl(gfa/Math.max(env*0.62,1),0,1),dl=cl(p.courtyard*1.5+p.openness*0.65-Math.abs(p.twist)/110,0,1),tp=Math.pow(Math.abs(p.twist)/30,1.3)*0.22,cpen=p.courtyard>0.42?(p.courtyard-0.42)*1.3:0,fp2=fl>mf?(fl-mf)*0.05:0,pen=tp+cpen+fp2,sc=cl(am*42+cp*26+dl*24+p.openness*10-pen*20,0,100);return{score:sc,grossFloorArea:gfa,floors:fl,areaMatch:am,compactness:cp,daylight:dl,openness:p.openness,penalty:pen,courtyardSize:cs}}
+function ev(p,tg){const m=cm(p,tg);return{params:p,metrics:m,score:m.score,id:'ga-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)}}
+function ts(pop,k=3){let b=null;for(let i=0;i<k;i++){const idx=Math.floor(Math.random()*pop.length);if(!b||pop[idx].score>b.score)b=pop[idx]}return b}
+function cx(a,b){const c={};for(const k of Object.keys(PL)){c[k]=Math.random()<0.5?a.params[k]:b.params[k];if(k==='floors')c[k]=Math.round(c[k])}return c}
+function mu(p,r){const res={...p};for(const k of Object.keys(PL)){if(Math.random()<r){const[lo,hi]=PL[k];res[k]=cl(res[k]+rn(-(hi-lo)*0.25,(hi-lo)*0.25),lo,hi);if(k==='floors')res[k]=Math.round(res[k])}}return res}
+self.addEventListener('message',e=>{const{type,config,seed,targets}=e.data;if(type!=='run')return;const{population:ps,generations:gens,mutationRate:mr,eliteCount:ec}=config;let pop=[];for(let i=0;i<ps;i++){const p=seed&&i===0?{...seed}:ri();pop.push(ev(p,targets))}pop.sort((a,b)=>b.score-a.score);const hist=[];let atb=[];for(let g=0;g<gens;g++){const nx=pop.slice(0,ec);while(nx.length<ps){const pa=ts(pop),pb=ts(pop);let ch=cx(pa,pb);ch=mu(ch,mr);nx.push(ev(ch,targets))}pop=nx.sort((a,b)=>b.score-a.score);for(const ind of pop)atb.push(ind);atb.sort((a,b)=>b.score-a.score);atb=atb.slice(0,10);const avg=pop.reduce((s,x)=>s+x.score,0)/pop.length;hist.push({generation:g+1,best:pop[0].score,avg});if((g+1)%5===0||g===gens-1){self.postMessage({type:g===gens-1?'done':'progress',progress:Math.round(((g+1)/gens)*100),best:atb[0].score,avg,history:[...hist],topResults:atb.map(r=>({id:r.id,params:{...r.params},metrics:{...r.metrics},score:r.score}))})}}});
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+
+const IP={width:48,depth:36,floors:10,floorHeight:3.5,courtyard:0.28,twist:8,openness:0.42};
+const SP=[
+{label:'Step 1',title:'Base Mass',params:{width:46,depth:34,floors:8,floorHeight:3.5,courtyard:0.12,twist:0,openness:0.24}},
+{label:'Step 2',title:'Courtyard+Daylight',params:{width:48,depth:36,floors:10,floorHeight:3.5,courtyard:0.28,twist:4,openness:0.36}},
+{label:'Step 3',title:'Twist+Openness',params:{width:54,depth:32,floors:12,floorHeight:4.0,courtyard:0.24,twist:14,openness:0.58}},
+{label:'Step 4',title:'Selected',params:{width:58,depth:38,floors:11,floorHeight:3.8,courtyard:0.22,twist:6,openness:0.62}}
+];
+const PL={width:[24,96],depth:[24,84],floors:[1,30],floorHeight:[2.8,5.0],courtyard:[0.1,0.55],twist:[-30,30],openness:[0.1,0.9]};
+const PROMPTS=[
+{title:'2D 분석 모델',caption:'Circle Packing',text:'건축학과 수업용 2D circle packing 실험을 만들어줘.\n하나의 index.html, 순수 HTML/CSS/JS.\n\n기능:\n- 캔버스에서 원들이 겹치지 않도록 분리력\n- Run / Scatter / Reset 버튼\n- 슬라이더: rMin, rMax, separation, gravity, damping\n- 통계: count, overlap, density\n\n디자인:\n- 흰 배경, 기술도면 스타일\n- 시스템 폰트, AARO 그레이스케일'},
+{title:'3D 변형 모델',caption:'Three.js Massing',text:'Three.js로 건물 massing 뷰어를 만들어줘.\nGitHub Pages에서 실행.\n\n기능:\n- OrbitControls 회전/줌/팬\n- 층수, 층고 슬라이더로 높이 조정\n- ring-type massing + 중정\n- 메트릭: GFA, floors, compactness\n\n기술:\n- three.module.js CDN, importmap\n- 연한 회색 배경'},
+{title:'다목적 최적화',caption:'GA / Multi-Obj',text:'다목적 유전 알고리즘 최적화를 추가해줘.\n\n목표:\n- Target GFA 입력 (기본 4500㎡)\n- Max Floors 제약 입력 (기본 20층)\n- areaMatch, compactness, daylight 고려\n\nGA:\n- Population 40, Generations 60\n- Web Worker\n\n시각화:\n- Plotly 수렴 그래프\n- Top 10 카드 → 3D 반영'},
+{title:'디버깅 요청',caption:'에러 수정',text:'아래 문제를 수정해줘.\n\n문제:\n- [에러 메시지]\n- 기대: [원하는 상태]\n- 현재: [실제 상태]\n\n조건:\n- 기존 기능 유지\n- 변경 부분만 설명\n- 수정 후 전체 코드 출력'}
+];
+
+const state={params:{...IP},activeStepIndex:1,selectedResultId:null,selectedVariant:'Manual',topResults:[],chartHistory:[],optimizationWorker:null,optimizationStatus:'Idle'};
+const pk={params:{count:34,rMin:9,rMax:28,separation:0.15,gravity:0.008,damping:0.92},defaultParams:{count:34,rMin:9,rMax:28,separation:0.15,gravity:0.008,damping:0.92},circles:[],running:false,iterations:0,stats:{overlapPairs:0,density:0,maxVelocity:0,centerBias:0},width:880,height:520,ratio:1};
+
+const $=id=>document.getElementById(id);
+const els={
+viewerCanvas:$('viewerCanvas'),stepNav:$('stepNav'),
+storySteps:Array.from(document.querySelectorAll('.story-step')),
+heroScore:$('heroScore'),heroArea:$('heroArea'),heroVariant:$('heroVariant'),heroDensity:$('heroDensity'),
+topResults:$('topResults'),
+optimizationChart:$('optimizationChart'),optimizationScatter:$('optimizationScatter'),
+optimizationProgress:$('optimizationProgress'),optimizationBest:$('optimizationBest'),
+optimizationAverage:$('optimizationAverage'),optimizationStatus:$('optimizationStatus'),
+runOptimizationButton:$('runOptimizationButton'),useCurrentAsSeedButton:$('useCurrentAsSeedButton'),
+stopOptimizationButton:$('stopOptimizationButton'),
+resetCameraButton:$('resetCameraButton'),fitModelButton:$('fitModelButton'),
+promptGrid:$('promptGrid'),
+targetGFAInput:$('targetGFAInput'),maxFloorsInput:$('maxFloorsInput'),
+metrics:{floors:$('metricFloors'),areaMatch:$('metricAreaMatch'),compactness:$('metricCompactness'),daylight:$('metricDaylight'),openness:$('metricOpenness'),penalty:$('metricPenalty')},
+sliders:{width:$('widthRange'),depth:$('depthRange'),floors:$('floorsRange'),floorHeight:$('floorHeightRange'),courtyard:$('courtyardRange'),twist:$('twistRange'),openness:$('opennessRange')},
+values:{width:$('widthValue'),depth:$('depthValue'),floors:$('floorsValue'),floorHeight:$('floorHeightValue'),courtyard:$('courtyardValue'),twist:$('twistValue'),openness:$('opennessValue')},
+readouts:{width:$('readoutWidth'),depth:$('readoutDepth'),floors:$('readoutFloors'),floorHeight:$('readoutFloorHeight'),twist:$('readoutTwist'),openness:$('readoutOpenness')},
+gaSliders:{population:$('gaPopulationRange'),generations:$('gaGenerationsRange'),mutationRate:$('gaMutationRange'),eliteCount:$('gaEliteRange')},
+gaValues:{population:$('gaPopulationValue'),generations:$('gaGenerationsValue'),mutationRate:$('gaMutationValue'),eliteCount:$('gaEliteValue')},
+packingCanvas:$('packingCanvas'),packingRunButton:$('packingRunButton'),packingScatterButton:$('packingScatterButton'),packingResetButton:$('packingResetButton'),syncPackingTo3dButton:$('syncPackingTo3dButton'),
+packingStatus:$('packingStatus'),packingStatCount:$('packingStatCount'),packingStatOverlap:$('packingStatOverlap'),packingStatDensity:$('packingStatDensity'),packingStatIterations:$('packingStatIterations'),packingStatVelocity:$('packingStatVelocity'),packingStatCenterBias:$('packingStatCenterBias'),
+packingSliders:{count:$('packingCountRange'),rMin:$('packingRMinRange'),rMax:$('packingRMaxRange'),separation:$('packingSeparationRange'),gravity:$('packingGravityRange'),damping:$('packingDampingRange')},
+packingValues:{count:$('packingCountValue'),rMin:$('packingRMinValue'),rMax:$('packingRMaxValue'),separation:$('packingSeparationValue'),gravity:$('packingGravityValue'),damping:$('packingDampingValue')}
+};
+const gaConfig={population:40,generations:60,mutationRate:0.15,eliteCount:3};
+
+function cl(v,a,b){return Math.min(Math.max(v,a),b)}
+function rb(a,b){return a+Math.random()*(b-a)}
+function fv(k,v){if(k==='courtyard'||k==='openness')return Number(v).toFixed(2);if(k==='floorHeight')return Number(v).toFixed(1);if(k==='twist')return Math.round(v)+'°';return''+Math.round(v)}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1400)}
+function getTargets(){return{targetGFA:Number(els.targetGFAInput.value)||4500,maxFloors:Number(els.maxFloorsInput.value)||20}}
+
+function computeMetrics(p,tg){const targets=tg||getTargets();const h=p.floors*p.floorHeight,fl=p.floors,cs=Math.min(p.width,p.depth)*p.courtyard,ca=cs**2,fp=p.width*p.depth,ra=Math.max(fp-ca,1),gfa=ra*fl,t=targets.targetGFA,mf=targets.maxFloors,am=1-Math.min(Math.abs(gfa-t)/t,1),env=((p.width+p.depth)*2*h)*(1+p.openness*0.08+Math.abs(p.twist)*0.008),cp=cl(gfa/Math.max(env*0.62,1),0,1),dl=cl(p.courtyard*1.5+p.openness*0.65-Math.abs(p.twist)/110,0,1),tp=Math.pow(Math.abs(p.twist)/30,1.3)*0.22,cpen=p.courtyard>0.42?(p.courtyard-0.42)*1.3:0,fp2=fl>mf?(fl-mf)*0.05:0,pen=tp+cpen+fp2,sc=cl(am*42+cp*26+dl*24+p.openness*10-pen*20,0,100);return{score:sc,grossFloorArea:gfa,floors:fl,areaMatch:am,compactness:cp,daylight:dl,openness:p.openness,penalty:pen,courtyardSize:cs}}
+
+function updateUI(){
+Object.entries(state.params).forEach(([k,v])=>{if(els.sliders[k])els.sliders[k].value=''+v;if(els.values[k])els.values[k].textContent=fv(k,v);if(els.readouts[k])els.readouts[k].textContent=fv(k,v)});
+const m=computeMetrics(state.params);
+els.heroScore.textContent=m.score.toFixed(2);els.heroArea.textContent=Math.round(m.grossFloorArea).toLocaleString('ko-KR')+'㎡';
+els.heroVariant.textContent=state.selectedVariant;els.heroDensity.textContent=pk.stats.density.toFixed(2);
+els.metrics.floors.textContent=''+m.floors;els.metrics.areaMatch.textContent=m.areaMatch.toFixed(2);
+els.metrics.compactness.textContent=m.compactness.toFixed(2);els.metrics.daylight.textContent=m.daylight.toFixed(2);
+els.metrics.openness.textContent=m.openness.toFixed(2);els.metrics.penalty.textContent=m.penalty.toFixed(2);
+return m}
+
+/* 3D */
+let renderer,hasWebGL=true,scene,camera,controls,buildingGroup;
+try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.setClearColor(0xF0F0F0,1);els.viewerCanvas.appendChild(renderer.domElement)}catch(e){hasWebGL=false;els.viewerCanvas.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#888;font-size:12px">WebGL not supported</div>'}
+if(hasWebGL){
+scene=new THREE.Scene();scene.background=new THREE.Color(0xF0F0F0);
+camera=new THREE.PerspectiveCamera(42,1,0.1,1000);camera.position.set(84,64,92);
+controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(0,18,0);
+scene.add(new THREE.HemisphereLight(0xffffff,0xe0e0e0,1.4));
+const dl=new THREE.DirectionalLight(0xffffff,0.8);dl.position.set(40,74,28);dl.castShadow=true;scene.add(dl);
+const gnd=new THREE.Mesh(new THREE.CircleGeometry(120,64),new THREE.MeshStandardMaterial({color:0xE8E8E8,metalness:0,roughness:1}));gnd.rotation.x=-Math.PI/2;gnd.position.y=-0.02;gnd.receiveShadow=true;scene.add(gnd);
+scene.add(new THREE.GridHelper(180,24,0xD0D0D0,0xE0E0E0));
+buildingGroup=new THREE.Group();scene.add(buildingGroup)}
+
+function clearG(g){while(g.children.length){const c=g.children[0];g.remove(c);c.geometry?.dispose?.();const m=c.material;if(Array.isArray(m))m.forEach(x=>x.dispose?.());else m?.dispose?.()}}
+function addW(w,d,h,x,z,mat){if(!hasWebGL)return;const geo=new THREE.BoxGeometry(w,h,d),mesh=new THREE.Mesh(geo,mat);mesh.castShadow=true;mesh.receiveShadow=true;mesh.position.set(x,h/2,z);buildingGroup.add(mesh);const edges=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x999999,transparent:true,opacity:0.15}));edges.position.copy(mesh.position);buildingGroup.add(edges)}
+function addFL(w,d,cs,h,fl){if(!hasWebGL)return;const o=[new THREE.Vector3(-w/2,0,-d/2),new THREE.Vector3(w/2,0,-d/2),new THREE.Vector3(w/2,0,d/2),new THREE.Vector3(-w/2,0,d/2),new THREE.Vector3(-w/2,0,-d/2)];const i=[new THREE.Vector3(-cs/2,0,-cs/2),new THREE.Vector3(cs/2,0,-cs/2),new THREE.Vector3(cs/2,0,cs/2),new THREE.Vector3(-cs/2,0,cs/2),new THREE.Vector3(-cs/2,0,-cs/2)];const og=new THREE.BufferGeometry().setFromPoints(o),ig=new THREE.BufferGeometry().setFromPoints(i);for(let f=1;f<=fl;f++){const y=(h/fl)*f;const ol=new THREE.Line(og.clone(),new THREE.LineBasicMaterial({color:0x000000,transparent:true,opacity:0.08}));ol.position.y=y;buildingGroup.add(ol);const il=new THREE.Line(ig.clone(),new THREE.LineBasicMaterial({color:0x666666,transparent:true,opacity:0.15}));il.position.y=y;buildingGroup.add(il)}}
+function buildM(p){if(!hasWebGL)return;clearG(buildingGroup);const w=p.width,d=p.depth,h=p.floors*p.floorHeight,fl=p.floors,cs=Math.min(w,d)*p.courtyard,wD=Math.max((d-cs)/2,2.4),wW=Math.max((w-cs)/2,2.4);const tint=new THREE.Color().setHSL(0,0,0.72-p.openness*0.08);const mat=new THREE.MeshPhysicalMaterial({color:tint,metalness:0.02,roughness:0.5,transparent:true,transmission:cl(p.openness*0.4,0.05,0.35),opacity:0.88,thickness:1.2});addW(w,wD,h,0,-cs/2-wD/2,mat);addW(w,wD,h,0,cs/2+wD/2,mat.clone());addW(wW,cs,h,-cs/2-wW/2,0,mat.clone());addW(wW,cs,h,cs/2+wW/2,0,mat.clone());addFL(w,d,cs,h,fl);const cp=new THREE.Mesh(new THREE.PlaneGeometry(cs,cs),new THREE.MeshBasicMaterial({color:0xCCCCCC,transparent:true,opacity:0.12}));cp.rotation.x=-Math.PI/2;cp.position.y=0.05;buildingGroup.add(cp);buildingGroup.rotation.y=THREE.MathUtils.degToRad(p.twist)}
+function fitCam(obj,off=1.38){if(!hasWebGL)return;const box=new THREE.Box3().setFromObject(obj),sz=box.getSize(new THREE.Vector3()),cn=box.getCenter(new THREE.Vector3()),mx=Math.max(sz.x,sz.y,sz.z),dist=off*mx/(2*Math.tan((Math.PI*camera.fov)/360));camera.near=Math.max(dist/100,0.1);camera.far=dist*100;camera.updateProjectionMatrix();camera.position.set(cn.x+dist*0.9,cn.y+dist*0.72,cn.z+dist*0.9);controls.target.copy(cn);controls.update()}
+function resR(){if(!hasWebGL)return;const w=Math.max(els.viewerCanvas.clientWidth,320),h=Math.max(els.viewerCanvas.clientHeight,320);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+
+/* 2D PACKING — AARO Technical Drawing Style */
+const pCtx=els.packingCanvas.getContext('2d');
+const GRID_MINOR=40,GRID_MAJOR=200;
+function resPC(){const r=els.packingCanvas.getBoundingClientRect();const w=Math.max(r.width||880,320),h=Math.max(r.height||520,320);const ratio=Math.min(window.devicePixelRatio||1,2);els.packingCanvas.width=w*ratio;els.packingCanvas.height=h*ratio;pCtx.setTransform(ratio,0,0,ratio,0,0);pk.width=w;pk.height=h;pk.ratio=ratio}
+function createC(r){return{x:rb(r,pk.width-r),y:rb(r,pk.height-r),vx:rb(-0.5,0.5),vy:rb(-0.5,0.5),r:r,hue:Math.round(rb(0,360)),overlapping:false}}
+function scatter(){pk.circles=[];pk.iterations=0;for(let i=0;i<pk.params.count;i++){const r=rb(pk.params.rMin,pk.params.rMax);pk.circles.push(createC(r))}updatePkStats()}
+function updatePkCtrl(){Object.entries(pk.params).forEach(([k,v])=>{if(els.packingSliders[k])els.packingSliders[k].value=''+v;if(els.packingValues[k])els.packingValues[k].textContent=k==='separation'||k==='gravity'||k==='damping'?Number(v).toFixed(3).replace(/0+$/,'').replace(/\.$/,''):''+Math.round(v)});els.packingStatus.textContent=pk.running?'Running':'Paused'}
+
+function stepPk(){const{gravity:g,damping:dm,separation:sep}=pk.params;const cs=pk.circles;const cx=pk.width/2,cy=pk.height/2;let op=0;
+for(let sub=0;sub<2;sub++){for(let i=0;i<cs.length;i++){const a=cs[i];a.overlapping=false;for(let j=i+1;j<cs.length;j++){const b=cs[j];let dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy);if(dist===0){dx=(Math.random()-0.5)*0.01;dy=(Math.random()-0.5)*0.01;dist=Math.hypot(dx,dy)}const md=a.r+b.r;if(dist<md){op++;a.overlapping=true;b.overlapping=true;const push=((md-dist)/dist)*sep;a.vx-=dx*push;a.vy-=dy*push;b.vx+=dx*push;b.vy+=dy*push}}}
+for(const c of cs){c.vx+=(cx-c.x)*g;c.vy+=(cy-c.y)*g;c.vx*=dm;c.vy*=dm;c.x+=c.vx;c.y+=c.vy;if(c.x<c.r){c.x=c.r;c.vx*=-0.5}if(c.x>pk.width-c.r){c.x=pk.width-c.r;c.vx*=-0.5}if(c.y<c.r){c.y=c.r;c.vy*=-0.5}if(c.y>pk.height-c.r){c.y=pk.height-c.r;c.vy*=-0.5}}}pk.iterations++;pk.stats.overlapPairs=op}
+
+function updatePkStats(){const area=Math.max(pk.width*pk.height,1);let ca=0,maxV=0,ds=0;const cx=pk.width/2,cy=pk.height/2;for(const c of pk.circles){ca+=Math.PI*c.r*c.r;maxV=Math.max(maxV,Math.hypot(c.vx,c.vy));ds+=Math.hypot(c.x-cx,c.y-cy)}pk.stats.density=ca/area;pk.stats.maxVelocity=maxV;pk.stats.centerBias=pk.circles.length?ds/pk.circles.length/Math.max(pk.width,pk.height):0;els.packingStatCount.textContent=''+pk.circles.length;els.packingStatOverlap.textContent=''+pk.stats.overlapPairs;els.packingStatDensity.textContent=pk.stats.density.toFixed(2);els.packingStatIterations.textContent=''+pk.iterations;els.packingStatVelocity.textContent=pk.stats.maxVelocity.toFixed(2);els.packingStatCenterBias.textContent=pk.stats.centerBias.toFixed(2);els.heroDensity.textContent=pk.stats.density.toFixed(2);if(pk.running&&pk.stats.overlapPairs===0&&pk.stats.maxVelocity<0.03){pk.running=false;updatePkCtrl()}}
+
+function renderPk(){const ctx=pCtx;ctx.clearRect(0,0,pk.width,pk.height);
+/* Grid minor */
+ctx.strokeStyle='rgba(0,0,0,0.04)';ctx.lineWidth=0.5;
+for(let x=GRID_MINOR;x<pk.width;x+=GRID_MINOR){if(x%GRID_MAJOR===0)continue;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,pk.height);ctx.stroke()}
+for(let y=GRID_MINOR;y<pk.height;y+=GRID_MINOR){if(y%GRID_MAJOR===0)continue;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(pk.width,y);ctx.stroke()}
+/* Grid major */
+ctx.strokeStyle='rgba(0,0,0,0.08)';ctx.lineWidth=0.5;
+for(let x=GRID_MAJOR;x<pk.width;x+=GRID_MAJOR){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,pk.height);ctx.stroke()}
+for(let y=GRID_MAJOR;y<pk.height;y+=GRID_MAJOR){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(pk.width,y);ctx.stroke()}
+/* Ticks + labels */
+ctx.fillStyle='rgba(0,0,0,0.25)';ctx.font='10px system-ui';ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=0.5;
+ctx.textAlign='center';ctx.textBaseline='top';
+for(let x=GRID_MAJOR;x<pk.width;x+=GRID_MAJOR){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,4);ctx.stroke();ctx.fillText(''+x,x,6)}
+ctx.textAlign='left';ctx.textBaseline='middle';
+for(let y=GRID_MAJOR;y<pk.height;y+=GRID_MAJOR){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(4,y);ctx.stroke();ctx.fillText(''+y,6,y)}
+/* Circles */
+for(const c of pk.circles){
+ctx.beginPath();ctx.arc(c.x,c.y,c.r,0,Math.PI*2);
+const fa=c.overlapping?0.18:0.12;
+ctx.fillStyle='hsla('+c.hue+',30%,60%,'+fa+')';ctx.fill();
+ctx.lineWidth=0.8;ctx.strokeStyle=c.overlapping?'rgba(160,50,50,0.6)':'rgba(80,80,80,0.3)';ctx.stroke();
+/* Center crosshair */
+const mk=Math.min(4,c.r*0.3);ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(c.x-mk,c.y);ctx.lineTo(c.x+mk,c.y);ctx.moveTo(c.x,c.y-mk);ctx.lineTo(c.x,c.y+mk);ctx.stroke();
+/* Radius label */
+if(c.r>=15){const ang=-Math.PI/4,ex=c.x+Math.cos(ang)*c.r,ey=c.y+Math.sin(ang)*c.r;ctx.save();ctx.strokeStyle='rgba(0,0,0,0.15)';ctx.lineWidth=0.5;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(c.x,c.y);ctx.lineTo(ex,ey);ctx.stroke();ctx.setLineDash([]);ctx.restore();ctx.font='9px system-ui';ctx.fillStyle='rgba(0,0,0,0.45)';ctx.textAlign='left';ctx.textBaseline='bottom';ctx.fillText('r='+Math.round(c.r),c.x+Math.cos(ang)*(c.r*0.5)+3,c.y+Math.sin(ang)*(c.r*0.5)-3)}}
+}
+
+function resetPk(){pk.params={...pk.defaultParams};pk.running=false;pk.stats={overlapPairs:0,density:0,maxVelocity:0,centerBias:0};updatePkCtrl();scatter()}
+function syncPk3D(){const d=pk.stats.density;const np={...state.params,width:cl(24+pk.params.count*1.05,...PL.width),depth:cl(24+pk.params.count*0.72,...PL.depth),courtyard:cl(0.1+(1-d)*0.22,...PL.courtyard),openness:cl(0.12+d*1.25,...PL.openness)};state.selectedVariant='2D Synced';state.selectedResultId=null;applyP(np,{fitCamera:true,updateStepState:true});renderTR();toast('2D → 3D 반영 완료');document.getElementById('massing')?.scrollIntoView({behavior:'smooth',block:'start'})}
+function setupPkEv(){updatePkCtrl();Object.entries(els.packingSliders).forEach(([k,sl])=>{sl.addEventListener('input',()=>{let v=Number(sl.value);if(k==='rMin'){v=Math.min(v,pk.params.rMax-1);pk.params.rMin=v}else if(k==='rMax'){v=Math.max(v,pk.params.rMin+1);pk.params.rMax=v}else{pk.params[k]=v}updatePkCtrl();scatter()})});els.packingRunButton.addEventListener('click',()=>{pk.running=!pk.running;updatePkCtrl()});els.packingScatterButton.addEventListener('click',()=>{scatter();toast('Scatter 완료')});els.packingResetButton.addEventListener('click',()=>{resetPk();toast('Reset 완료')});els.syncPackingTo3dButton.addEventListener('click',syncPk3D)}
+
+/* Charts */
+const CL={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{family:'system-ui',color:'#888'},legend:{orientation:'h',x:0,y:1.14}};
+function renderCC(h=[]){window.Plotly.react(els.optimizationChart,[{x:h.map(i=>i.generation),y:h.map(i=>+i.best.toFixed(3)),type:'scatter',mode:'lines+markers',name:'Best',marker:{color:'#333'}},{x:h.map(i=>i.generation),y:h.map(i=>+i.avg.toFixed(3)),type:'scatter',mode:'lines',name:'Avg',line:{dash:'dot',color:'#AAA'}}],{...CL,margin:{l:40,r:10,t:10,b:34},xaxis:{title:'Gen',color:'#888',gridcolor:'rgba(0,0,0,0.06)'},yaxis:{title:'Fitness',color:'#888',range:[0,100],gridcolor:'rgba(0,0,0,0.06)'}},{displayModeBar:false,responsive:true})}
+function renderSC(r=[]){window.Plotly.react(els.optimizationScatter,[{x:r.map(i=>Math.round(i.metrics.grossFloorArea)),y:r.map(i=>+i.metrics.daylight.toFixed(3)),text:r.map((i,n)=>'#'+(n+1)+' '+i.score.toFixed(1)),type:'scatter',mode:'markers',marker:{size:r.map(i=>10+i.metrics.areaMatch*14),opacity:0.7,color:'#555'}}],{...CL,margin:{l:40,r:10,t:10,b:34},xaxis:{title:'GFA ㎡',color:'#888',gridcolor:'rgba(0,0,0,0.06)'},yaxis:{title:'Daylight',color:'#888',range:[0,1],gridcolor:'rgba(0,0,0,0.06)'}},{displayModeBar:false,responsive:true})}
+
+/* Results & Steps */
+function planSVG(p){const vw=140,vh=100,pad=12,sc=Math.min((vw-pad*2)/p.width,(vh-pad*2)/p.depth),ow=p.width*sc,oh=p.depth*sc,ct=Math.min(p.width,p.depth)*p.courtyard*sc,ox=(vw-ow)/2,oy=(vh-oh)/2,ix=(vw-ct)/2,iy=(vh-ct)/2;return'<svg class="result-card__preview" viewBox="0 0 '+vw+' '+vh+'"><rect x="'+ox+'" y="'+oy+'" width="'+ow+'" height="'+oh+'" fill="rgba(0,0,0,0.06)" stroke="rgba(0,0,0,0.15)" stroke-width="1"/><rect x="'+ix+'" y="'+iy+'" width="'+ct+'" height="'+ct+'" fill="#F5F5F5" stroke="rgba(0,0,0,0.12)" stroke-width="0.8"/></svg>'}
+function renderSN(){els.stepNav.innerHTML=SP.map((s,i)=>'<button class="step-nav__button '+(i===state.activeStepIndex?'is-active':'')+'" data-step-button="'+i+'"><span>'+s.label+'</span><strong>'+s.title+'</strong></button>').join('');els.stepNav.querySelectorAll('[data-step-button]').forEach(b=>{b.addEventListener('click',()=>activateStep(Number(b.getAttribute('data-step-button')),{scrollIntoView:true,fitCamera:true}))})}
+function renderTR(){if(!state.topResults.length){els.topResults.innerHTML='<article class="result-card"><div class="result-card__header"><span class="result-card__badge">Waiting</span><strong class="result-card__score">Run GA</strong></div><p style="font-size:11px;color:var(--text-muted)">최적화를 실행하면 Top 10이 여기에 표시됩니다.</p></article>';renderSC([]);return}els.topResults.innerHTML=state.topResults.map((r,i)=>{const sel=r.id===state.selectedResultId?'is-selected':'';return'<article class="result-card '+sel+'" data-result-id="'+r.id+'"><div class="result-card__header"><span class="result-card__badge">#'+(i+1)+'</span><strong class="result-card__score">'+r.score.toFixed(2)+'</strong></div>'+planSVG(r.params)+'<dl><div><dt>W/D</dt><dd>'+Math.round(r.params.width)+'/'+Math.round(r.params.depth)+'</dd></div><div><dt>FL</dt><dd>'+Math.round(r.params.floors)+'F</dd></div><div><dt>Court</dt><dd>'+r.params.courtyard.toFixed(2)+'</dd></div><div><dt>GFA</dt><dd>'+Math.round(r.metrics.grossFloorArea).toLocaleString('ko-KR')+'</dd></div><div><dt>Day</dt><dd>'+r.metrics.daylight.toFixed(2)+'</dd></div><div><dt>Comp</dt><dd>'+r.metrics.compactness.toFixed(2)+'</dd></div></dl></article>'}).join('');els.topResults.querySelectorAll('[data-result-id]').forEach(card=>{card.addEventListener('click',()=>{const id=card.getAttribute('data-result-id'),res=state.topResults.find(r=>r.id===id);if(!res)return;state.selectedResultId=id;state.selectedVariant='Top '+(state.topResults.findIndex(r=>r.id===id)+1);applyP(res.params,{fitCamera:true,updateStepState:false});renderTR();document.getElementById('massing')?.scrollIntoView({behavior:'smooth',block:'start'})})});renderSC(state.topResults)}
+
+function applyP(np,opts={}){state.params={width:cl(Number(np.width),...PL.width),depth:cl(Number(np.depth),...PL.depth),floors:cl(Math.round(Number(np.floors)),...PL.floors),floorHeight:cl(Number(np.floorHeight),...PL.floorHeight),courtyard:cl(Number(np.courtyard),...PL.courtyard),twist:cl(Number(np.twist),...PL.twist),openness:cl(Number(np.openness),...PL.openness)};buildM(state.params);updateUI();if(opts.fitCamera&&hasWebGL)fitCam(buildingGroup,1.35);if(opts.updateStepState!==false)state.selectedResultId=null}
+function activateStep(i,opts={}){state.activeStepIndex=i;state.selectedResultId=null;state.selectedVariant=SP[i].label;renderSN();els.storySteps.forEach((s,n)=>s.classList.toggle('is-active',n===i));applyP(SP[i].params,{fitCamera:opts.fitCamera??false,updateStepState:false});if(opts.scrollIntoView)document.getElementById('step-'+i)?.scrollIntoView({behavior:'smooth',block:'center'})}
+function setupSliders(){Object.entries(els.sliders).forEach(([k,sl])=>{sl.addEventListener('input',()=>{const np={...state.params,[k]:Number(sl.value)};state.selectedVariant='Manual';state.selectedResultId=null;applyP(np,{updateStepState:true});renderTR()})})}
+function setupGA(){Object.entries(els.gaSliders).forEach(([k,sl])=>{const sync=()=>{gaConfig[k]=Number(sl.value);els.gaValues[k].textContent=k==='mutationRate'?Number(sl.value).toFixed(2):''+Math.round(Number(sl.value))};sl.addEventListener('input',sync);sync()})}
+
+/* GA Worker */
+function createW(){const code=document.getElementById('workerCode').textContent;const blob=new Blob([code],{type:'application/javascript'});return new Worker(URL.createObjectURL(blob))}
+function seedR(){const seeds=[{width:50,depth:34,floors:11,floorHeight:3.5,courtyard:0.22,twist:6,openness:0.46},{width:58,depth:38,floors:10,floorHeight:3.8,courtyard:0.24,twist:10,openness:0.62},{width:42,depth:32,floors:14,floorHeight:3.5,courtyard:0.18,twist:-4,openness:0.34},{width:64,depth:30,floors:9,floorHeight:4.0,courtyard:0.30,twist:12,openness:0.58},{width:52,depth:42,floors:8,floorHeight:3.5,courtyard:0.26,twist:2,openness:0.51},{width:40,depth:40,floors:15,floorHeight:3.3,courtyard:0.20,twist:-8,openness:0.39},{width:70,depth:28,floors:7,floorHeight:4.2,courtyard:0.34,twist:16,openness:0.69},{width:46,depth:30,floors:13,floorHeight:3.5,courtyard:0.16,twist:-2,openness:0.33},{width:60,depth:36,floors:10,floorHeight:3.8,courtyard:0.28,twist:4,openness:0.57},{width:54,depth:34,floors:12,floorHeight:3.5,courtyard:0.25,twist:8,openness:0.48}];state.topResults=seeds.map((p,i)=>{const m=computeMetrics(p);return{id:'seed-'+i,params:p,metrics:m,score:m.score}}).sort((a,b)=>b.score-a.score).slice(0,10);state.chartHistory=state.topResults.slice(0,6).map((r,i)=>({generation:(i+1)*10,best:r.score,avg:Math.max(r.score-8-i,0)}));renderCC(state.chartHistory);renderTR();els.optimizationProgress.textContent='Seeded';els.optimizationBest.textContent=state.topResults[0].score.toFixed(2);els.optimizationAverage.textContent=state.chartHistory.at(-1)?.avg?.toFixed(2)??'0.00';els.optimizationStatus.textContent='Ready'}
+function termW(l='Stopped'){if(state.optimizationWorker){state.optimizationWorker.terminate();state.optimizationWorker=null}state.optimizationStatus=l;els.optimizationStatus.textContent=l}
+function startOpt(useSeed=false){termW('Preparing');state.chartHistory=[];renderCC([]);renderSC([]);state.selectedResultId=null;state.selectedVariant=useSeed?'Seeded':'GA Run';els.optimizationProgress.textContent='0%';els.optimizationBest.textContent='0.00';els.optimizationAverage.textContent='0.00';els.optimizationStatus.textContent='Running';state.optimizationWorker=createW();state.optimizationWorker.addEventListener('message',ev=>{const pl=ev.data;if(!pl)return;if(pl.type==='progress'||pl.type==='done'){state.chartHistory=pl.history;state.topResults=pl.topResults.map(item=>({...item,metrics:item.metrics||computeMetrics(item.params)}));els.optimizationProgress.textContent=pl.progress+'%';els.optimizationBest.textContent=pl.best.toFixed(2);els.optimizationAverage.textContent=pl.avg.toFixed(2);els.optimizationStatus.textContent=pl.type==='done'?'Completed':'Running';renderCC(state.chartHistory);renderTR()}if(pl.type==='done'){if(state.topResults[0]){state.selectedResultId=state.topResults[0].id;state.selectedVariant='Top 1';applyP(state.topResults[0].params,{fitCamera:true,updateStepState:false});renderTR()}termW('Completed');toast('GA 최적화 완료')}});state.optimizationWorker.postMessage({type:'run',config:gaConfig,seed:useSeed?state.params:null,targets:getTargets()})}
+function setupBtns(){els.runOptimizationButton.addEventListener('click',()=>startOpt(false));els.useCurrentAsSeedButton.addEventListener('click',()=>startOpt(true));els.stopOptimizationButton.addEventListener('click',()=>{termW('Stopped');toast('최적화 중지')});els.resetCameraButton.addEventListener('click',()=>{if(hasWebGL){camera.position.set(84,64,92);controls.target.set(0,18,0);controls.update()}});els.fitModelButton.addEventListener('click',()=>{if(hasWebGL)fitCam(buildingGroup,1.35)})}
+
+/* Prompts */
+function renderPR(){els.promptGrid.innerHTML=PROMPTS.map((p,i)=>'<article class="prompt-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px"><div><p class="eyebrow">'+String(i+1).padStart(2,'0')+'</p><h3 style="text-transform:none;letter-spacing:0;color:var(--text-primary);font-size:12px">'+p.title+'</h3><p style="font-size:10px;color:var(--text-muted)">'+p.caption+'</p></div><button class="btn" style="font-size:11px;padding:4px 8px" data-copy-prompt="'+i+'">Copy</button></div><pre style="background:var(--bg-canvas);color:var(--text-secondary);font-size:10px;line-height:1.7;padding:8px;white-space:pre-wrap;flex:1;border:1px solid var(--border-default);border-radius:4px;font-family:monospace">'+p.text+'</pre></article>').join('');els.promptGrid.querySelectorAll('[data-copy-prompt]').forEach(btn=>{btn.addEventListener('click',async()=>{const text=PROMPTS[Number(btn.getAttribute('data-copy-prompt'))]?.text;if(!text)return;try{await navigator.clipboard.writeText(text);toast('복사 완료')}catch{toast('복사 권한 확인')}})})}
+
+/* Main Loop */
+function animate(){if(pk.running){stepPk();updatePkStats()}renderPk();if(hasWebGL){controls.update();renderer.render(scene,camera)}requestAnimationFrame(animate)}
+function init(){resR();resPC();renderPR();renderSN();setupSliders();setupGA();setupBtns();setupPkEv();applyP(state.params,{fitCamera:true,updateStepState:false});activateStep(1,{fitCamera:true});resetPk();seedR();pk.running=true;updatePkCtrl();animate()}
+window.addEventListener('resize',()=>{resR();resPC();renderPk()});
+init();
+</script>
+</body>
+</html>

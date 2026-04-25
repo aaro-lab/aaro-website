@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 240">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,700');
+      .l { font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif; font-weight: 700; font-size: 120px; fill: #EDE8E0; }
+    </style>
+  </defs>
+  <rect width="480" height="240" fill="#0D0D0C"/>
+  <text class="l" text-anchor="middle" x="167" y="116">a</text>
+  <text class="l" text-anchor="middle" x="313" y="116">a</text>
+  <text class="l" text-anchor="middle" x="167" y="206">r</text>
+  <text class="l" text-anchor="middle" x="313" y="206">o</text>
+</svg>

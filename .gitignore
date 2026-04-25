@@ -1,2 +1,15 @@
 .vercel
 *.mov
+
+# Editor / OS
+.vscode/
+.DS_Store
+
+# Private content
+aaro_data/
+외부 강의/
+KakaoTalk_Photo_*.png
+*.pptx
+
+# Mobile reference screenshots (not for deploy)
+mobile/

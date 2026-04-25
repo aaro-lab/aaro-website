@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,700');
+      .l { font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif; font-weight: 700; font-size: 256px; fill: #EDE8E0; }
+    </style>
+  </defs>
+  <rect width="512" height="512" fill="#0D0D0C"/>
+  <!-- 2x2 grid: each letter centered in its cell -->
+  <text class="l" text-anchor="middle" x="178" y="248">a</text>
+  <text class="l" text-anchor="middle" x="334" y="248">a</text>
+  <text class="l" text-anchor="middle" x="178" y="440">r</text>
+  <text class="l" text-anchor="middle" x="334" y="440">o</text>
+</svg>
