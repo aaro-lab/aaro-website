@@ -407,11 +407,12 @@
     /* Cover grid lines — hidden */
     .cover-grid { display: none; }
 
-    /* Cover Graph */
+    /* Cover Graph — Shiva multi-cursor swarm; full-bleed, doesn't block clicks */
     .cover-graph {
-      position: absolute; right: 0; top: 0;
-      width: 60vw; height: 100%;
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
       z-index: 2;
+      pointer-events: none;
     }
     .cover-graph canvas {
       width: 100%; height: 100%; display: block;
@@ -422,15 +423,7 @@
         padding: clamp(80px, 14vh, 120px) 24px clamp(20px, 4vh, 40px);
       }
       .s-cover__title { margin-bottom: 12px; text-align: center; }
-      .cover-graph {
-        position: absolute; top: auto; right: 0; bottom: 0; left: 0;
-        width: 100%; height: 55%;
-        margin: 0;
-        order: unset;
-        opacity: 0.55;
-        mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 100%);
-        -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 100%);
-      }
+      .cover-graph { opacity: 0.85; }
       .s-cover__sub { text-align: center; margin-top: 16px; }
     }
 
@@ -2411,532 +2404,679 @@
       if (e.key === 'ArrowUp' && cur > 0) { e.preventDefault(); ss[cur - 1].scrollIntoView({ behavior: 'smooth' }); }
     });
 
-    // ── Cover Graph ──
-    (function initCoverGraph() {
+    // ── Shiva Multi-Cursor swarm (cover hero) ──
+    // Pursue the user pointer with varied paths, settle into rest positions
+    // when idle and reveal stat bubbles per role (Regulation, Massing, etc.).
+    (function initShivaSwarm() {
       const canvas = document.getElementById('coverCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       const dpr = window.devicePixelRatio || 1;
+      const reducedMotion = window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      // 53 nodes total: 1 World Agent + 24 real APPS + 28 dummies
-      const ALL_NODES = [
-        { id:'W', n:'aaro', ini:'WA', c:'Master', r:36, isCenter:true },
-        ...APPS.map((a,i) => ({
-          id:'a'+i, n:a.n, ini: a.n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),
-          c:a.c, r:24, svgPath: a.p
-        })),
-        { id:'d0', n:'Facade Gen', ini:'FG', c:'Generation', r:24 },
-        { id:'d1', n:'Structure Check', ini:'SC', c:'Evaluation', r:24 },
-        { id:'d2', n:'Solar Analysis', ini:'SA', c:'Simulation', r:24 },
-        { id:'d3', n:'Cost Estimator', ini:'CE', c:'Evaluation', r:24 },
-        { id:'d4', n:'Circulation', ini:'CI', c:'Optimization', r:24 },
-        { id:'d5', n:'Site Context', ini:'SX', c:'Evaluation', r:24 },
-        { id:'d6', n:'Floor Plan AI', ini:'FP', c:'Generation', r:24 },
-        { id:'d7', n:'BIM Export', ini:'BX', c:'Dashboard', r:24 },
-        { id:'d8', n:'Regulation DB', ini:'RD', c:'Evaluation', r:24 },
-        { id:'d9', n:'Setback Calc', ini:'SB', c:'Generation', r:24 },
-        { id:'d10', n:'Daylight Sim', ini:'DS', c:'Simulation', r:24 },
-        { id:'d11', n:'Wind Flow', ini:'WF', c:'Simulation', r:24 },
-        { id:'d12', n:'View Analysis', ini:'VA', c:'Evaluation', r:24 },
-        { id:'d13', n:'Noise Map', ini:'NM', c:'Simulation', r:24 },
-        { id:'d14', n:'Density Map', ini:'DM', c:'Evaluation', r:24 },
-        { id:'d15', n:'Shadow Study', ini:'SS', c:'Simulation', r:24 },
-        { id:'d16', n:'Egress Path', ini:'EP', c:'Optimization', r:24 },
-        { id:'d17', n:'MEP Router', ini:'MR', c:'Generation', r:24 },
-        { id:'d18', n:'Material DB', ini:'MD', c:'Dashboard', r:24 },
-        { id:'d19', n:'Green Score', ini:'GS', c:'Evaluation', r:24 },
-        { id:'d20', n:'Floor Area', ini:'FA', c:'Evaluation', r:24 },
-        { id:'d21', n:'Sky Exposure', ini:'SE', c:'Simulation', r:24 },
-        { id:'d22', n:'Access Route', ini:'AR', c:'Planning', r:24 },
-        { id:'d23', n:'Fire Safety', ini:'FS', c:'Evaluation', r:24 },
-        { id:'d24', n:'Rain Flow', ini:'RF', c:'Simulation', r:24 },
-        { id:'d25', n:'Cost Model', ini:'CM', c:'Dashboard', r:24 },
-        { id:'d26', n:'Thermal Map', ini:'TM', c:'Simulation', r:24 },
+      const ROLES = [
+        { label: 'Regulation', color: '#7B6CD9', glyph: '◇', stats: [
+          { k: 'FAR',      v: '2.10',  ok: true },
+          { k: 'Height',   v: '48.0m', ok: true },
+          { k: 'Setbacks', v: 'OK',    ok: true },
+        ]},
+        { label: 'Massing', color: '#5B8DEF', glyph: '◰', stats: [
+          { k: 'Iterations', v: '12'   },
+          { k: 'Score',      v: '0.82' },
+          { k: 'Daylight',   v: 'Good' },
+        ]},
+        { label: 'Parking', color: '#E8784B', glyph: 'P', stats: [
+          { k: 'Spaces', v: '128'       },
+          { k: 'Ratio',  v: '1 / 93 m²' },
+          { k: 'Access', v: 'OK'        },
+        ]},
+        { label: 'Critic', color: '#3FA88E', glyph: '✱', stats: [
+          { k: 'Overshadowing', v: 'Low'        },
+          { k: 'Wind',          v: 'Acceptable' },
+          { k: 'Public Realm',  v: 'Strong'     },
+        ]},
+        { label: 'Report', color: '#D9527B', glyph: '≡', stats: [
+          { k: 'Pages',    v: '42'    },
+          { k: 'Diagrams', v: '18'    },
+          { k: 'Status',   v: 'Draft' },
+        ]},
+        { label: 'Context', color: '#C7942A', glyph: '◐', stats: [
+          { k: 'Views',  v: 'Good'   },
+          { k: 'Noise',  v: 'Low'    },
+          { k: 'Access', v: 'Strong' },
+        ]},
       ];
 
-      const APP_EDGES = [
-        [1,21],[1,10],[2,3],[3,4],[5,6],[5,11],[7,8],[8,22],[9,10],[10,14],
-        [11,12],[13,14],[15,16],[17,18],[19,20],[21,22],[23,24],[4,15],[6,21],
-        [3,19],[7,23],[12,13],[16,17],[9,24],[20,22],[8,11],[2,7],[14,19],
-        [1,5],[4,21],[6,14],[10,22],[3,8],[15,24],[11,17],[2,20],[9,13],
-        [25,1],[26,4],[27,8],[28,15],[29,6],[30,3],[31,5],[32,21],[33,16],
-        [34,10],[35,7],[36,22],[25,26],[27,28],[29,30],[31,32],[33,34],[35,36],
-        [37,1],[38,4],[39,8],[37,25],[38,26],[39,27],
-        [40,2],[41,9],[42,14],[43,18],[44,11],[45,23],[46,7],[47,3],[48,20],
-        [49,15],[50,6],[51,22],[52,10],
-        [40,41],[42,43],[44,45],[46,47],[48,49],[50,51],
-        [40,25],[41,28],[42,33],[43,35],[44,30],[45,37],
-      ];
+      let W = 0, H = 0;
+      const cursors = [];
+      const user = { x: -9999, y: -9999, vx: 0, vy: 0, active: false, lastMove: 0 };
+      const userTrail = [];
+      const TRAIL_MAX_MS = 1300;
+      const USER_TRAIL_MAX_MS = 1500;
 
-      const CAT_COLORS = {
-        'Master':'#C4773C','Generation':'#C4773C','Evaluation':'#4682B4',
-        'Optimization':'#4C9900','Planning':'#9966CC','Simulation':'#C85050','Dashboard':'#6B6B6B',
-      };
+      // Title-safe zone: keep bubbles out of the left third where the hero
+      // title sits. Updated each frame so resize behaves.
+      let TITLE_RIGHT_EDGE = 0;
 
-      const nodes = [];
-      let W, H, centerX, centerY;
+      let wasIdle = false;
+      let autoT = 0;
+      let userHasInteracted = false;
 
       function resize() {
         const rect = canvas.parentElement.getBoundingClientRect();
-        W = rect.width; H = canvas.offsetHeight || rect.height || 400;
+        W = rect.width; H = rect.height;
         canvas.width = W * dpr; canvas.height = H * dpr;
         canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        centerX = W * 0.5; centerY = H * 0.5;
-        const scale = Math.min(W, H) / 900;
-        const rScale = Math.max(scale, 0.55);
-        nodes.forEach((n, i) => { n.r = ALL_NODES[i].r * rScale; });
+        // Rough title region: clamps to right side on desktop, no clamp on mobile.
+        // The hero title spans roughly the left half of the canvas at this
+        // type scale; give it a generous keep-out so bubbles never crowd it.
+        TITLE_RIGHT_EDGE = W >= 1024 ? W * 0.50 : 0;
       }
 
-      const INITIAL_COUNT = 35; // start with ~35 nodes
-      const MAX_COUNT = ALL_NODES.length; // 1.5x target already in ALL_NODES
-      let spawnTimer = 0;
-      const SPAWN_INTERVAL = 180; // ~3s between spawns
-      let nextSpawnIdx = INITIAL_COUNT;
+      // The swarm size is dynamic: during pursuit, the count drifts inside
+      // [COUNT_MIN, COUNT_MAX] — sometimes a new agent joins, sometimes one
+      // peels off. lifeOp drives a smooth fade-in / fade-out so cursors
+      // never appear or vanish abruptly.
+      const COUNT_MIN = 5, COUNT_MAX = 8;
 
-      function initNodes() {
-        nodes.length = 0;
-        const count = Math.min(INITIAL_COUNT, ALL_NODES.length);
-        for (let i = 0; i < count; i++) {
-          const nd = ALL_NODES[i];
-          if (i === 0) {
-            nodes.push({ ...nd, idx:i, x:centerX, y:centerY, vx:0, vy:0, fx:null, fy:null, baseX:centerX, baseY:centerY, opacity:1 });
-          } else {
-            const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
-            const dist = 80 + Math.random() * Math.min(W, H) * 0.35;
-            const x = Math.max(nd.r + 20, Math.min(W - nd.r - 20, centerX + Math.cos(angle) * dist));
-            const y = Math.max(nd.r + 80, Math.min(H - nd.r - 20, centerY + Math.sin(angle) * dist));
-            nodes.push({
-              ...nd, idx:i, x, y,
-              vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5,
-              fx: null, fy: null, opacity: 1
-            });
-          }
+      // Choose the role that is currently *least* represented in the swarm,
+      // so adds/removes keep role coverage balanced across cycles.
+      function pickFreshRole() {
+        const counts = ROLES.map(() => 0);
+        for (const c of cursors) {
+          if (c.dying) continue;
+          const i = ROLES.indexOf(c.role);
+          if (i >= 0) counts[i]++;
         }
-        nextSpawnIdx = count;
+        let minIdx = 0, minVal = Infinity;
+        for (let i = 0; i < ROLES.length; i++) {
+          if (counts[i] < minVal) { minVal = counts[i]; minIdx = i; }
+        }
+        return ROLES[minIdx];
       }
 
-      function spawnNode() {
-        if (nextSpawnIdx >= MAX_COUNT) return;
-        const w = nodes[0];
-        if (!w) return;
-        const nd = ALL_NODES[nextSpawnIdx];
+      function spawnAgent(i, opts) {
+        opts = opts || {};
+        const role = opts.role || ROLES[i % ROLES.length];
+        // New agents introduced mid-pursuit appear at the user pointer,
+        // initial agents start scattered around the right side.
+        const px = opts.atUser ? user.x : W * 0.6;
+        const py = opts.atUser ? user.y : H * 0.5;
         const angle = Math.random() * Math.PI * 2;
-        const dist = 30 + Math.random() * 20;
-        const scale = Math.min(W, H) / 900;
-        const rScale = Math.max(scale, W < 768 ? 0.35 : 0.55);
-        nodes.push({
-          ...nd, idx: nextSpawnIdx,
-          x: w.x + Math.cos(angle) * dist,
-          y: w.y + Math.sin(angle) * dist,
-          vx: Math.cos(angle) * 3, vy: Math.sin(angle) * 3,
-          fx: null, fy: null, opacity: 0, r: nd.r * rScale
-        });
-        nextSpawnIdx++;
+        const dist = opts.atUser ? 30 + Math.random() * 30 : 80 + Math.random() * 140;
+        return {
+          x: px + Math.cos(angle) * dist,
+          y: py + Math.sin(angle) * dist,
+          vx: 0, vy: 0,
+          role,
+          rot: 0,
+          maxSpeed: 4.6 + Math.random() * 2.4,
+          eagerness: 0.7 + Math.random() * 0.7,
+          lateralBias: (Math.random() * 2 - 1) * 0.95,
+          pursueLag: 60 + Math.random() * 220,
+          trail: [],
+          hasRest: false, restX: 0, restY: 0,
+          bubbleOp: 0,
+          connectorBias: (Math.random() * 2 - 1) * 0.9,
+          // Lifecycle fade. Initial agents start at full opacity; agents
+          // spawned by maybeChangeCount() override this to 0 (fade in).
+          lifeOp: 1,
+          dying: false,
+        };
       }
 
-      // Circle-packing physics — slow gentle convergence over 5-8 seconds
-      const GRAVITY = 0.002;
-      const REPULSION = 5000;
-      const DAMPING = 0.92;
-      const BROWNIAN = 0.15;
-      const WOBBLE_AMP = 4;
-      const WOBBLE_SPEED = 0.0015;
-      // Single-jump wandering for World Agent
-      let wanderAngle = Math.random() * Math.PI * 2;
-      let wanderTimer = 0;
-      let wanderPhase = 'rest';
-      let currentMoveDuration = 0;
-      const REST_DURATION = 90; // ~1.5s pause between jumps
-      let alpha = 1.0;
+      function setCount(n) {
+        while (cursors.length < n) cursors.push(spawnAgent(cursors.length));
+        while (cursors.length > n) cursors.pop();
+      }
 
-      function simulate() {
-        alpha = Math.max(alpha * 0.999, 0.01);
+      // Dynamic swarm-size oscillation while the user is actively moving.
+      // Locked during rest so the bubble layout stays stable.
+      let countChangeTimer = 0;
+      const COUNT_CHANGE_INTERVAL_MS = 5500;
 
-        // Spawn new nodes periodically from World Agent
-        spawnTimer++;
-        if (spawnTimer >= SPAWN_INTERVAL && nextSpawnIdx < MAX_COUNT) {
-          spawnNode();
-          spawnTimer = 0;
+      function aliveCount() {
+        let n = 0;
+        for (const c of cursors) if (!c.dying) n++;
+        return n;
+      }
+
+      function maybeChangeCount(dt, isIdle) {
+        if (isIdle) return;
+        countChangeTimer += dt;
+        if (countChangeTimer < COUNT_CHANGE_INTERVAL_MS) return;
+        // Negative reset adds jitter so the cadence doesn't feel mechanical.
+        countChangeTimer = -Math.random() * 2500;
+        const N = aliveCount();
+        const r = Math.random();
+        if (r < 0.4 && N < COUNT_MAX) {
+          // Add a fresh role. Spawns at user pointer, fades in.
+          const nu = spawnAgent(cursors.length, { role: pickFreshRole(), atUser: true });
+          nu.lifeOp = 0;
+          cursors.push(nu);
+        } else if (r < 0.8 && N > COUNT_MIN) {
+          // Mark a non-dying cursor for retirement (random pick).
+          const alive = cursors.filter(c => !c.dying);
+          const victim = alive[Math.floor(Math.random() * alive.length)];
+          if (victim) victim.dying = true;
         }
+        // else: stay — keeps the user from getting whiplash.
+      }
 
-        // Fade in new nodes
-        for (const n of nodes) {
-          if (n.opacity !== undefined && n.opacity < 1) n.opacity = Math.min(1, n.opacity + 0.02);
+      const PARAMS = {
+        SEP_RADIUS: 78,           // wider separation prevents label-pill overlap during pursuit
+        SEP_FORCE: 1.8,
+        ALI_RADIUS: 100,
+        ALI_FORCE: 0.05,
+        PURSUE_FORCE: 0.038,
+        REST_FORCE: 0.045,
+        DAMPING: 0.90,
+        REST_DAMPING: 0.82,
+        LEASH_R: 320,
+        LEASH_FORCE: 0.06,
+        PERSONAL_SPACE: 50,
+        IDLE_MS: 700,
+        REST_LOCK_DIST: 22,
+        ROT_LERP: 0.18,
+        MOVE_THRESH: 0.55,
+      };
+
+      function trackMove(clientX, clientY) {
+        const r = canvas.getBoundingClientRect();
+        const x = clientX - r.left;
+        const y = clientY - r.top;
+        if (Math.hypot(x - user.x, y - user.y) < 0.5) return;
+        user.vx = x - user.x; user.vy = y - user.y;
+        user.x = x; user.y = y;
+        user.active = true;
+        userHasInteracted = true;
+        user.lastMove = performance.now();
+        userTrail.push({ x, y, t: user.lastMove });
+      }
+      window.addEventListener('mousemove', e => trackMove(e.clientX, e.clientY));
+      window.addEventListener('touchmove', e => {
+        if (e.touches[0]) trackMove(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: true });
+      window.addEventListener('touchstart', e => {
+        if (e.touches[0]) trackMove(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: true });
+
+      function pruneTrail(now) {
+        while (userTrail.length > 0 && now - userTrail[0].t > USER_TRAIL_MAX_MS) {
+          userTrail.shift();
         }
-
-        const w = nodes[0];
-        if (!w) return;
-
-        // World Agent: single quick jump then rest
-        if (w.fx === null) {
-          wanderTimer++;
-          if (wanderPhase === 'rest' && wanderTimer >= REST_DURATION) {
-            wanderPhase = 'move';
-            wanderTimer = 0;
-            wanderAngle = Math.random() * Math.PI * 2;
-            currentMoveDuration = 4 + Math.floor(Math.random() * 10); // random 4-13 frames
-          } else if (wanderPhase === 'move' && wanderTimer >= currentMoveDuration) {
-            wanderPhase = 'rest';
-            wanderTimer = 0;
-          }
-          if (wanderPhase === 'move') {
-            const speed = 13.4;
-            w.baseX += Math.cos(wanderAngle) * speed;
-            w.baseY += Math.sin(wanderAngle) * speed;
-          }
-          // Keep within safe zone: 25%-75% of canvas
-          const safeL = W * 0.25, safeR = W * 0.75;
-          const safeT = Math.max(H * 0.25, 120), safeB = H * 0.75;
-          if (w.baseX < safeL || w.baseX > safeR) wanderAngle = Math.PI - wanderAngle;
-          if (w.baseY < safeT || w.baseY > safeB) wanderAngle = -wanderAngle;
-          w.baseX = Math.max(safeL, Math.min(safeR, w.baseX));
-          w.baseY = Math.max(safeT, Math.min(safeB, w.baseY));
-          // Wobble on top of wander
-          const t = Date.now();
-          w.x = w.baseX + Math.sin(t * WOBBLE_SPEED) * WOBBLE_AMP;
-          w.y = w.baseY + Math.cos(t * WOBBLE_SPEED * 1.3) * WOBBLE_AMP;
-        } else {
-          w.baseX = w.fx; w.baseY = w.fy;
-          w.x = w.fx; w.y = w.fy;
+      }
+      function trailPointAt(now, lagMs) {
+        const target = now - lagMs;
+        for (let i = userTrail.length - 1; i >= 0; i--) {
+          if (userTrail[i].t <= target) return userTrail[i];
         }
+        return userTrail[0] || { x: user.x, y: user.y };
+      }
 
-        for (let i = 1; i < nodes.length; i++) {
-          const a = nodes[i];
-          if (a.fx !== null) { a.x = a.fx; a.y = a.fy; a.vx = 0; a.vy = 0; continue; }
+      // Equal-radius angular layout — eliminates bubble overlap that occurs
+      // when adjacent slots end up at different rings. Title zone, top nav,
+      // and bottom scroll/chat button are respected. The bubble extends
+      // ~110px past its cursor outward, so the safe radius subtracts that
+      // reach as well — otherwise bubbles at the edge angles still clip.
+      function assignRestPositions() {
+        const N = cursors.length;
+        const slotSize = (Math.PI * 2) / N;
+        const bubbleReach = 110;
+        const sideMargin  = 60  + bubbleReach;   // bubble outer corner
+        const topMargin   = 70  + bubbleReach;   // top nav clearance
+        const bottomMargin = 90 + bubbleReach;   // chat-toggle FAB
+        const safeLeft = user.x - Math.max(TITLE_RIGHT_EDGE + 80, 80) - bubbleReach;
+        const safeR = Math.min(
+          safeLeft,
+          W - user.x - sideMargin,
+          user.y - topMargin,
+          H - user.y - bottomMargin,
+        );
+        // Floor at 80 — when the user is near a viewport edge, the swarm
+        // packs tighter rather than spilling into the nav or footer chrome.
+        const baseR = Math.max(80, Math.min(240, safeR));
+        // When title is on the left, bias the phase so the first bubble
+        // lands upper-right (away from the title).
+        const phase = TITLE_RIGHT_EDGE > 0
+          ? -Math.PI / 3 + (Math.random() - 0.5) * slotSize * 0.3
+          : Math.random() * slotSize;
+        const order = cursors.slice().sort(() => Math.random() - 0.5);
+        // When N is large, the slot pitch shrinks and adjacent bubbles overlap.
+        // Stagger neighbours onto an inner / outer ring so bubble centres
+        // don't collide. (Below 8 we keep a single clean ring.)
+        const stagger = N >= 8;
+        for (let i = 0; i < N; i++) {
+          const a = order[i];
+          const ang = phase + slotSize * i + (Math.random() - 0.5) * slotSize * 0.15;
+          const ringR = stagger && i % 2 === 1 ? baseR * 0.74 : baseR;
+          let rx = user.x + Math.cos(ang) * ringR;
+          let ry = user.y + Math.sin(ang) * ringR;
+          rx = Math.max(60, Math.min(W - 60, rx));
+          ry = Math.max(60, Math.min(H - 60, ry));
+          a.restX = rx; a.restY = ry;
+          a.hasRest = true;
+        }
+      }
+      function clearRestAssignments() { for (const a of cursors) a.hasRest = false; }
 
-          // Repulsion from all other nodes
-          for (let j = 0; j < nodes.length; j++) {
-            if (j === i) continue;
-            const b = nodes[j];
-            let dx = a.x - b.x, dy = a.y - b.y;
-            let dist = Math.sqrt(dx*dx + dy*dy) || 0.01;
-            const minD = a.r + b.r + 4;
-            if (dist < minD) {
-              const overlap = minD - dist;
-              const push = overlap * 0.35 + (REPULSION * alpha) / (dist * dist) * 0.08;
-              a.vx += (dx/dist)*push; a.vy += (dy/dist)*push;
-            } else if (dist < minD * 3) {
-              const f = (REPULSION * alpha * 0.04) / (dist * dist);
-              a.vx += (dx/dist)*f; a.vy += (dy/dist)*f;
+      function step(dt) {
+        const now = performance.now();
+        // Auto-demo until the user moves their pointer. Cycle between
+        // "moving" and "resting" so first-time visitors see both states
+        // (swarm following + agents revealing their bubbles).
+        if (!userHasInteracted) {
+          const CYCLE_MS = 9000;
+          const MOVE_FRAC = 0.55;
+          const phase = (now % CYCLE_MS) / CYCLE_MS;
+          if (phase < MOVE_FRAC) {
+            autoT += dt * 0.0006;
+            // Stay in the right half of the canvas so the rest layout
+            // never crashes bubbles into the hero title on the left.
+            const safeMinX = TITLE_RIGHT_EDGE > 0 ? TITLE_RIGHT_EDGE + 300 : W * 0.58;
+            const safeMaxX = W * 0.85;
+            const cxBase = (safeMinX + safeMaxX) / 2;
+            const cxAmp  = (safeMaxX - safeMinX) / 2;
+            const cx = cxBase + Math.cos(autoT) * cxAmp;
+            const cy = H * 0.5 + Math.sin(autoT * 1.8) * (H * 0.16);
+            if (Math.hypot(cx - user.x, cy - user.y) > 0.5) {
+              user.vx = cx - user.x; user.vy = cy - user.y;
+              user.x = cx; user.y = cy;
+              user.lastMove = now;
+              user.active = true;
+              userTrail.push({ x: cx, y: cy, t: now });
             }
           }
-
-          // Gentle gravity toward World Agent (circle packing pull)
-          {
-            let dx = w.x - a.x, dy = w.y - a.y;
-            let dist = Math.sqrt(dx*dx + dy*dy) || 0.01;
-            const minSafeD = w.r + a.r + 4;
-            if (dist > minSafeD) {
-              const pull = (dist - minSafeD) * GRAVITY * (1 + alpha * 1.5);
-              a.vx += (dx/dist)*pull; a.vy += (dy/dist)*pull;
-            }
-          }
+          // else: pause — user.lastMove ages out, idle kicks in, bubbles reveal
         }
+        pruneTrail(now);
 
-        // App-to-app edge attraction
-        for (const [ai, bi] of APP_EDGES) {
-          if (ai >= nodes.length || bi >= nodes.length) continue;
-          const a = nodes[ai], b = nodes[bi];
-          if (a === w || b === w) continue;
-          let dx = b.x - a.x, dy = b.y - a.y;
-          let dist = Math.sqrt(dx*dx + dy*dy) || 0.01;
-          const target = 90;
-          if (dist > target) {
-            const pull = (dist - target) * 0.0008 * alpha;
-            const fx = (dx/dist)*pull, fy = (dy/dist)*pull;
-            if (a.fx === null) { a.vx += fx; a.vy += fy; }
-            if (b.fx === null) { b.vx -= fx; b.vy -= fy; }
-          }
-        }
+        const idleMs = now - user.lastMove;
+        const isIdle = idleMs > PARAMS.IDLE_MS;
+        if (isIdle && !wasIdle) assignRestPositions();
+        if (!isIdle && wasIdle) clearRestAssignments();
+        wasIdle = isIdle;
 
-        // Integrate
-        for (let i = 1; i < nodes.length; i++) {
-          const a = nodes[i];
-          if (a.fx !== null) continue;
-          a.vx += (Math.random()-0.5)*BROWNIAN;
-          a.vy += (Math.random()-0.5)*BROWNIAN;
-          a.vx *= DAMPING; a.vy *= DAMPING;
-          a.x += a.vx; a.y += a.vy;
-          a.x = Math.max(a.r+10, Math.min(W-a.r-10, a.x));
-          a.y = Math.max(a.r+80, Math.min(H-a.r-10, a.y));
-        }
-      }
+        // Drift the swarm size 5↔8 while the user is moving.
+        maybeChangeCount(dt, isIdle);
 
-      const packets = [];
-      function spawnPacket() {
-        if (nodes.length < 2) return;
-        const edge = APP_EDGES[Math.floor(Math.random()*APP_EDGES.length)];
-        if (!edge || edge[0] >= nodes.length || edge[1] >= nodes.length) return;
-        const dir = Math.random() > 0.5;
-        packets.push({ from: nodes[dir?edge[0]:edge[1]], to: nodes[dir?edge[1]:edge[0]], t:0, dur: 1500+Math.random()*1000 });
-      }
+        const usp = Math.hypot(user.vx, user.vy);
+        const ndx = usp > 0.01 ? user.vx / usp : 1;
+        const ndy = usp > 0.01 ? user.vy / usp : 0;
+        const perpX = -ndy, perpY = ndx;
 
-      let hoveredNode = null;
-      let dragNode = null;
-      let dragOffset = {x:0, y:0};
-      let mouseDownPos = {x:0, y:0};
-      let didDrag = false;
-
-      function draw() {
-        ctx.clearRect(0, 0, W, H);
-
-        const w = nodes[0];
-        if (!w) return;
-        const worldHovered = hoveredNode === w;
-
-        // Hub edges (World Agent to all) — proximity opacity * node opacity
-        for (let i = 1; i < nodes.length; i++) {
-          const n = nodes[i];
-          const nOp = n.opacity !== undefined ? n.opacity : 1;
-          if (nOp < 0.01) continue;
-          const dist = Math.hypot(w.x - n.x, w.y - n.y);
-          const proximity = Math.max(0.04, Math.min(0.35, 1 - dist / 500)) * nOp;
-          const isHL = hoveredNode === n || worldHovered;
-          ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(n.x, n.y);
-          ctx.strokeStyle = isHL ? 'rgba(196,119,60,0.45)' : `rgba(196,119,60,${proximity})`;
-          ctx.lineWidth = isHL ? 1.5 : Math.max(0.3, 1.2 - dist / 400);
-          ctx.stroke();
-        }
-
-        // App-to-app edges
-        for (const [ai, bi] of APP_EDGES) {
-          if (ai >= nodes.length || bi >= nodes.length) continue;
-          const a = nodes[ai], b = nodes[bi];
-          const isHL = hoveredNode && (hoveredNode === a || hoveredNode === b);
-          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = isHL ? 'rgba(196,119,60,0.4)' : 'rgba(255,255,255,0.06)';
-          ctx.lineWidth = isHL ? 1.2 : 0.5;
-          ctx.stroke();
-        }
-
-        // Packets
-        for (const pk of packets) {
-          const p = pk.t/pk.dur;
-          const ease = p<0.5 ? 2*p*p : -1+(4-2*p)*p;
-          const px = pk.from.x + (pk.to.x-pk.from.x)*ease;
-          const py = pk.from.y + (pk.to.y-pk.from.y)*ease;
-          const op = p<0.1?p*10:p>0.9?(1-p)*10:0.6;
-          ctx.beginPath(); ctx.arc(px,py,2.5,0,Math.PI*2);
-          ctx.fillStyle = `rgba(196,119,60,${op})`; ctx.fill();
-        }
-
-        // App nodes (rounded rect with SVG icon or initials fallback)
-        for (let i = 1; i < nodes.length; i++) {
-          const n = nodes[i];
-          const nOp = n.opacity !== undefined ? n.opacity : 1;
-          if (nOp < 0.01) continue;
-          ctx.globalAlpha = nOp;
-          const s = n.r * 2;
-          const rad = s * 0.3;
-          const col = CAT_COLORS[n.c] || '#888';
-          const isHov = hoveredNode === n;
-          const isDrag = dragNode === n;
-
-          ctx.save();
-          ctx.globalAlpha = isHov ? 1 : 0.5;
-          ctx.beginPath();
-          ctx.moveTo(n.x-s/2+rad, n.y-s/2);
-          ctx.arcTo(n.x+s/2,n.y-s/2, n.x+s/2,n.y+s/2, rad);
-          ctx.arcTo(n.x+s/2,n.y+s/2, n.x-s/2,n.y+s/2, rad);
-          ctx.arcTo(n.x-s/2,n.y+s/2, n.x-s/2,n.y-s/2, rad);
-          ctx.arcTo(n.x-s/2,n.y-s/2, n.x+s/2,n.y-s/2, rad);
-          ctx.closePath();
-          if (isHov || isDrag) { ctx.shadowColor = col; ctx.shadowBlur = 16; }
-          ctx.fillStyle = isHov ? '#2A2A26' : '#1A1A18';
-          ctx.fill();
-          ctx.strokeStyle = isHov ? col : 'rgba(255,255,255,0.06)';
-          ctx.lineWidth = isHov ? 1.5 : 0.5;
-          ctx.stroke();
-          ctx.shadowBlur = 0;
-
-          // Icon: SVG path for real APPS nodes, initials for dummies
-          ctx.fillStyle = isHov ? '#fff' : 'rgba(255,255,255,0.45)';
-          ctx.globalAlpha = 1;
-          if (n.svgPath) {
-            const iconSize = Math.max(16, s * 0.5);
-            const scale = iconSize / 40;
-            ctx.save();
-            ctx.translate(n.x - iconSize/2, n.y - iconSize/2);
-            ctx.scale(scale, scale);
-            const path = new Path2D(n.svgPath);
-            ctx.fill(path);
-            ctx.restore();
+        for (let i = 0; i < cursors.length; i++) {
+          const a = cursors[i];
+          let tx, ty, pushK;
+          if (isIdle && a.hasRest) {
+            tx = a.restX; ty = a.restY;
+            pushK = PARAMS.REST_FORCE * a.eagerness;
           } else {
-            ctx.font = `700 ${Math.max(10, s*0.32)}px 'DM Sans', sans-serif`;
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(n.ini, n.x, n.y);
+            const lag = trailPointAt(now, a.pursueLag);
+            tx = lag.x + perpX * a.lateralBias * 75 - ndx * 35;
+            ty = lag.y + perpY * a.lateralBias * 75 - ndy * 35;
+            pushK = PARAMS.PURSUE_FORCE * a.eagerness;
           }
-          ctx.globalAlpha = 1;
+          let pX = (tx - a.x) * pushK;
+          let pY = (ty - a.y) * pushK;
 
-          // Hover tooltip (white pill above node)
-          if (isHov) {
-            const name = n.n;
-            ctx.font = `600 12px 'DM Sans', sans-serif`;
-            const tw = ctx.measureText(name).width;
-            const bx = n.x, by = n.y - s/2 - 22;
-            const bw = tw + 20, bh = 26;
-            ctx.beginPath();
-            const br = 8;
-            ctx.moveTo(bx-bw/2+br, by-bh/2);
-            ctx.arcTo(bx+bw/2,by-bh/2, bx+bw/2,by+bh/2, br);
-            ctx.arcTo(bx+bw/2,by+bh/2, bx-bw/2,by+bh/2, br);
-            ctx.arcTo(bx-bw/2,by+bh/2, bx-bw/2,by-bh/2, br);
-            ctx.arcTo(bx-bw/2,by-bh/2, bx+bw/2,by-bh/2, br);
-            ctx.closePath();
-            ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 0.5; ctx.stroke();
-            ctx.fillStyle = '#111';
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(name, bx, by);
+          let sepX = 0, sepY = 0, sepN = 0, aliX = 0, aliY = 0, aliN = 0;
+          for (let j = 0; j < cursors.length; j++) {
+            if (j === i) continue;
+            const b = cursors[j];
+            const dx = a.x - b.x, dy = a.y - b.y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < PARAMS.SEP_RADIUS * PARAMS.SEP_RADIUS && d2 > 0.01) {
+              const d = Math.sqrt(d2);
+              const k = (PARAMS.SEP_RADIUS - d) / PARAMS.SEP_RADIUS;
+              sepX += (dx / d) * k; sepY += (dy / d) * k; sepN++;
+            }
+            if (d2 < PARAMS.ALI_RADIUS * PARAMS.ALI_RADIUS) {
+              aliX += b.vx; aliY += b.vy; aliN++;
+            }
           }
-          ctx.restore();
+          a.vx += pX; a.vy += pY;
+          if (sepN > 0) {
+            a.vx += (sepX / sepN) * PARAMS.SEP_FORCE * 4;
+            a.vy += (sepY / sepN) * PARAMS.SEP_FORCE * 4;
+          }
+          if (aliN > 0) {
+            a.vx += ((aliX / aliN) - a.vx) * PARAMS.ALI_FORCE;
+            a.vy += ((aliY / aliN) - a.vy) * PARAMS.ALI_FORCE;
+          }
+
+          {
+            const dx = a.x - user.x, dy = a.y - user.y;
+            const d = Math.hypot(dx, dy);
+            if (d > PARAMS.LEASH_R && d > 0.01) {
+              const overflow = d - PARAMS.LEASH_R;
+              a.vx -= (dx / d) * overflow * PARAMS.LEASH_FORCE;
+              a.vy -= (dy / d) * overflow * PARAMS.LEASH_FORCE;
+            }
+            if (d < PARAMS.PERSONAL_SPACE && d > 0.01) {
+              const k = (PARAMS.PERSONAL_SPACE - d) / PARAMS.PERSONAL_SPACE;
+              a.vx += (dx / d) * k * 1.4;
+              a.vy += (dy / d) * k * 1.4;
+            }
+          }
+
+          let damping = PARAMS.DAMPING;
+          let distToTarget = Math.hypot(tx - a.x, ty - a.y);
+          if (isIdle && distToTarget < 50) damping = PARAMS.REST_DAMPING;
+          a.vx *= damping; a.vy *= damping;
+
+          const sp = Math.hypot(a.vx, a.vy);
+          if (sp > a.maxSpeed) { a.vx = (a.vx / sp) * a.maxSpeed; a.vy = (a.vy / sp) * a.maxSpeed; }
+          if (!isIdle || distToTarget > PARAMS.REST_LOCK_DIST) {
+            a.vx += (Math.random() - 0.5) * 0.05;
+            a.vy += (Math.random() - 0.5) * 0.05;
+          }
+          a.x += a.vx; a.y += a.vy;
+
+          const m = 24;
+          if (a.x < m)     a.vx += (m - a.x) * 0.05;
+          if (a.x > W - m) a.vx -= (a.x - (W - m)) * 0.05;
+          if (a.y < m)     a.vy += (m - a.y) * 0.05;
+          if (a.y > H - m) a.vy -= (a.y - (H - m)) * 0.05;
+
+          // Trail
+          if (sp > 0.4) a.trail.push({ x: a.x, y: a.y, t: now });
+          while (a.trail.length > 0 && now - a.trail[0].t > TRAIL_MAX_MS) a.trail.shift();
+
+          // Velocity-aligned rotation
+          if (sp > PARAMS.MOVE_THRESH) {
+            const va = Math.atan2(a.vy, a.vx);
+            const targetRot = va + Math.PI - 1.13;
+            let dRot = targetRot - a.rot;
+            while (dRot > Math.PI)  dRot -= Math.PI * 2;
+            while (dRot < -Math.PI) dRot += Math.PI * 2;
+            a.rot += dRot * PARAMS.ROT_LERP;
+          } else if (isIdle && distToTarget < PARAMS.REST_LOCK_DIST) {
+            a.rot += (0 - a.rot) * 0.06;
+          }
+
+          // Bubble opacity. Suppress reveal when the user has paused over
+          // the hero title — otherwise bubbles fade in *on top of* the type.
+          const userInSafeZone = user.x > TITLE_RIGHT_EDGE + 80;
+          const atRest = isIdle && distToTarget < PARAMS.REST_LOCK_DIST && userInSafeZone;
+          const targetOp = atRest ? 1 : 0;
+          const lerp = targetOp > a.bubbleOp ? 0.045 : 0.14;
+          a.bubbleOp += (targetOp - a.bubbleOp) * lerp;
+
+          // Lifecycle fade — slow in (~600ms), faster out (~250ms) so removals
+          // feel deliberate without lingering.
+          const lifeTarget = a.dying ? 0 : 1;
+          const lifeLerp = lifeTarget > a.lifeOp ? 0.04 : 0.10;
+          a.lifeOp += (lifeTarget - a.lifeOp) * lifeLerp;
         }
-        ctx.globalAlpha = 1;
 
-        // World Agent node (large rounded rect, orange border, radial glow)
+        // Reap dying cursors that have fully faded.
+        for (let i = cursors.length - 1; i >= 0; i--) {
+          if (cursors[i].dying && cursors[i].lifeOp < 0.03) cursors.splice(i, 1);
+        }
+      }
+
+      const ARROW_PATH = new Path2D(
+        'M 0 0 L 0 18 L 5.2 14 L 8.6 21.8 L 11.4 20.6 L 8 13 L 14.4 13 Z'
+      );
+      const ah = (a) => Math.floor(Math.max(0, Math.min(1, a)) * 255).toString(16).padStart(2, '0');
+      const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+
+      function drawTrail(c, now) {
+        if (c.trail.length < 2) return;
+        // Bump alpha in dark mode where low-alpha strokes get absorbed by bg.
+        // Multiply by lifeOp so a fading-in/out cursor's trail fades with it.
+        const baseAlpha = (isDark() ? 0.74 : 0.62) * (1 - c.bubbleOp) * c.lifeOp;
+        if (baseAlpha < 0.02) return;
         ctx.save();
-        const wH = hoveredNode === w;
-        const ws = w.r * 2;
-        const wRad = ws * 0.3;
-        const glowS = ws + 160;
-        const glowGrad = ctx.createRadialGradient(w.x, w.y, ws/2, w.x, w.y, glowS/2);
-        glowGrad.addColorStop(0, 'rgba(196,119,60,0.08)');
-        glowGrad.addColorStop(1, 'transparent');
-        ctx.beginPath();
-        ctx.moveTo(w.x-glowS/2+wRad*2, w.y-glowS/2);
-        ctx.arcTo(w.x+glowS/2,w.y-glowS/2, w.x+glowS/2,w.y+glowS/2, wRad*2);
-        ctx.arcTo(w.x+glowS/2,w.y+glowS/2, w.x-glowS/2,w.y+glowS/2, wRad*2);
-        ctx.arcTo(w.x-glowS/2,w.y+glowS/2, w.x-glowS/2,w.y-glowS/2, wRad*2);
-        ctx.arcTo(w.x-glowS/2,w.y-glowS/2, w.x+glowS/2,w.y-glowS/2, wRad*2);
-        ctx.closePath();
-        ctx.fillStyle = glowGrad; ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(w.x-ws/2+wRad, w.y-ws/2);
-        ctx.arcTo(w.x+ws/2,w.y-ws/2, w.x+ws/2,w.y+ws/2, wRad);
-        ctx.arcTo(w.x+ws/2,w.y+ws/2, w.x-ws/2,w.y+ws/2, wRad);
-        ctx.arcTo(w.x-ws/2,w.y+ws/2, w.x-ws/2,w.y-ws/2, wRad);
-        ctx.arcTo(w.x-ws/2,w.y-ws/2, w.x+ws/2,w.y-ws/2, wRad);
-        ctx.closePath();
-        if (wH) { ctx.shadowColor='rgba(196,119,60,0.5)'; ctx.shadowBlur=50; }
-        ctx.fillStyle = wH ? '#252018' : '#1A1A18';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1; ctx.stroke();
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#C4773C';
-        ctx.font = `700 ${Math.max(10, ws * 0.2)}px 'IBM Plex Mono', monospace`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        const lfs = Math.max(10, ws * 0.2);
-        ctx.fillText('aaro', w.x, w.y - lfs * 0.55);
-        ctx.fillStyle = '#EDE8E0';
-        ctx.fillText('agent', w.x, w.y + lfs * 0.55);
+        // Tighter dash pattern reads as a smoother curve along the path.
+        ctx.setLineDash([2, 3.5]);
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 1.3;
+        for (let i = 1; i < c.trail.length; i++) {
+          const p0 = c.trail[i - 1], p1 = c.trail[i];
+          const age = (now - p1.t) / TRAIL_MAX_MS;
+          // Quadratic falloff — recent strokes pop, old strokes ghost out.
+          const a = baseAlpha * (1 - age) * (1 - age);
+          if (a < 0.02) continue;
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          ctx.lineTo(p1.x, p1.y);
+          ctx.strokeStyle = c.role.color + ah(a);
+          ctx.stroke();
+        }
         ctx.restore();
       }
 
-      function getNodeAt(mx, my) {
-        const w = nodes[0];
-        if (!w) return null;
-        if (Math.abs(mx-w.x)<w.r && Math.abs(my-w.y)<w.r) return w;
-        for (let i = nodes.length-1; i>=1; i--) {
-          const n = nodes[i];
-          if (Math.abs(mx-n.x)<n.r && Math.abs(my-n.y)<n.r) return n;
+      function drawCursor(c) {
+        if (c.lifeOp < 0.02) return;
+        // Wrap whole cursor draw in a save/globalAlpha so lifeOp fades shadow,
+        // body, and the label pill together when the agent is being added or
+        // retired by the dynamic-count drift.
+        ctx.save();
+        ctx.globalAlpha = c.lifeOp;
+
+        // Shadow in WORLD coords (light from upper-left → drop to lower-right)
+        // — independent of cursor rotation.
+        ctx.save();
+        ctx.translate(c.x + 1.2, c.y + 1.6);
+        ctx.rotate(c.rot);
+        ctx.fillStyle = 'rgba(0,0,0,0.20)';
+        ctx.fill(ARROW_PATH);
+        ctx.restore();
+
+        // Body
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate(c.rot);
+        ctx.fillStyle = c.role.color; ctx.fill(ARROW_PATH);
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1.2;
+        ctx.stroke(ARROW_PATH);
+        ctx.restore();
+
+        // Fade the label pill when the cursor is moving fast — during dense
+        // pursuit the pills pile up, and the dashed trail is enough on its own.
+        const sp = Math.hypot(c.vx, c.vy);
+        const speedFade = sp > 1.6 ? Math.max(0, 1 - (sp - 1.6) / 2.5) : 1;
+        const labelOp = (1 - c.bubbleOp) * speedFade;
+        if (labelOp > 0.04) {
+          ctx.save();
+          ctx.globalAlpha = labelOp;
+          ctx.font = "600 11px 'DM Sans', sans-serif";
+          const tw = ctx.measureText(c.role.label).width;
+          const lx = c.x + 16, ly = c.y + 2, pw = tw + 14, ph = 18, rr = 9;
+          ctx.beginPath();
+          ctx.moveTo(lx + rr, ly);
+          ctx.arcTo(lx + pw, ly, lx + pw, ly + ph, rr);
+          ctx.arcTo(lx + pw, ly + ph, lx, ly + ph, rr);
+          ctx.arcTo(lx, ly + ph, lx, ly, rr);
+          ctx.arcTo(lx, ly, lx + pw, ly, rr);
+          ctx.closePath();
+          ctx.fillStyle = c.role.color; ctx.fill();
+          ctx.fillStyle = '#fff'; ctx.textBaseline = 'middle';
+          ctx.fillText(c.role.label, lx + 7, ly + ph / 2);
+          ctx.restore();
         }
-        return null;
+        ctx.restore();   // close lifeOp wrapper
       }
 
-      canvas.addEventListener('mousemove', e => {
-        const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX-rect.left, my = e.clientY-rect.top;
-        if (dragNode) {
-          const dx = mx-mouseDownPos.x, dy = my-mouseDownPos.y;
-          if (Math.sqrt(dx*dx+dy*dy)>4) didDrag = true;
-          dragNode.fx = mx+dragOffset.x; dragNode.fy = my+dragOffset.y;
-          if (dragNode.isCenter) { dragNode.baseX = dragNode.fx; dragNode.baseY = dragNode.fy; }
-          alpha = Math.max(alpha, 0.3);
-          return;
+      function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      const BUB = { w: 174, headerH: 30, rowH: 18, padX: 14, padY: 12, radius: 12 };
+      function bubbleHeight(role) { return BUB.headerH + role.stats.length * BUB.rowH + BUB.padY; }
+
+      function drawBubble(c) {
+        if (c.bubbleOp < 0.02 || c.lifeOp < 0.02) return;
+        // Multiply visible opacity by lifeOp so a fading-in cursor's bubble
+        // doesn't pop in fully-opaque before the cursor itself is visible.
+        const op = c.bubbleOp * c.lifeOp;
+        const role = c.role;
+        const w = BUB.w;
+        const h = bubbleHeight(role);
+        const dirX = c.x - user.x, dirY = c.y - user.y;
+        const dirLen = Math.hypot(dirX, dirY) || 1;
+        const ndx = dirX / dirLen, ndy = dirY / dirLen;
+        const ax = c.x + ndx * 26;
+        const ay = c.y + ndy * 26;
+        let bx = ax + (ndx >= 0 ? 0 : -w);
+        let by = ay + (ndy >= 0 ? 0 : -h);
+        bx = Math.max(8, Math.min(W - w - 8, bx));
+        by = Math.max(8, Math.min(H - h - 8, by));
+
+        ctx.save();
+        ctx.globalAlpha = op;
+
+        // Connector
+        const connEndX = bx + (c.x < bx + w / 2 ? 8 : w - 8);
+        const connEndY = by + 14;
+        ctx.save();
+        ctx.globalAlpha = op * 0.55;
+        ctx.setLineDash([3, 5]);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = role.color;
+        ctx.beginPath();
+        ctx.moveTo(c.x, c.y);
+        // Bend the curve perpendicular to the cursor→bubble line; per-cursor
+        // connectorBias decides which side of the line, so each cursor's
+        // path looks distinct (matches the concept image's varied arcs).
+        const segDx = connEndX - c.x, segDy = connEndY - c.y;
+        const segLen = Math.hypot(segDx, segDy) || 1;
+        const perpX = -segDy / segLen, perpY = segDx / segLen;
+        const bend = Math.min(28, segLen * 0.22);
+        const cpx = (c.x + connEndX) / 2 + perpX * bend * c.connectorBias;
+        const cpy = (c.y + connEndY) / 2 + perpY * bend * c.connectorBias;
+        ctx.quadraticCurveTo(cpx, cpy, connEndX, connEndY);
+        ctx.stroke();
+        ctx.restore();
+
+        // Card body — theme-aware
+        ctx.shadowColor = 'rgba(0,0,0,0.12)';
+        ctx.shadowBlur = 14;
+        ctx.shadowOffsetY = 4;
+        roundRect(bx, by, w, h, BUB.radius);
+        ctx.fillStyle = isDark() ? 'rgba(28,28,26,0.95)' : 'rgba(255,255,255,0.97)';
+        ctx.fill();
+        ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+        // Border lifts the card off the page in both themes; alpha tuned per
+        // theme since dark-bg absorbs low-alpha strokes.
+        ctx.strokeStyle = isDark() ? 'rgba(237,232,224,0.18)' : 'rgba(26,26,24,0.10)';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        const headerY = by + BUB.padY;
+        ctx.fillStyle = role.color;
+        ctx.beginPath();
+        ctx.arc(bx + BUB.padX + 6, headerY + 7, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = "600 11px 'IBM Plex Mono', monospace";
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(role.glyph, bx + BUB.padX + 6, headerY + 7);
+
+        ctx.font = "600 13px 'DM Sans', sans-serif";
+        ctx.textAlign = 'left';
+        ctx.fillStyle = isDark() ? '#EDE8E0' : '#1A1A18';
+        ctx.fillText(role.label, bx + BUB.padX + 22, headerY + 8);
+
+        ctx.beginPath();
+        ctx.arc(bx + w - BUB.padX - 4, headerY + 7, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = role.color; ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(bx + BUB.padX, headerY + 22);
+        ctx.lineTo(bx + w - BUB.padX, headerY + 22);
+        ctx.strokeStyle = isDark() ? 'rgba(237,232,224,0.16)' : 'rgba(26,26,24,0.08)';
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+
+        ctx.font = "500 11px 'DM Sans', sans-serif";
+        ctx.textBaseline = 'middle';
+        for (let i = 0; i < role.stats.length; i++) {
+          const stat = role.stats[i];
+          const ry = by + BUB.headerH + i * BUB.rowH + 4;
+          ctx.fillStyle = isDark() ? 'rgba(237,232,224,0.55)' : 'rgba(26,26,24,0.55)';
+          ctx.textAlign = 'left';
+          ctx.fillText(stat.k, bx + BUB.padX, ry);
+          const vx = bx + w - BUB.padX - (stat.ok ? 14 : 0);
+          ctx.fillStyle = isDark() ? '#EDE8E0' : '#1A1A18';
+          ctx.font = "500 11px 'IBM Plex Mono', monospace";
+          ctx.textAlign = 'right';
+          ctx.fillText(stat.v, vx, ry);
+          ctx.font = "500 11px 'DM Sans', sans-serif";
+          if (stat.ok) {
+            ctx.textAlign = 'right';
+            ctx.fillStyle = role.color;
+            ctx.fillText('✓', bx + w - BUB.padX, ry);
+          }
         }
-        hoveredNode = getNodeAt(mx, my);
-        canvas.style.cursor = hoveredNode ? 'pointer' : 'default';
-      });
+        ctx.textAlign = 'left';
+        ctx.restore();
+      }
 
-      canvas.addEventListener('mousedown', e => {
-        const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX-rect.left, my = e.clientY-rect.top;
-        const node = getNodeAt(mx, my);
-        mouseDownPos = {x:mx, y:my};
-        didDrag = false;
-        if (node) {
-          dragNode = node;
-          dragOffset.x = node.x-mx; dragOffset.y = node.y-my;
-          node.fx = node.x; node.fy = node.y;
-          canvas.style.cursor = 'grabbing';
-          e.preventDefault();
+      function draw() {
+        const now = performance.now();
+        ctx.clearRect(0, 0, W, H);
+
+        for (const c of cursors) drawTrail(c, now);
+
+        // Soft user→cursor connectors during pursuit
+        const swarmLineOp = 1 - Math.max(...cursors.map(c => c.bubbleOp), 0);
+        if (user.active && swarmLineOp > 0.05) {
+          for (const c of cursors) {
+            const d = Math.hypot(c.x - user.x, c.y - user.y);
+            if (d > 240) continue;
+            const op = Math.max(0.04, Math.min(0.18, 1 - d / 240)) * 0.55 * swarmLineOp * c.lifeOp;
+            ctx.beginPath();
+            ctx.moveTo(user.x, user.y);
+            ctx.lineTo(c.x, c.y);
+            ctx.strokeStyle = c.role.color + ah(op);
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
         }
-      });
 
-      canvas.addEventListener('mouseup', () => {
-        if (dragNode) {
-          dragNode.fx = null; dragNode.fy = null;
-          dragNode = null;
-          canvas.style.cursor = hoveredNode ? 'pointer' : 'default';
-        }
-      });
+        for (const c of cursors) drawBubble(c);
+        for (const c of cursors) drawCursor(c);
+      }
 
-      canvas.addEventListener('mouseleave', () => {
-        if (dragNode) { dragNode.fx=null; dragNode.fy=null; dragNode=null; }
-        hoveredNode = null; canvas.style.cursor = 'default';
-      });
+      // Pause RAF when cover offscreen
+      let visible = true;
+      const cover = document.getElementById('s0');
+      if (cover && 'IntersectionObserver' in window) {
+        new IntersectionObserver((entries) => {
+          for (const e of entries) visible = e.isIntersecting;
+        }, { threshold: 0.05 }).observe(cover);
+      }
 
-      let touchStartPos = {x:0, y:0};
-      canvas.addEventListener('touchstart', e => {
-        const t = e.touches[0], rect = canvas.getBoundingClientRect();
-        const mx = t.clientX-rect.left, my = t.clientY-rect.top;
-        const node = getNodeAt(mx, my);
-        touchStartPos = {x:mx, y:my};
-        didDrag = false;
-        if (node) {
-          dragNode = node;
-          dragOffset.x = node.x-mx; dragOffset.y = node.y-my;
-          node.fx = node.x; node.fy = node.y;
-          e.preventDefault();
-        }
-      }, {passive:false});
-      canvas.addEventListener('touchmove', e => {
-        if (!dragNode) return;
-        const t = e.touches[0], rect = canvas.getBoundingClientRect();
-        const mx = t.clientX-rect.left, my = t.clientY-rect.top;
-        const ddx = mx-touchStartPos.x, ddy = my-touchStartPos.y;
-        if (Math.sqrt(ddx*ddx+ddy*ddy)>6) didDrag = true;
-        dragNode.fx = mx+dragOffset.x; dragNode.fy = my+dragOffset.y;
-        if (dragNode.isCenter) { dragNode.baseX = dragNode.fx; dragNode.baseY = dragNode.fy; }
-        alpha = Math.max(alpha, 0.3);
-        e.preventDefault();
-      }, {passive:false});
-      canvas.addEventListener('touchend', () => {
-        if (dragNode) { dragNode.fx=null; dragNode.fy=null; dragNode=null; }
-      });
-
-      let lastPacket = 0;
-      function loop(ts) {
-        simulate();
-        for (let i=packets.length-1;i>=0;i--) { packets[i].t+=16; if(packets[i].t>packets[i].dur) packets.splice(i,1); }
-        if (ts-lastPacket > 500) { spawnPacket(); lastPacket=ts; }
-        draw();
+      let lastT = performance.now();
+      function loop(t) {
+        const dt = Math.min(50, t - lastT);
+        lastT = t;
+        if (visible) { step(dt); draw(); }
         requestAnimationFrame(loop);
       }
 
-      resize();
-      initNodes();
-      requestAnimationFrame(loop);
-
-      window.addEventListener('resize', () => {
+      function init() {
         resize();
-        if (nodes.length > 0) {
-          nodes[0].x = centerX; nodes[0].y = centerY;
-          nodes[0].baseX = centerX; nodes[0].baseY = centerY;
-        }
-        alpha = 0.8;
-      });
+        // Initial count sits in the middle of [COUNT_MIN, COUNT_MAX]; the
+        // dynamic drift takes over once the user starts moving.
+        const target = reducedMotion ? COUNT_MIN : (W < 720 ? COUNT_MIN : 6);
+        setCount(target);
+        requestAnimationFrame(loop);
+      }
+      init();
+      window.addEventListener('resize', resize);
     })();
 
 

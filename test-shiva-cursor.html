@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shiva Multi-Cursor — Boids Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F4EFE6;
+      --ink: #1A1A18;
+      --ink-40: rgba(26,26,24,0.4);
+      --ink-20: rgba(26,26,24,0.2);
+      --accent: #C4773C;
+      --user-color: #2D7AF6;
+    }
+    [data-theme="dark"] {
+      --bg: #0E0E0C;
+      --ink: #EDE8E0;
+      --ink-40: rgba(237,232,224,0.4);
+      --ink-20: rgba(237,232,224,0.2);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg); color: var(--ink);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      overflow: hidden;
+      cursor: none;             /* hide native cursor — user is "Shiva" */
+    }
+
+    .stage {
+      position: fixed; inset: 0;
+      overflow: hidden;
+    }
+
+    /* Hero text overlay */
+    .hero {
+      position: fixed; left: 6vw; top: 50%;
+      transform: translateY(-50%);
+      z-index: 4;
+      pointer-events: none;
+      max-width: 540px;
+    }
+    .hero h1 {
+      font-size: clamp(40px, 7vw, 96px);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+    .hero h1 em {
+      color: var(--accent);
+      font-style: normal;
+    }
+    .hero p {
+      font-size: clamp(13px, 1.1vw, 16px);
+      color: var(--ink-40);
+      max-width: 36ch;
+      line-height: 1.6;
+    }
+    .hero .kicker {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-40);
+      margin-bottom: 28px;
+      display: block;
+    }
+
+    /* Stat strip */
+    .stats {
+      position: fixed; right: 4vw; top: 50%;
+      transform: translateY(-50%);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      pointer-events: none;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--ink-40);
+      z-index: 4;
+      min-width: 160px;
+    }
+    .stats .row {
+      display: flex; justify-content: space-between;
+      border-bottom: 1px solid var(--ink-20);
+      padding-bottom: 6px;
+    }
+    .stats .v { color: var(--ink); font-weight: 600; }
+
+    /* Controls */
+    .controls {
+      position: fixed; left: 24px; bottom: 24px;
+      z-index: 5;
+      display: flex; gap: 8px; flex-wrap: wrap;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+    }
+    .controls button {
+      background: transparent;
+      border: 1px solid var(--ink-20);
+      color: var(--ink);
+      padding: 8px 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all .2s;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+    }
+    .controls button:hover { border-color: var(--accent); color: var(--accent); }
+    .controls button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+    /* Canvas — full background */
+    canvas#stage {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      display: block;
+    }
+
+    /* Hint */
+    .hint {
+      position: fixed; right: 24px; bottom: 24px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--ink-40);
+      text-transform: uppercase;
+      z-index: 4;
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <div class="stage">
+    <canvas id="stage"></canvas>
+
+    <div class="hero">
+      <span class="kicker">Shiva — many hands, one intent</span>
+      <h1>From <em>intent</em><br>to evidence.</h1>
+      <p>하나의 의도, 여러 개의 손. Shiva가 당신의 커서를 따라
+      여러 전담 에이전트로 분기하여 동시에 일을 처리합니다.</p>
+    </div>
+
+    <div class="stats">
+      <div class="row"><span>Cursors</span><span class="v" id="statCount">0</span></div>
+      <div class="row"><span>FPS</span><span class="v" id="statFps">0</span></div>
+      <div class="row"><span>Mode</span><span class="v" id="statMode">cohesion</span></div>
+      <div class="row"><span>Avg dist</span><span class="v" id="statDist">—</span></div>
+    </div>
+
+    <div class="controls">
+      <button id="btnTheme">theme</button>
+      <button id="btnCount">+1</button>
+      <button id="btnLess">-1</button>
+      <button id="btnReset">reset</button>
+      <button id="btnAuto">auto-demo</button>
+    </div>
+
+    <div class="hint">move your mouse — they follow (5–8)</div>
+  </div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Roles & stats (from concept image) ──
+  const ROLES = [
+    { label: 'Regulation', color: '#7B6CD9', glyph: '◇', stats: [
+      { k: 'FAR',      v: '2.10',  ok: true },
+      { k: 'Height',   v: '48.0m', ok: true },
+      { k: 'Setbacks', v: 'OK',    ok: true },
+    ]},
+    { label: 'Massing', color: '#5B8DEF', glyph: '◰', stats: [
+      { k: 'Iterations', v: '12'   },
+      { k: 'Score',      v: '0.82' },
+      { k: 'Daylight',   v: 'Good' },
+    ]},
+    { label: 'Parking', color: '#E8784B', glyph: 'P', stats: [
+      { k: 'Spaces', v: '128'       },
+      { k: 'Ratio',  v: '1 / 93 m²' },
+      { k: 'Access', v: 'OK'        },
+    ]},
+    { label: 'Critic', color: '#3FA88E', glyph: '✱', stats: [
+      { k: 'Overshadowing', v: 'Low'        },
+      { k: 'Wind',          v: 'Acceptable' },
+      { k: 'Public Realm',  v: 'Strong'     },
+    ]},
+    { label: 'Report', color: '#D9527B', glyph: '≡', stats: [
+      { k: 'Pages',    v: '42'    },
+      { k: 'Diagrams', v: '18'    },
+      { k: 'Status',   v: 'Draft' },
+    ]},
+    { label: 'Context', color: '#C7942A', glyph: '◐', stats: [
+      { k: 'Views',  v: 'Good'   },
+      { k: 'Noise',  v: 'Low'    },
+      { k: 'Access', v: 'Strong' },
+    ]},
+  ];
+
+  const COUNT_MIN = 5, COUNT_MAX = 8, COUNT_DEFAULT = 6;
+
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+
+  let W = 0, H = 0;
+  const cursors = [];
+  const user = { x: -9999, y: -9999, vx: 0, vy: 0, active: false, lastMove: 0 };
+  const userTrail = [];
+  const TRAIL_MAX_MS = 1300;       // per-cursor trail history window
+  const USER_TRAIL_MAX_MS = 1500;  // user pursuit-lag history
+
+  let autoDemo = false;
+  let autoT = 0;
+  let wasIdle = false;
+
+  function resize() {
+    const r = canvas.getBoundingClientRect();
+    W = r.width; H = r.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function spawnAgent(i) {
+    const role = ROLES[i % ROLES.length];
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 80 + Math.random() * 140;
+    const cx = W * 0.5, cy = H * 0.5;
+    return {
+      x: cx + Math.cos(angle) * dist,
+      y: cy + Math.sin(angle) * dist,
+      vx: 0, vy: 0,
+      role,
+      rot: 0,
+      maxSpeed: 4.6 + Math.random() * 2.4,
+      eagerness: 0.7 + Math.random() * 0.7,
+      lateralBias: (Math.random() * 2 - 1) * 0.95,
+      pursueLag: 60 + Math.random() * 220,
+      // trail (own)
+      trail: [],
+      // rest state
+      hasRest: false, restX: 0, restY: 0,
+      bubbleSide: 1,                  // +1 right, -1 left of cursor
+      bubbleOp: 0,
+      // mild personality
+      jitterSeed: Math.random() * 1000,
+      connectorBias: (Math.random() * 2 - 1) * 0.9,
+    };
+  }
+
+  function setCount(n) {
+    n = Math.max(COUNT_MIN, Math.min(COUNT_MAX, n));
+    while (cursors.length < n) cursors.push(spawnAgent(cursors.length));
+    while (cursors.length > n) cursors.pop();
+    return n;
+  }
+
+  // ── Tunables ──
+  const PARAMS = {
+    SEP_RADIUS: 78,                 // wider — prevents label-pill overlap
+    SEP_FORCE: 1.8,
+    ALI_RADIUS: 100,
+    ALI_FORCE: 0.05,
+    PURSUE_FORCE: 0.038,
+    REST_FORCE: 0.045,
+    DAMPING: 0.90,
+    REST_DAMPING: 0.82,             // stronger damping near rest
+    LEASH_R: 320,
+    LEASH_FORCE: 0.06,
+    PERSONAL_SPACE: 50,
+    IDLE_MS: 600,                   // pause this long → settle to rest
+    REST_LOCK_DIST: 22,             // within this px → snap rotation, fade-in bubble
+    ROT_LERP: 0.18,
+    MOVE_THRESH: 0.55,
+  };
+
+  // ── Mouse / touch ──
+  function trackMove(clientX, clientY) {
+    const r = canvas.getBoundingClientRect();
+    const x = clientX - r.left;
+    const y = clientY - r.top;
+    if (Math.hypot(x - user.x, y - user.y) < 0.5) return;
+    user.vx = x - user.x; user.vy = y - user.y;
+    user.x = x; user.y = y;
+    user.active = true;
+    user.lastMove = performance.now();
+    userTrail.push({ x, y, t: user.lastMove });
+  }
+  window.addEventListener('mousemove', e => trackMove(e.clientX, e.clientY));
+  window.addEventListener('touchmove', e => {
+    if (e.touches[0]) trackMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  window.addEventListener('touchstart', e => {
+    if (e.touches[0]) trackMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+
+  function pruneTrail(now) {
+    while (userTrail.length > 0 && now - userTrail[0].t > USER_TRAIL_MAX_MS) {
+      userTrail.shift();
+    }
+  }
+  function trailPointAt(now, lagMs) {
+    const target = now - lagMs;
+    for (let i = userTrail.length - 1; i >= 0; i--) {
+      if (userTrail[i].t <= target) return userTrail[i];
+    }
+    return userTrail[0] || { x: user.x, y: user.y };
+  }
+
+  // ── Rest assignment: distribute cursors in angular slots around user ──
+  // Distribute rest positions on a single ring around the user. Equal radii
+  // + tight angular jitter prevents bubbles at adjacent slots from overlapping.
+  function assignRestPositions() {
+    const N = cursors.length;
+    const slotSize = (Math.PI * 2) / N;
+    const margin = 110;
+    // Largest ring that still keeps every cursor (and its bubble) on canvas.
+    const safeR = Math.min(
+      user.x - margin,
+      W - user.x - margin,
+      user.y - margin,
+      H - user.y - margin,
+    );
+    const baseR = Math.max(170, Math.min(260, safeR));
+    // Random global rotation so the layout doesn't look identical each idle.
+    const phase = Math.random() * slotSize;
+    const order = cursors.slice().sort(() => Math.random() - 0.5);
+    // When N is large, the slot pitch shrinks and adjacent bubbles overlap.
+    // Stagger neighbours onto an inner / outer ring so bubble centres don't
+    // collide. (Below 8 we keep a single clean ring.)
+    const stagger = N >= 8;
+    for (let i = 0; i < N; i++) {
+      const a = order[i];
+      const ang = phase + slotSize * i + (Math.random() - 0.5) * slotSize * 0.18;
+      const ringR = stagger && i % 2 === 1 ? baseR * 0.74 : baseR;
+      let rx = user.x + Math.cos(ang) * ringR;
+      let ry = user.y + Math.sin(ang) * ringR;
+      rx = Math.max(60, Math.min(W - 60, rx));
+      ry = Math.max(60, Math.min(H - 60, ry));
+      a.restX = rx; a.restY = ry;
+      a.hasRest = true;
+    }
+  }
+  function clearRestAssignments() {
+    for (const a of cursors) a.hasRest = false;
+  }
+
+  // ── Step ──
+  function step(dt) {
+    const now = performance.now();
+    if (autoDemo) {
+      autoT += dt * 0.0005;
+      const cx = W * 0.5 + Math.cos(autoT) * (W * 0.20);
+      const cy = H * 0.5 + Math.sin(autoT * 1.7) * (H * 0.18);
+      if (Math.hypot(cx - user.x, cy - user.y) > 0.5) {
+        user.vx = cx - user.x; user.vy = cy - user.y;
+        user.x = cx; user.y = cy;
+        user.lastMove = now;
+        user.active = true;
+        userTrail.push({ x: cx, y: cy, t: now });
+      }
+    }
+    pruneTrail(now);
+
+    const idleMs = now - user.lastMove;
+    const isIdle = idleMs > PARAMS.IDLE_MS;
+    if (isIdle && !wasIdle) assignRestPositions();
+    if (!isIdle && wasIdle) clearRestAssignments();
+    wasIdle = isIdle;
+
+    document.getElementById('statMode').textContent = isIdle ? 'rest' : 'pursue';
+
+    // User direction (for flank offsets)
+    const usp = Math.hypot(user.vx, user.vy);
+    const ndx = usp > 0.01 ? user.vx / usp : 1;
+    const ndy = usp > 0.01 ? user.vy / usp : 0;
+    const perpX = -ndy, perpY = ndx;
+
+    let totalDist = 0;
+
+    for (let i = 0; i < cursors.length; i++) {
+      const a = cursors[i];
+
+      // ── Target selection ──
+      let tx, ty, pushK;
+      if (isIdle && a.hasRest) {
+        tx = a.restX; ty = a.restY;
+        pushK = PARAMS.REST_FORCE * a.eagerness;
+      } else {
+        const lag = trailPointAt(now, a.pursueLag);
+        const flankAmt = 75;
+        const trailAmt = 35;
+        tx = lag.x + perpX * a.lateralBias * flankAmt - ndx * trailAmt;
+        ty = lag.y + perpY * a.lateralBias * flankAmt - ndy * trailAmt;
+        pushK = PARAMS.PURSUE_FORCE * a.eagerness;
+      }
+      let pX = (tx - a.x) * pushK;
+      let pY = (ty - a.y) * pushK;
+
+      // ── Boids: separation + alignment ──
+      let sepX = 0, sepY = 0, sepN = 0, aliX = 0, aliY = 0, aliN = 0;
+      for (let j = 0; j < cursors.length; j++) {
+        if (j === i) continue;
+        const b = cursors[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < PARAMS.SEP_RADIUS * PARAMS.SEP_RADIUS && d2 > 0.01) {
+          const d = Math.sqrt(d2);
+          const k = (PARAMS.SEP_RADIUS - d) / PARAMS.SEP_RADIUS;
+          sepX += (dx / d) * k; sepY += (dy / d) * k; sepN++;
+        }
+        if (d2 < PARAMS.ALI_RADIUS * PARAMS.ALI_RADIUS) {
+          aliX += b.vx; aliY += b.vy; aliN++;
+        }
+      }
+      a.vx += pX; a.vy += pY;
+      if (sepN > 0) {
+        a.vx += (sepX / sepN) * PARAMS.SEP_FORCE * 4;
+        a.vy += (sepY / sepN) * PARAMS.SEP_FORCE * 4;
+      }
+      if (aliN > 0) {
+        a.vx += ((aliX / aliN) - a.vx) * PARAMS.ALI_FORCE;
+        a.vy += ((aliY / aliN) - a.vy) * PARAMS.ALI_FORCE;
+      }
+
+      // ── Leash + personal-space (around user pointer) ──
+      {
+        const dx = a.x - user.x, dy = a.y - user.y;
+        const d = Math.hypot(dx, dy);
+        if (d > PARAMS.LEASH_R && d > 0.01) {
+          const overflow = d - PARAMS.LEASH_R;
+          a.vx -= (dx / d) * overflow * PARAMS.LEASH_FORCE;
+          a.vy -= (dy / d) * overflow * PARAMS.LEASH_FORCE;
+        }
+        if (d < PARAMS.PERSONAL_SPACE && d > 0.01) {
+          const k = (PARAMS.PERSONAL_SPACE - d) / PARAMS.PERSONAL_SPACE;
+          a.vx += (dx / d) * k * 1.4;
+          a.vy += (dy / d) * k * 1.4;
+        }
+        totalDist += d;
+      }
+
+      // Damping (stronger near rest target so they actually settle)
+      let damping = PARAMS.DAMPING;
+      let distToTarget = Math.hypot(tx - a.x, ty - a.y);
+      if (isIdle && distToTarget < 50) damping = PARAMS.REST_DAMPING;
+      a.vx *= damping; a.vy *= damping;
+
+      const sp = Math.hypot(a.vx, a.vy);
+      if (sp > a.maxSpeed) {
+        a.vx = (a.vx / sp) * a.maxSpeed;
+        a.vy = (a.vy / sp) * a.maxSpeed;
+      }
+      // micro-jitter only when not at rest (rest should look still)
+      if (!isIdle || distToTarget > PARAMS.REST_LOCK_DIST) {
+        a.vx += (Math.random() - 0.5) * 0.05;
+        a.vy += (Math.random() - 0.5) * 0.05;
+      }
+      a.x += a.vx; a.y += a.vy;
+
+      // canvas-edge bounds
+      const m = 24;
+      if (a.x < m)     a.vx += (m - a.x) * 0.05;
+      if (a.x > W - m) a.vx -= (a.x - (W - m)) * 0.05;
+      if (a.y < m)     a.vy += (m - a.y) * 0.05;
+      if (a.y > H - m) a.vy -= (a.y - (H - m)) * 0.05;
+
+      // ── Trail history (for dashed motion trail) ──
+      // Only record when meaningfully moving — prevents stuttering when at rest.
+      if (sp > 0.4) {
+        a.trail.push({ x: a.x, y: a.y, t: now });
+      }
+      while (a.trail.length > 0 && now - a.trail[0].t > TRAIL_MAX_MS) {
+        a.trail.shift();
+      }
+
+      // ── Velocity-aligned rotation (smoothed) ──
+      if (sp > PARAMS.MOVE_THRESH) {
+        const va = Math.atan2(a.vy, a.vx);
+        const targetRot = va + Math.PI - 1.13;
+        let dRot = targetRot - a.rot;
+        while (dRot > Math.PI)  dRot -= Math.PI * 2;
+        while (dRot < -Math.PI) dRot += Math.PI * 2;
+        a.rot += dRot * PARAMS.ROT_LERP;
+      } else if (isIdle && distToTarget < PARAMS.REST_LOCK_DIST) {
+        // At rest: ease back to natural OS-cursor orientation
+        const dRot = 0 - a.rot;
+        a.rot += dRot * 0.06;
+      }
+
+      // ── Bubble opacity ──
+      const atRest = isIdle && distToTarget < PARAMS.REST_LOCK_DIST;
+      const targetOp = atRest ? 1 : 0;
+      // Asymmetric: slow fade-in (feels considered), fast fade-out (feels reactive)
+      const lerp = targetOp > a.bubbleOp ? 0.045 : 0.14;
+      a.bubbleOp += (targetOp - a.bubbleOp) * lerp;
+    }
+
+    document.getElementById('statDist').textContent =
+      cursors.length ? Math.round(totalDist / cursors.length) + 'px' : '—';
+  }
+
+  // ── Render ──
+  const ARROW_PATH = new Path2D(
+    'M 0 0 L 0 18 L 5.2 14 L 8.6 21.8 L 11.4 20.6 L 8 13 L 14.4 13 Z'
+  );
+
+  // Hex alpha helper
+  const ah = (a) => Math.floor(Math.max(0, Math.min(1, a)) * 255).toString(16).padStart(2, '0');
+
+  function drawTrail(c, now) {
+    if (c.trail.length < 2) return;
+    // Trail visibility scales with how active we are (hide when bubble showing).
+    const baseAlpha = 0.62 * (1 - c.bubbleOp);
+    if (baseAlpha < 0.02) return;
+    ctx.save();
+    ctx.setLineDash([2, 3.5]);
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 1.3;
+    for (let i = 1; i < c.trail.length; i++) {
+      const p0 = c.trail[i - 1], p1 = c.trail[i];
+      const age = (now - p1.t) / TRAIL_MAX_MS;
+      const a = baseAlpha * (1 - age) * (1 - age);
+      if (a < 0.02) continue;
+      ctx.beginPath();
+      ctx.moveTo(p0.x, p0.y);
+      ctx.lineTo(p1.x, p1.y);
+      ctx.strokeStyle = c.role.color + ah(a);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawCursor(c) {
+    // Shadow in world coords (light from upper-left) — does not invert when
+    // cursor rotates to face its movement direction.
+    ctx.save();
+    ctx.translate(c.x + 1.2, c.y + 1.6);
+    ctx.rotate(c.rot);
+    ctx.fillStyle = 'rgba(0,0,0,0.20)';
+    ctx.fill(ARROW_PATH);
+    ctx.restore();
+
+    // Body
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(c.rot);
+    ctx.fillStyle = c.role.color; ctx.fill(ARROW_PATH);
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1.2;
+    ctx.stroke(ARROW_PATH);
+    ctx.restore();
+
+    // Label pill — fades out as bubble fades in, also fades during fast motion
+    // so converging cursors don't pile labels on top of each other.
+    const sp = Math.hypot(c.vx, c.vy);
+    const speedFade = sp > 1.6 ? Math.max(0, 1 - (sp - 1.6) / 2.5) : 1;
+    const labelOp = (1 - c.bubbleOp) * speedFade;
+    if (labelOp > 0.04) {
+      ctx.save();
+      ctx.globalAlpha = labelOp;
+      ctx.font = "600 11px 'DM Sans', sans-serif";
+      const tw = ctx.measureText(c.role.label).width;
+      const lx = c.x + 16, ly = c.y + 2, pw = tw + 14, ph = 18, rr = 9;
+      ctx.beginPath();
+      ctx.moveTo(lx + rr, ly);
+      ctx.arcTo(lx + pw, ly, lx + pw, ly + ph, rr);
+      ctx.arcTo(lx + pw, ly + ph, lx, ly + ph, rr);
+      ctx.arcTo(lx, ly + ph, lx, ly, rr);
+      ctx.arcTo(lx, ly, lx + pw, ly, rr);
+      ctx.closePath();
+      ctx.fillStyle = c.role.color; ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.textBaseline = 'middle';
+      ctx.fillText(c.role.label, lx + 7, ly + ph / 2);
+      ctx.restore();
+    }
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  // Bubble dimensions
+  const BUB = {
+    w: 184,
+    headerH: 30,
+    rowH: 18,
+    padX: 14,
+    padY: 12,
+    radius: 12,
+  };
+  function bubbleHeight(role) {
+    return BUB.headerH + role.stats.length * BUB.rowH + BUB.padY;
+  }
+
+  function drawBubble(c) {
+    if (c.bubbleOp < 0.02) return;
+    const op = c.bubbleOp;
+    const role = c.role;
+    const w = BUB.w;
+    const h = bubbleHeight(role);
+    // Anchor: bubble extends outward away from user
+    const dirX = c.x - user.x, dirY = c.y - user.y;
+    const dirLen = Math.hypot(dirX, dirY) || 1;
+    const ndx = dirX / dirLen, ndy = dirY / dirLen;
+    // Anchor point on bubble nearest cursor
+    const anchorOffset = 26;
+    const ax = c.x + ndx * anchorOffset;
+    const ay = c.y + ndy * anchorOffset;
+    // Place top-left so bubble grows outward; clamp to canvas
+    let bx = ax + (ndx >= 0 ? 0 : -w);
+    let by = ay + (ndy >= 0 ? 0 : -h);
+    bx = Math.max(8, Math.min(W - w - 8, bx));
+    by = Math.max(8, Math.min(H - h - 8, by));
+
+    ctx.save();
+    ctx.globalAlpha = op;
+
+    // Connector — dashed curved line from cursor to bubble
+    const connEndX = bx + (c.x < bx + w / 2 ? 8 : w - 8);
+    const connEndY = by + 14;
+    ctx.save();
+    ctx.globalAlpha = op * 0.55;
+    ctx.setLineDash([3, 5]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = role.color;
+    ctx.beginPath();
+    ctx.moveTo(c.x, c.y);
+    // Per-cursor curve bend so connector arcs don't all bend the same way.
+    const segDx = connEndX - c.x, segDy = connEndY - c.y;
+    const segLen = Math.hypot(segDx, segDy) || 1;
+    const perpX = -segDy / segLen, perpY = segDx / segLen;
+    const bend = Math.min(28, segLen * 0.22);
+    const cpx = (c.x + connEndX) / 2 + perpX * bend * c.connectorBias;
+    const cpy = (c.y + connEndY) / 2 + perpY * bend * c.connectorBias;
+    ctx.quadraticCurveTo(cpx, cpy, connEndX, connEndY);
+    ctx.stroke();
+    ctx.restore();
+
+    // Card shadow + body
+    ctx.shadowColor = 'rgba(0,0,0,0.10)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 4;
+    roundRect(bx, by, w, h, BUB.radius);
+    ctx.fillStyle = 'rgba(255,255,255,0.97)';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.strokeStyle = 'rgba(26,26,24,0.10)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+
+    // Header
+    const headerY = by + BUB.padY;
+    // Glyph badge
+    ctx.fillStyle = role.color;
+    ctx.beginPath();
+    ctx.arc(bx + BUB.padX + 6, headerY + 7, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = "600 11px 'IBM Plex Mono', monospace";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(role.glyph, bx + BUB.padX + 6, headerY + 7);
+    // Label
+    ctx.font = "600 13px 'DM Sans', sans-serif";
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#1A1A18';
+    ctx.fillText(role.label, bx + BUB.padX + 22, headerY + 8);
+    // Color dot
+    ctx.beginPath();
+    ctx.arc(bx + w - BUB.padX - 4, headerY + 7, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = role.color;
+    ctx.fill();
+
+    // Divider
+    ctx.beginPath();
+    ctx.moveTo(bx + BUB.padX, headerY + 22);
+    ctx.lineTo(bx + w - BUB.padX, headerY + 22);
+    ctx.strokeStyle = 'rgba(26,26,24,0.08)';
+    ctx.lineWidth = 0.6;
+    ctx.stroke();
+
+    // Stat rows
+    ctx.font = "500 11px 'DM Sans', sans-serif";
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < role.stats.length; i++) {
+      const stat = role.stats[i];
+      const ry = by + BUB.headerH + i * BUB.rowH + 4;
+      ctx.fillStyle = 'rgba(26,26,24,0.55)';
+      ctx.textAlign = 'left';
+      ctx.fillText(stat.k, bx + BUB.padX, ry);
+      // Right-aligned value
+      ctx.textAlign = 'right';
+      const vx = bx + w - BUB.padX - (stat.ok ? 14 : 0);
+      ctx.fillStyle = '#1A1A18';
+      ctx.font = "500 11px 'IBM Plex Mono', monospace";
+      ctx.fillText(stat.v, vx, ry);
+      ctx.font = "500 11px 'DM Sans', sans-serif";
+      if (stat.ok) {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = role.color;
+        ctx.fillText('✓', bx + w - BUB.padX, ry);
+      }
+    }
+    ctx.textAlign = 'left';
+    ctx.restore();
+  }
+
+  function drawUserCursor() {
+    if (!user.active && !autoDemo) return;
+    const cssCol = getComputedStyle(document.body).getPropertyValue('--user-color').trim() || '#2D7AF6';
+    ctx.save();
+    ctx.translate(user.x, user.y);
+
+    const t = performance.now() * 0.002;
+    const ringR = 16 + Math.sin(t) * 3;
+    ctx.beginPath(); ctx.arc(0, 0, ringR, 0, Math.PI * 2);
+    ctx.strokeStyle = cssCol + '55'; ctx.lineWidth = 1.2; ctx.stroke();
+
+    const grad = ctx.createRadialGradient(0, 0, 4, 0, 0, 80);
+    grad.addColorStop(0, cssCol + '22'); grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(0, 0, 80, 0, Math.PI * 2); ctx.fill();
+
+    // Faint leash circle (test page only)
+    ctx.beginPath(); ctx.arc(0, 0, PARAMS.LEASH_R, 0, Math.PI * 2);
+    ctx.strokeStyle = cssCol + '12';
+    ctx.setLineDash([4, 6]);
+    ctx.lineWidth = 1; ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.translate(0.7, 1.2); ctx.fill(ARROW_PATH); ctx.translate(-0.7, -1.2);
+    ctx.fillStyle = cssCol; ctx.fill(ARROW_PATH);
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.lineWidth = 1.4; ctx.stroke(ARROW_PATH);
+    ctx.restore();
+
+    ctx.font = "700 11px 'IBM Plex Mono', monospace";
+    const tw = ctx.measureText('you').width;
+    const lx = user.x + 16, ly = user.y - 6, pw = tw + 14, ph = 18, rr = 9;
+    ctx.beginPath();
+    ctx.moveTo(lx + rr, ly);
+    ctx.arcTo(lx + pw, ly, lx + pw, ly + ph, rr);
+    ctx.arcTo(lx + pw, ly + ph, lx, ly + ph, rr);
+    ctx.arcTo(lx, ly + ph, lx, ly, rr);
+    ctx.arcTo(lx, ly, lx + pw, ly, rr);
+    ctx.closePath();
+    ctx.fillStyle = cssCol; ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.textBaseline = 'middle';
+    ctx.fillText('you', lx + 7, ly + ph / 2);
+  }
+
+  function draw() {
+    const now = performance.now();
+    ctx.clearRect(0, 0, W, H);
+
+    // Trails first (under cursors)
+    for (const c of cursors) drawTrail(c, now);
+
+    // Soft connector lines from user → nearby cursors (only when active)
+    const swarmLineOp = 1 - Math.max(...cursors.map(c => c.bubbleOp), 0);
+    if ((user.active || autoDemo) && swarmLineOp > 0.05) {
+      for (const c of cursors) {
+        const d = Math.hypot(c.x - user.x, c.y - user.y);
+        if (d > 240) continue;
+        const op = Math.max(0.04, Math.min(0.18, 1 - d / 240)) * 0.55 * swarmLineOp;
+        ctx.beginPath();
+        ctx.moveTo(user.x, user.y);
+        ctx.lineTo(c.x, c.y);
+        ctx.strokeStyle = c.role.color + ah(op);
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+      }
+    }
+
+    // Bubbles (above trails, below cursors so cursor stays visible)
+    for (const c of cursors) drawBubble(c);
+    for (const c of cursors) drawCursor(c);
+    drawUserCursor();
+  }
+
+  // ── FPS + loop ──
+  let lastT = performance.now();
+  let frameCount = 0;
+  let fpsAcc = 0;
+  function loop(t) {
+    const dt = Math.min(50, t - lastT);
+    lastT = t;
+    step(dt);
+    draw();
+    frameCount++;
+    fpsAcc += dt;
+    if (fpsAcc > 500) {
+      const fps = Math.round(1000 * frameCount / fpsAcc);
+      document.getElementById('statFps').textContent = fps;
+      frameCount = 0; fpsAcc = 0;
+    }
+    document.getElementById('statCount').textContent = cursors.length;
+    requestAnimationFrame(loop);
+  }
+
+  function init() {
+    resize();
+    setCount(COUNT_DEFAULT);
+    user.x = W * 0.5; user.y = H * 0.5;
+    requestAnimationFrame(loop);
+  }
+  window.addEventListener('resize', resize);
+  init();
+
+  // ── Controls ──
+  document.getElementById('btnTheme').addEventListener('click', () => {
+    const cur = document.body.getAttribute('data-theme');
+    document.body.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+  });
+  document.getElementById('btnCount').addEventListener('click', () => setCount(cursors.length + 1));
+  document.getElementById('btnLess').addEventListener('click',  () => setCount(cursors.length - 1));
+  document.getElementById('btnReset').addEventListener('click', () => {
+    cursors.length = 0;
+    setCount(COUNT_DEFAULT);
+  });
+  const btnAuto = document.getElementById('btnAuto');
+  btnAuto.addEventListener('click', () => {
+    autoDemo = !autoDemo;
+    btnAuto.classList.toggle('active', autoDemo);
+  });
+})();
+</script>
+</body>
+</html>
